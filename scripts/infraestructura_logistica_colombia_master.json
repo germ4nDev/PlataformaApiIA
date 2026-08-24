@@ -1,0 +1,191 @@
+{
+    "red_logistica_y_portuaria_colombia": {
+        "nodos_maritimos_caribe": {
+            "cartagena": [
+                {
+                    "terminal": "SPRC (Sociedad Portuaria Regional de Cartagena) - Manga",
+                    "infraestructura": [
+                        {"tipo": "patio_contenedores_llenos", "nombre": "Patio Principal de Llenos SPRC", "ubicacion_exacta": {"lat": 10.4061, "lon": -75.5343}, "bounding_box": [[10.4035, -75.5375], [10.4085, -75.5315]]},
+                        {"tipo": "patio_contenedores_vacios", "nombre": "Patio de Retiro y Entrega Vacíos SPRC", "ubicacion_exacta": {"lat": 10.4080, "lon": -75.5320}, "bounding_box": [[10.4075, -75.5330], [10.4085, -75.5310]]},
+                        {"tipo": "bodega_almacenamiento", "nombre": "Bodega Cubierta Multipropósito SPRC", "ubicacion_exacta": {"lat": 10.4075, "lon": -75.5350}, "bounding_box": [[10.4070, -75.5355], [10.4080, -75.5345]]},
+                        {"tipo": "sitio_enturnamiento", "nombre": "Zona Enturnamiento Camiones Manga", "ubicacion_exacta": {"lat": 10.4020, "lon": -75.5360}, "bounding_box": [[10.4015, -75.5365], [10.4025, -75.5355]]},
+                        {"tipo": "inspeccion_contenedores", "nombre": "Plataforma Inspección DIAN SPRC", "ubicacion_exacta": {"lat": 10.4050, "lon": -75.5350}, "bounding_box": [[10.4045, -75.5355], [10.4055, -75.5345]]},
+                        {"tipo": "almacenamiento_liquidos", "nombre": "Tanques Vopak SPRC", "ubicacion_exacta": {"lat": 10.4090, "lon": -75.5300}, "bounding_box": [[10.4080, -75.5310], [10.4100, -75.5290]]}
+                    ]
+                },
+                {
+                    "terminal": "CONTECAR - Mamonal",
+                    "infraestructura": [
+                        {"tipo": "patio_contenedores_llenos", "nombre": "Patio Principal CONTECAR", "ubicacion_exacta": {"lat": 10.3705, "lon": -75.5132}, "bounding_box": [[10.3650, -75.5180], [10.3750, -75.5080]]},
+                        {"tipo": "patio_contenedores_vacios", "nombre": "Patio Vacíos y Mantenimiento CONTECAR", "ubicacion_exacta": {"lat": 10.3680, "lon": -75.5100}, "bounding_box": [[10.3670, -75.5120], [10.3690, -75.5080]]},
+                        {"tipo": "bodega_almacenamiento", "nombre": "Bodega CFS CONTECAR", "ubicacion_exacta": {"lat": 10.3710, "lon": -75.5120}, "bounding_box": [[10.3705, -75.5125], [10.3715, -75.5115]]},
+                        {"tipo": "sitio_enturnamiento", "nombre": "Gate In / Antepuerto CONTECAR", "ubicacion_exacta": {"lat": 10.3730, "lon": -75.5100}, "bounding_box": [[10.3725, -75.5105], [10.3735, -75.5095]]},
+                        {"tipo": "inspeccion_contenedores", "nombre": "Zona ITR e Inspecciones Antinarcóticos", "ubicacion_exacta": {"lat": 10.3715, "lon": -75.5140}, "bounding_box": [[10.3710, -75.5145], [10.3720, -75.5135]]},
+                        {"tipo": "patio_vehiculos", "nombre": "Patio Ro-Ro Automóviles CONTECAR", "ubicacion_exacta": {"lat": 10.3750, "lon": -75.5150}, "bounding_box": [[10.3740, -75.5160], [10.3760, -75.5140]]}
+                    ]
+                },
+                {
+                    "terminal": "Puerto Bahía (Isla de Barú/Mamonal)",
+                    "infraestructura": [
+                        {"tipo": "almacenamiento_liquidos", "nombre": "Terminal de Líquidos (Tanques Crudo/Nafta)", "ubicacion_exacta": {"lat": 10.3150, "lon": -75.5400}, "bounding_box": [[10.3100, -75.5450], [10.3200, -75.5350]]},
+                        {"tipo": "patio_vehiculos", "nombre": "Patio Vehículos Ro-Ro Puerto Bahía", "ubicacion_exacta": {"lat": 10.3160, "lon": -75.5380}, "bounding_box": [[10.3150, -75.5390], [10.3170, -75.5370]]},
+                        {"tipo": "bodega_almacenamiento", "nombre": "Bodega Carga General P. Bahía", "ubicacion_exacta": {"lat": 10.3140, "lon": -75.5360}, "bounding_box": [[10.3130, -75.5370], [10.3150, -75.5350]]}
+                    ]
+                },
+                {
+                    "terminal": "Compas Cartagena",
+                    "infraestructura": [
+                        {"tipo": "almacenamiento_granel", "nombre": "Silos Cereales Compas", "ubicacion_exacta": {"lat": 10.3850, "lon": -75.5200}, "bounding_box": [[10.3840, -75.5210], [10.3860, -75.5190]]},
+                        {"tipo": "patio_contenedores_llenos", "nombre": "Patio Contenedores y Carga General", "ubicacion_exacta": {"lat": 10.3845, "lon": -75.5195}, "bounding_box": [[10.3840, -75.5205], [10.3850, -75.5185]]}
+                    ]
+                }
+            ],
+            "barranquilla": [
+                {
+                    "terminal": "SPRB (Sociedad Portuaria Regional de Barranquilla)",
+                    "infraestructura": [
+                        {"tipo": "almacenamiento_granel", "nombre": "Bodegas de Granel Limpio SPRB", "ubicacion_exacta": {"lat": 10.9665, "lon": -74.7705}, "bounding_box": [[10.9650, -74.7720], [10.9680, -74.7690]]},
+                        {"tipo": "almacenamiento_granel", "nombre": "Silos Almacenamiento Cemento", "ubicacion_exacta": {"lat": 10.9650, "lon": -74.7730}, "bounding_box": [[10.9640, -74.7740], [10.9660, -74.7720]]},
+                        {"tipo": "patio_contenedores_llenos", "nombre": "Patio Contenedores BITCO/SPRB", "ubicacion_exacta": {"lat": 10.9680, "lon": -74.7690}, "bounding_box": [[10.9670, -74.7700], [10.9690, -74.7680]]},
+                        {"tipo": "inspeccion_contenedores", "nombre": "Bahía de Inspección SPRB", "ubicacion_exacta": {"lat": 10.9675, "lon": -74.7685}, "bounding_box": [[10.9670, -74.7690], [10.9680, -74.7680]]},
+                        {"tipo": "bodega_almacenamiento", "nombre": "Bodegas Carga General / Acero", "ubicacion_exacta": {"lat": 10.9660, "lon": -74.7680}, "bounding_box": [[10.9650, -74.7690], [10.9670, -74.7670]]},
+                        {"tipo": "almacenamiento_liquidos", "nombre": "Tanques Líquidos (Vopak Barranquilla)", "ubicacion_exacta": {"lat": 10.9700, "lon": -74.7660}, "bounding_box": [[10.9690, -74.7670], [10.9710, -74.7650]]}
+                    ]
+                },
+                {
+                    "terminal": "Palermo Sociedad Portuaria",
+                    "infraestructura": [
+                        {"tipo": "almacenamiento_granel", "nombre": "Bodegas Granel Suelo Palermo", "ubicacion_exacta": {"lat": 10.9745, "lon": -74.7590}, "bounding_box": [[10.9735, -74.7600], [10.9755, -74.7580]]},
+                        {"tipo": "almacenamiento_liquidos", "nombre": "Tanques Almacenamiento Palermo Tanks", "ubicacion_exacta": {"lat": 10.9720, "lon": -74.7550}, "bounding_box": [[10.9710, -74.7560], [10.9730, -74.7540]]},
+                        {"tipo": "patio_contenedores_llenos", "nombre": "Patio Multipropósito (Contenedores y Acero)", "ubicacion_exacta": {"lat": 10.9750, "lon": -74.7600}, "bounding_box": [[10.9740, -74.7620], [10.9760, -74.7580]]}
+                    ]
+                },
+                {
+                    "terminal": "Compas Barranquilla",
+                    "infraestructura": [
+                        {"tipo": "almacenamiento_granel", "nombre": "Silos y Bodegas Graneleras Compas", "ubicacion_exacta": {"lat": 10.9800, "lon": -74.7650}, "bounding_box": [[10.9790, -74.7660], [10.9810, -74.7640]]}
+                    ]
+                }
+            ],
+            "santa_marta_y_cienaga": [
+                {
+                    "terminal": "SPSM (Sociedad Portuaria de Santa Marta)",
+                    "infraestructura": [
+                        {"tipo": "almacenamiento_granel", "nombre": "Silos Graneles Limpios (Cereales)", "ubicacion_exacta": {"lat": 11.2440, "lon": -74.2150}, "bounding_box": [[11.2420, -74.2170], [11.2460, -74.2130]]},
+                        {"tipo": "almacenamiento_granel", "nombre": "Silos de Cemento", "ubicacion_exacta": {"lat": 11.2420, "lon": -74.2160}, "bounding_box": [[11.2410, -74.2170], [11.2430, -74.2150]]},
+                        {"tipo": "almacenamiento_liquidos", "nombre": "Tanques Aceite de Palma (Daabon)", "ubicacion_exacta": {"lat": 11.2430, "lon": -74.2120}, "bounding_box": [[11.2420, -74.2130], [11.2440, -74.2110]]},
+                        {"tipo": "patio_contenedores_llenos", "nombre": "Patio Contenedores Refrigerados", "ubicacion_exacta": {"lat": 11.2460, "lon": -74.2120}, "bounding_box": [[11.2455, -74.2130], [11.2465, -74.2110]]},
+                        {"tipo": "patio_contenedores_vacios", "nombre": "Patio Vacíos Santa Marta", "ubicacion_exacta": {"lat": 11.2450, "lon": -74.2110}, "bounding_box": [[11.2440, -74.2120], [11.2460, -74.2100]]},
+                        {"tipo": "inspeccion_contenedores", "nombre": "Bahía de Aforos Antinarcóticos / ITR", "ubicacion_exacta": {"lat": 11.2470, "lon": -74.2130}, "bounding_box": [[11.2465, -74.2135], [11.2475, -74.2125]]}
+                    ]
+                },
+                {
+                    "terminal": "Puerto Drummond (Ciénaga)",
+                    "infraestructura": [
+                        {"tipo": "almacenamiento_granel", "nombre": "Patios de Acopio de Carbón Principal", "ubicacion_exacta": {"lat": 11.0800, "lon": -74.2300}, "bounding_box": [[11.0700, -74.2400], [11.0900, -74.2200]]}
+                    ]
+                },
+                {
+                    "terminal": "Puerto Nuevo / Prodeco (Ciénaga)",
+                    "infraestructura": [
+                        {"tipo": "almacenamiento_granel", "nombre": "Patios de Carbón Prodeco", "ubicacion_exacta": {"lat": 11.0900, "lon": -74.2350}, "bounding_box": [[11.0850, -74.2450], [11.0950, -74.2250]]}
+                    ]
+                }
+            ],
+            "la_guajira_y_sucre": [
+                {
+                    "terminal": "Puerto Bolívar (Cerrejón - Guajira)",
+                    "infraestructura": [
+                        {"tipo": "almacenamiento_granel", "nombre": "Patios Almacenamiento Carbón", "ubicacion_exacta": {"lat": 12.2500, "lon": -71.9600}, "bounding_box": [[12.2400, -71.9700], [12.2600, -71.9500]]}
+                    ]
+                },
+                {
+                    "terminal": "Terminal Coveñas (Ocensa / Ecopetrol - Sucre)",
+                    "infraestructura": [
+                        {"tipo": "almacenamiento_liquidos", "nombre": "Parque de Tanques Crudo Coveñas", "ubicacion_exacta": {"lat": 9.4000, "lon": -75.6800}, "bounding_box": [[9.3900, -75.6900], [9.4100, -75.6700]]}
+                    ]
+                }
+            ]
+        },
+        "nodos_maritimos_pacifico": {
+            "buenaventura": [
+                {
+                    "terminal": "SPRBUN (Sociedad Portuaria Regional de Buenaventura)",
+                    "infraestructura": [
+                        {"tipo": "patio_contenedores_llenos", "nombre": "Patio Contenedores Principal SPRBUN", "ubicacion_exacta": {"lat": 3.8855, "lon": -77.0282}, "bounding_box": [[3.8830, -77.0300], [3.8880, -77.0260]]},
+                        {"tipo": "patio_contenedores_vacios", "nombre": "Patios de Entregas y Vacíos Muelle 1 al 4", "ubicacion_exacta": {"lat": 3.8840, "lon": -77.0300}, "bounding_box": [[3.8830, -77.0310], [3.8850, -77.0290]]},
+                        {"tipo": "almacenamiento_granel", "nombre": "Bodegas de Azúcar (Cabaña) SPRBUN", "ubicacion_exacta": {"lat": 3.8860, "lon": -77.0270}, "bounding_box": [[3.8850, -77.0280], [3.8870, -77.0260]]},
+                        {"tipo": "almacenamiento_granel", "nombre": "Silos Almacenamiento Cereales", "ubicacion_exacta": {"lat": 3.8880, "lon": -77.0250}, "bounding_box": [[3.8870, -77.0260], [3.8890, -77.0240]]},
+                        {"tipo": "almacenamiento_liquidos", "nombre": "Tanques Líquidos (Terminal Múltiple)", "ubicacion_exacta": {"lat": 3.8820, "lon": -77.0310}, "bounding_box": [[3.8810, -77.0320], [3.8830, -77.0300]]},
+                        {"tipo": "inspeccion_contenedores", "nombre": "CAEB / Plataforma Aforos y Antinarcóticos SPRBUN", "ubicacion_exacta": {"lat": 3.8840, "lon": -77.0250}, "bounding_box": [[3.8830, -77.0260], [3.8850, -77.0240]]},
+                        {"tipo": "sitio_enturnamiento", "nombre": "Vía Interna Enturnamiento / Pre-Gate SPRBUN", "ubicacion_exacta": {"lat": 3.8835, "lon": -77.0245}, "bounding_box": [[3.8830, -77.0255], [3.8840, -77.0235]]}
+                    ]
+                },
+                {
+                    "terminal": "TCBUEN (Terminal de Contenedores de Buenaventura)",
+                    "infraestructura": [
+                        {"tipo": "patio_contenedores_llenos", "nombre": "Patios de Bloques de Contenedores TCBUEN", "ubicacion_exacta": {"lat": 3.8650, "lon": -77.0210}, "bounding_box": [[3.8630, -77.0230], [3.8670, -77.0190]]},
+                        {"tipo": "patio_contenedores_vacios", "nombre": "Depósito de Vacíos TCBUEN", "ubicacion_exacta": {"lat": 3.8640, "lon": -77.0200}, "bounding_box": [[3.8635, -77.0205], [3.8645, -77.0195]]},
+                        {"tipo": "inspeccion_contenedores", "nombre": "Zona ITR, Senasa y DIAN TCBUEN", "ubicacion_exacta": {"lat": 3.8660, "lon": -77.0200}, "bounding_box": [[3.8655, -77.0205], [3.8665, -77.0195]]},
+                        {"tipo": "sitio_enturnamiento", "nombre": "Gate, Básculas y Enturnamiento Camiones", "ubicacion_exacta": {"lat": 3.8680, "lon": -77.0190}, "bounding_box": [[3.8670, -77.0200], [3.8690, -77.0180]]}
+                    ]
+                },
+                {
+                    "terminal": "SPIA (Puerto Aguadulce)",
+                    "infraestructura": [
+                        {"tipo": "patio_contenedores_llenos", "nombre": "Patio Contenedores Llenos Aguadulce", "ubicacion_exacta": {"lat": 3.8470, "lon": -77.0280}, "bounding_box": [[3.8450, -77.0300], [3.8490, -77.0260]]},
+                        {"tipo": "patio_contenedores_vacios", "nombre": "Zona Limpieza y Retiro Vacíos SPIA", "ubicacion_exacta": {"lat": 3.8460, "lon": -77.0290}, "bounding_box": [[3.8455, -77.0295], [3.8465, -77.0285]]},
+                        {"tipo": "almacenamiento_granel", "nombre": "Silos Especializados Carbón/Granel SPIA", "ubicacion_exacta": {"lat": 3.8460, "lon": -77.0270}, "bounding_box": [[3.8450, -77.0280], [3.8470, -77.0260]]},
+                        {"tipo": "inspeccion_contenedores", "nombre": "Aforos ICA, INVIMA, DIAN Aguadulce", "ubicacion_exacta": {"lat": 3.8480, "lon": -77.0270}, "bounding_box": [[3.8475, -77.0275], [3.8485, -77.0265]]},
+                        {"tipo": "sitio_enturnamiento", "nombre": "Antepuerto y Parqueadero Tractomulas Aguadulce", "ubicacion_exacta": {"lat": 3.8490, "lon": -77.0250}, "bounding_box": [[3.8480, -77.0260], [3.8500, -77.0240]]}
+                    ]
+                }
+            ],
+            "tumaco": [
+                {
+                    "terminal": "SPR Tumaco",
+                    "infraestructura": [
+                        {"tipo": "bodega_almacenamiento", "nombre": "Bodegas Generales Carga Suelta", "ubicacion_exacta": {"lat": 1.8150, "lon": -78.7290}, "bounding_box": [[1.8140, -78.7300], [1.8160, -78.7280]]},
+                        {"tipo": "almacenamiento_liquidos", "nombre": "Tanques de Hidrocarburos Ecopetrol", "ubicacion_exacta": {"lat": 1.8180, "lon": -78.7250}, "bounding_box": [[1.8170, -78.7260], [1.8190, -78.7240]]}
+                    ]
+                }
+            ]
+        },
+        "puertos_secos_y_zonas_logisticas_interior": {
+            "valle_del_cauca": [
+                {
+                    "terminal": "Puerto Seco de Buga",
+                    "infraestructura": [
+                        {"tipo": "puerto_seco", "nombre": "Plataforma Logística Buga", "ubicacion_exacta": {"lat": 3.8950, "lon": -76.2900}, "bounding_box": [[3.8900, -76.2950], [3.9000, -76.2850]]},
+                        {"tipo": "patio_contenedores_vacios", "nombre": "Patio Entrega/Recepción Contenedores Buga", "ubicacion_exacta": {"lat": 3.8960, "lon": -76.2890}, "bounding_box": [[3.8950, -76.2900], [3.8970, -76.2880]]},
+                        {"tipo": "bodega_almacenamiento", "nombre": "Bodegas de Consolidación / Desconsolidación", "ubicacion_exacta": {"lat": 3.8940, "lon": -76.2910}, "bounding_box": [[3.8930, -76.2920], [3.8950, -76.2900]]}
+                    ]
+                },
+                {
+                    "terminal": "Zona Franca del Pacífico",
+                    "infraestructura": [
+                        {"tipo": "puerto_seco", "nombre": "Zona Franca Pacífico (Palmira)", "ubicacion_exacta": {"lat": 3.5500, "lon": -76.3500}, "bounding_box": [[3.5400, -76.3600], [3.5600, -76.3400]]}
+                    ]
+                }
+            ],
+            "bogota_y_cundinamarca": [
+                {
+                    "terminal": "Zona Franca de Bogotá (Fontibón)",
+                    "infraestructura": [
+                        {"tipo": "puerto_seco", "nombre": "Parque Logístico ZFB", "ubicacion_exacta": {"lat": 4.6700, "lon": -74.1300}, "bounding_box": [[4.6600, -74.1400], [4.6800, -74.1200]]},
+                        {"tipo": "inspeccion_contenedores", "nombre": "Centro de Aforos Aduaneros DIAN ZFB", "ubicacion_exacta": {"lat": 4.6720, "lon": -74.1320}, "bounding_box": [[4.6710, -74.1330], [4.6730, -74.1310]]},
+                        {"tipo": "bodega_almacenamiento", "nombre": "Grandes Bodegas Cedis (Exito, Koba, etc)", "ubicacion_exacta": {"lat": 4.6680, "lon": -74.1280}, "bounding_box": [[4.6670, -74.1290], [4.6690, -74.1270]]}
+                    ]
+                }
+            ],
+            "antioquia": [
+                {
+                    "terminal": "Zona Franca Rionegro",
+                    "infraestructura": [
+                        {"tipo": "puerto_seco", "nombre": "Zona Franca Rionegro", "ubicacion_exacta": {"lat": 6.1500, "lon": -75.4000}, "bounding_box": [[6.1400, -75.4100], [6.1600, -75.3900]]}
+                    ]
+                }
+            ]
+        }
+    }
+}
