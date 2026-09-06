@@ -48,8 +48,8 @@ const getRolesByApp = async (req, res = response) => {
 const createRole = async (req, res = response) => {
   try {
     // QPLUS: Inyección de auditoría
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-    const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+    const dataDTO = { ...req.body };
+    console.log('data controller', dataDTO);
 
     const role = await service.createRole(dataDTO);
     return res.status(201).json({ ok: true, role });

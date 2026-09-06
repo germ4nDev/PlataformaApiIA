@@ -19,7 +19,7 @@ const UsuarioSchema = Joi.object({
 });
 
 const UsuarioDTO = (rawData) => {
-  const { error, value } = UsuarioSchema.validate(rawData, { abortEarly: false });
+  const { error, value } = UsuarioSchema.validate(rawData, { abortEarly: false, stripUnknown: true });
 
   if (error) {
     throw {

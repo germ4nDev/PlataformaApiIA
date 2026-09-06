@@ -99,6 +99,43 @@ const createUsuarioRole = async (req, res = response) => {
   }
 };
 
+const sincronizarRoles = async (req, res) => {
+  try {
+    // req.body contiene el payloadSync que armamos en Angular
+    const resultado = await service.sincronizarRolesUsuario(req.body);
+    return res.status(200).json({ ok: true, msg: resultado.msg });
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({ ok: false, msg: error.msg || 'Error interno' });
+  }
+};
+
+const sincronizarUsuariosRole = async (req, res) => {
+  try {
+    const resultado = await service.sincronizarUsuariosDelRole(req.body);
+    return res.status(200).json({ ok: true, msg: resultado.msg });
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({ ok: false, msg: error.msg || 'Error interno' });
+  }
+};
+
+const updateUsuarioRole = async (req, res = response) => {
+  try {
+    const { id } = req.params;
+    console.log('codigo', id);
+
+    const dataDTO = { ...req.body };
+    console.log('dataDTO', dataDTO);
+
+    const usuarioRole = await service.updateUsuarioRole(id, dataDTO);
+    return res.status(200).json({ ok: true, usuarioRole });
+  } catch (error) {
+    return res.status(error.statusCode || 400).json({
+      ok: false,
+      msg: error.msg || "Error al actualizar el usuarioRole."
+    });
+  }
+};
+
 const syncRoleUsers = async (req, res = response) => {
   try {
     const { id } = req.params;
@@ -186,6 +223,9 @@ module.exports = {
   getRolesPorUsuarioYEmpresa,
   getRolesByUser,
   createUsuarioRole,
+  updateUsuarioRole,
+  sincronizarRoles,
+  sincronizarUsuariosRole,
   syncRoleUsers,
   syncUserRoles,
   deleteUsuarioRole,

@@ -6,32 +6,37 @@ const Joi = require('joi');
 const { DataTypes } = require('sequelize');
 
 const EmpresaSCSchema = Joi.object({
+  empresaId: Joi.number().integer().optional(), // 🟢 Añadido para que acepte el ID sin fallar
+
   codigoEmpresaSC: Joi.string().max(200).required()
     .messages({ 'any.required': 'El código de la empresa es obligatorio.' }),
 
   codigoSuscriptor: Joi.string().max(200).required()
     .messages({ 'any.required': 'El código del suscriptor es obligatorio.' }),
 
-  nombreEmpresa: Joi.string().max(100).required()
+  nombreEmpresa: Joi.string().max(255).required()
     .messages({ 'any.required': 'El nombre de la empresa es obligatorio.' }),
 
   descripcionEmpresa: Joi.string().max(4000).required()
     .messages({ 'any.required': 'La descripción de la empresa es obligatoria.' }),
 
-  estadoEmpresa: Joi.boolean().optional().default(true),
+  estadoEmpresa: Joi.boolean().required().default(true),
 
-  logoEmpresa: Joi.string().max(100).allow('', null).optional().default('no-imagen.png'),
+  logoEmpresa: Joi.string().max(200).allow('', null).optional().default('no-imagen.png'),
 
-  codigoUsuarioCreacion: Joi.string().max(200).required(),
-  fechaCreacion: Joi.string().max(100).required(),
+  observaciones: Joi.string().max(4000).allow('', null).optional().default(''),
+
+  codigoUsuarioCreacion: Joi.string().max(200).allow('', null).optional(),
+  fechaCreacion: Joi.string().max(100).allow('', null).optional(),
   codigoUsuarioModificacion: Joi.string().max(200).allow('', null).optional(),
   fechaModificacion: Joi.string().max(100).allow('', null).optional()
-});
+}).unknown(true); // 🟢 Permite campos adicionales que vengan del cliente o de Sequelize
 
 const EmpresaSCDTO = (rawData) => {
   const { error, value } = EmpresaSCSchema.validate(rawData, { abortEarly: false });
 
   if (error) {
+    console.error('❌ Error de validación DTO EmpresasSC:', error.details); // Útil para depurar en consola si vuelve a fallar
     throw {
       type: 'ValidationError',
       details: error.details.map(d => ({ campo: d.context.key, mensaje: d.message }))
@@ -45,6 +50,7 @@ const EmpresaSCDTO = (rawData) => {
     codigoSuscriptor: value.codigoSuscriptor.trim(),
     nombreEmpresa: value.nombreEmpresa.trim(),
     descripcionEmpresa: value.descripcionEmpresa.trim(),
+    observaciones: value.observaciones ? value.observaciones.trim() : '',
     estadoEmpresa: value.estadoEmpresa,
     logoEmpresa: value.logoEmpresa || 'no-imagen.png',
 
@@ -62,46 +68,50 @@ const EmpresaSCModel = (sequelize) => {
       autoIncrement: true
     },
     codigoEmpresaSC: {
-      type: DataTypes.STRING(50),
+      type: DataTypes.STRING(200),
       primaryKey: true,
       allowNull: false
     },
     codigoSuscriptor: {
-      type: DataTypes.STRING(50),
+      type: DataTypes.STRING(200),
       allowNull: false
     },
     nombreEmpresa: {
-      type: DataTypes.STRING(100),
+      type: DataTypes.STRING(255),
       allowNull: false
     },
     descripcionEmpresa: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.STRING(4000),
       allowNull: false
     },
     estadoEmpresa: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
-      defaultValue: true
+      defaultValue: false
     },
     logoEmpresa: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.STRING(200),
       allowNull: false
+    },
+    observaciones: {
+      type: DataTypes.STRING(4000),
+      allowNull: true
     },
     codigoUsuarioCreacion: {
       type: DataTypes.STRING(200),
-      allowNull: false
+      allowNull: true
     },
     fechaCreacion: {
       type: DataTypes.STRING(100),
-      allowNull: false
+      allowNull: true
     },
     codigoUsuarioModificacion: {
       type: DataTypes.STRING(200),
-      allowNull: false
+      allowNull: true
     },
     fechaModificacion: {
       type: DataTypes.STRING(100),
-      allowNull: false
+      allowNull: true
     }
   }, {
     tableName: 'PTLEmpresasSC',

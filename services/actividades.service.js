@@ -39,33 +39,32 @@ class ActividadesService {
     return registro;
   }
 
-  async getActividadesPorApp(codigoAplicacion) {
+  async getActividadByCodeApp(codigoAplicacion) {
     return await this.model.findAll({ where: { codigoAplicacion } });
   }
 
-  async getActividadesPorSuite(codigoSuite) {
+  async getActividadByCodeSuite(codigoSuite) {
     return await this.model.findAll({ where: { codigoSuite } });
   }
 
-  async getActividadesPorModulo(codigoModulo) {
+  async getActividadByCodeModulo(codigoModulo) {
     return await this.model.findAll({ where: { codigoModulo } });
   }
 
-  /**
-   * Crea una nueva actividad validando duplicidad
-   */
   async createActividad(rawData) {
     const dataDTO = ActividadDTO(rawData);
+    console.log('crear actividad', dataDTO);
 
     return await sequelize.transaction(async (t) => {
-      // Verificación de duplicidad de negocio
-      const [existente, existeNombre] = await Promise.all([
+      const [existente, existeNombre, existeLlavePermiso] = await Promise.all([
         this.model.findOne({ where: { codigoActividad: dataDTO.codigoActividad }, transaction: t }),
-        this.model.findOne({ where: { actividad: dataDTO.actividad }, transaction: t })
+        this.model.findOne({ where: { actividad: dataDTO.actividad }, transaction: t }),
+        this.model.findOne({ where: { llavePermiso: dataDTO.llavePermiso }, transaction: t })
       ]);
 
       if (existente) throw { statusCode: 400, msg: "Ya existe una actividad con ese código." };
       if (existeNombre) throw { statusCode: 400, msg: "Ya existe una actividad con ese nombre." };
+      if (existeLlavePermiso) throw { statusCode: 400, msg: "Ya existe una actividad con llavePermiso." };
 
       const actividadDB = await this.model.create(dataDTO, { transaction: t });
 
@@ -78,11 +77,17 @@ class ActividadesService {
     });
   }
 
-  /**
-   * Actualiza actividad existente
-   */
   async updateActividad(codigoActividad, rawData) {
-    const dataDTO = ActividadDTO(rawData);
+    console.log('actualizar actividad', rawData);
+
+    const payload = {
+      ...rawData,
+      codigoActividad: codigoActividad
+    };
+
+    const dataDTO = ActividadDTO(payload);
+    console.log('actualizar actividad', codigoActividad);
+    console.log('actualizar actividad dto', dataDTO);
 
     return await sequelize.transaction(async (t) => {
       const actividadDB = await this.model.findOne({ where: { codigoActividad }, transaction: t });

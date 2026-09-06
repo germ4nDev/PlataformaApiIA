@@ -10,7 +10,7 @@ const {
     showResource,
     deleteResource,
     clearCategoryFolder
-} = require("../controllers/uploads");
+} = require("../controllers/uploads.controller");
 
 const router = Router();
 

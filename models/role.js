@@ -1,36 +1,28 @@
-/*
-    Author: German Valencia
-    Refactored for: QPLUS DTO Pattern, Entity Standardization & Joi Validation
-*/
 const Joi = require('joi');
 const { DataTypes } = require('sequelize');
 
+// 1. ESQUEMA JOI CORREGIDO
 const RoleAPSchema = Joi.object({
   codigoRole: Joi.string().max(200).required()
     .messages({ 'any.required': 'El código del rol es obligatorio.' }),
-
-  codigoAplicacion: Joi.string().max(200).required()
-    .messages({ 'any.required': 'El código de la aplicación es obligatorio.' }),
-
-  codigoSuite: Joi.string().max(200).required()
-    .messages({ 'any.required': 'El código de la suite es obligatorio.' }),
-
+  codigoTipoRole: Joi.string().max(200).required()
+    .messages({ 'any.required': 'El código del tipo de role es obligatorio.' }),
   nombreRole: Joi.string().max(100).required()
     .messages({ 'any.required': 'El nombre del rol es obligatorio.' }),
 
-  descripcionRole: Joi.string().max(4000).allow('').required()
-    .messages({ 'any.required': 'La descripción del rol es obligatoria.' }),
-
+  codigoAplicacion: Joi.string().max(200).allow('', null).optional(),
+  codigoSuite: Joi.string().max(200).allow('', null).optional(),
+  descripcionRole: Joi.string().max(4000).allow('', null).optional(),
   estadoRole: Joi.boolean().optional().default(true),
 
-  codigoUsuarioCreacion: Joi.string().max(200).required(),
-  fechaCreacion: Joi.string().max(100).required(),
+  codigoUsuarioCreacion: Joi.string().max(200).allow('', null).optional(),
+  fechaCreacion: Joi.string().max(100).allow('', null).optional(),
   codigoUsuarioModificacion: Joi.string().max(200).allow('', null).optional(),
   fechaModificacion: Joi.string().max(100).allow('', null).optional()
 });
 
 const RoleAPDTO = (rawData) => {
-  const { error, value } = RoleAPSchema.validate(rawData, { abortEarly: false });
+  const { error, value } = RoleAPSchema.validate(rawData, { abortEarly: false, stripUnknown: true });
 
   if (error) {
     throw {
@@ -43,15 +35,16 @@ const RoleAPDTO = (rawData) => {
 
   return {
     codigoRole: value.codigoRole.trim(),
-    codigoAplicacion: value.codigoAplicacion.trim(),
-    codigoSuite: value.codigoSuite.trim(),
+    codigoTipoRole: value.codigoTipoRole.trim(),
+    codigoAplicacion: value.codigoAplicacion ? value.codigoAplicacion.trim() : null,
+    codigoSuite: value.codigoSuite ? value.codigoSuite.trim() : null,
     nombreRole: value.nombreRole.trim(),
-    descripcionRole: value.descripcionRole.trim(),
-    estadoRole: value.estadoRole,
+    descripcionRole: value.descripcionRole ? value.descripcionRole.trim() : null,
+    estadoRole: value.estadoRole ?? true,
 
-    codigoUsuarioCreacion: value.codigoUsuarioCreacion,
+    codigoUsuarioCreacion: value.codigoUsuarioCreacion || null,
     fechaCreacion: value.fechaCreacion || fechaActual,
-    codigoUsuarioModificacion: value.codigoUsuarioModificacion || value.codigoUsuarioCreacion,
+    codigoUsuarioModificacion: value.codigoUsuarioModificacion || value.codigoUsuarioCreacion || null,
     fechaModificacion: value.fechaModificacion || fechaActual
   };
 };
@@ -67,13 +60,17 @@ const RoleAPModel = (sequelize) => {
       primaryKey: true,
       allowNull: false
     },
-    codigoAplicacion: {
+    codigoTipoRole: {
       type: DataTypes.STRING(200),
       allowNull: false
     },
+    codigoAplicacion: {
+      type: DataTypes.STRING(200),
+      allowNull: true
+    },
     codigoSuite: {
       type: DataTypes.STRING(200),
-      allowNull: false
+      allowNull: true
     },
     nombreRole: {
       type: DataTypes.STRING(100),
@@ -81,7 +78,7 @@ const RoleAPModel = (sequelize) => {
     },
     descripcionRole: {
       type: DataTypes.STRING(4000),
-      allowNull: false
+      allowNull: true
     },
     estadoRole: {
       type: DataTypes.BOOLEAN,
@@ -90,19 +87,19 @@ const RoleAPModel = (sequelize) => {
     },
     codigoUsuarioCreacion: {
       type: DataTypes.STRING(200),
-      allowNull: false
+      allowNull: true
     },
     fechaCreacion: {
       type: DataTypes.STRING(100),
-      allowNull: false
+      allowNull: true
     },
     codigoUsuarioModificacion: {
       type: DataTypes.STRING(200),
-      allowNull: false
+      allowNull: true
     },
     fechaModificacion: {
       type: DataTypes.STRING(100),
-      allowNull: false
+      allowNull: true
     }
   }, {
     tableName: 'PTLRolesAP',
@@ -110,8 +107,4 @@ const RoleAPModel = (sequelize) => {
   });
 };
 
-module.exports = {
-  RoleAPModel,
-  RoleAPDTO,
-  RoleAPSchema
-};
+module.exports = { RoleAPModel, RoleAPDTO, RoleAPSchema };

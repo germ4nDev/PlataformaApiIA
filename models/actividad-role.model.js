@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Refactored for: QPLUS DTO Pattern
+    Refactored for: QPLUS DTO Pattern & SQL Server Schema Alignment
 */
 const Joi = require('joi');
 const { DataTypes } = require('sequelize');
@@ -18,14 +18,19 @@ const ActividadRoleSchema = Joi.object({
     permiso: Joi.boolean().required()
         .messages({ 'any.required': 'El estado del permiso debe ser definido.' }),
 
-    codigoUsuarioCreacion: Joi.string().max(200).required(),
-    fechaCreacion: Joi.string().max(100).required(),
+    // 🟢 Alineado con BD: Permitimos nulos para que no bloquee el guardado masivo
+    codigoUsuarioCreacion: Joi.string().max(200).allow('', null).optional(),
+    fechaCreacion: Joi.string().max(100).allow('', null).optional(),
     codigoUsuarioModificacion: Joi.string().max(200).allow('', null).optional(),
     fechaModificacion: Joi.string().max(100).allow('', null).optional()
 });
 
 const ActividadRoleDTO = (rawData) => {
-    const { error, value } = ActividadRoleSchema.validate(rawData, { abortEarly: false });
+    // 🟢 VITAL: stripUnknown para ignorar las propiedades 'checked' o 'nomEstado' que envía Angular
+    const { error, value } = ActividadRoleSchema.validate(rawData, {
+        abortEarly: false,
+        stripUnknown: true
+    });
 
     if (error) {
         throw {
@@ -34,29 +39,32 @@ const ActividadRoleDTO = (rawData) => {
         };
     }
 
+    const fechaActual = new Date().toISOString();
+
     return {
         codigoActividadRole: value.codigoActividadRole.trim(),
         codigoActividad: value.codigoActividad.trim(),
         codigoRole: value.codigoRole.trim(),
         permiso: value.permiso,
 
-        codigoUsuarioCreacion: value.codigoUsuarioCreacion,
+        codigoUsuarioCreacion: value.codigoUsuarioCreacion || '',
         fechaCreacion: value.fechaCreacion || fechaActual,
-        codigoUsuarioModificacion: value.codigoUsuarioModificacion || value.codigoUsuarioCreacion,
+        codigoUsuarioModificacion: value.codigoUsuarioModificacion || value.codigoUsuarioCreacion || '',
         fechaModificacion: value.fechaModificacion || fechaActual
     };
 };
 
 const ActividadRoleModel = (sequelize) => {
-    return sequelize.define('PTLActividadesRoles', {
+    const PTLActividadesRoles = sequelize.define('PTLActividadesRoles', {
         actividadRoleId: {
             type: DataTypes.INTEGER,
             autoIncrement: true,
-            unique: true
+            unique: true,
+            allowNull: false // 🟢 En la BD no tiene el check de Allow Nulls
         },
         codigoActividadRole: {
             type: DataTypes.STRING(200),
-            primaryKey: true,
+            primaryKey: true, // 🔑 En la BD tiene el ícono de llave primaria
             allowNull: false
         },
         codigoActividad: {
@@ -72,26 +80,37 @@ const ActividadRoleModel = (sequelize) => {
             allowNull: false,
             defaultValue: false
         },
+        // 🟢 CORRECCIONES: Todos pasados a allowNull: true por el check azul en SQL Server
         codigoUsuarioCreacion: {
             type: DataTypes.STRING(200),
-            allowNull: false
+            allowNull: true
         },
         fechaCreacion: {
-            type: DataTypes.STRING(100), // Recomendable usar DataTypes.DATE en el futuro
-            allowNull: false
+            type: DataTypes.STRING(100),
+            allowNull: true
         },
         codigoUsuarioModificacion: {
             type: DataTypes.STRING(200),
-            allowNull: false
+            allowNull: true
         },
         fechaModificacion: {
             type: DataTypes.STRING(100),
-            allowNull: false
+            allowNull: true
         }
     }, {
         tableName: 'PTLActividadesRoles',
         timestamps: false
     });
+
+    PTLActividadesRoles.associate = (models) => {
+        PTLActividadesRoles.belongsTo(models.PTLActividades, {
+            foreignKey: 'codigoActividad',
+            targetKey: 'codigoActividad',
+            as: 'actividad'
+        });
+    };
+
+    return PTLActividadesRoles;
 };
 
 module.exports = {

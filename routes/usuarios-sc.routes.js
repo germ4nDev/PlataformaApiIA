@@ -15,7 +15,7 @@ const {
     createUsuarioSC,
     updateUsuarioSC,
     deleteUsuarioSC
-} = require("../controllers/usuarios-sc");
+} = require("../controllers/usuarios-sc.controller");
 
 const router = Router();
 

@@ -6,6 +6,7 @@ const { sequelize } = require("../database/connection");
 const { UsuarioRoleModel, UsuarioRoleDTO } = require("../models/usuario-role");
 const { RoleAPModel } = require("../models/role");
 const { UsuarioModel } = require("../models/usuario");
+const { Op } = require('sequelize');
 const { io } = require("../index");
 
 class UsuariosRolesService {
@@ -43,9 +44,6 @@ class UsuariosRolesService {
     return await this.model.findAll({ where: { codigoUsuarioSC } });
   }
 
-  /**
-   * Crea una relación individual Usuario-Rol
-   */
   async createUsuarioRole(rawData) {
     const dataDTO = UsuarioRoleDTO(rawData);
 
@@ -56,9 +54,74 @@ class UsuariosRolesService {
     });
   }
 
-  /**
-   * Sincronización masiva: Actualiza el Rol y regenera todas sus asociaciones de usuarios
-   */
+  async sincronizarRolesUsuario(payload) {
+    const { codigoUsuarioSC, rolesContexto, roles } = payload;
+
+    const transaction = await sequelize.transaction();
+
+    try {
+      if (rolesContexto && rolesContexto.length > 0) {
+        await this.model.destroy({
+          where: {
+            codigoUsuarioSC: codigoUsuarioSC,
+            codigoRole: {
+              [Op.in]: rolesContexto // Borra donde codigoRole esté en el array
+            }
+          },
+          transaction
+        });
+      }
+
+      if (roles && roles.length > 0) {
+        await this.model.bulkCreate(roles, { transaction });
+      }
+
+      await transaction.commit();
+      return { msg: 'Roles sincronizados correctamente' };
+
+    } catch (error) {
+      await transaction.rollback();
+      console.error("🔴 ERROR SEQUELIZE:", error);
+
+      const mensajeReal = error.original ? error.original.message : error.message;
+      throw { statusCode: 500, msg: 'Error al sincronizar roles: ' + mensajeReal };
+    }
+  }
+
+  async sincronizarUsuariosDelRole(payload) {
+    const { codigoRole, usuariosContexto, relaciones } = payload;
+    const transaction = await sequelize.transaction();
+
+    try {
+      // 1. ELIMINAR las relaciones de este rol con los usuarios visualizados actualmente
+      if (usuariosContexto && usuariosContexto.length > 0) {
+        await this.model.destroy({
+          where: {
+            codigoRole: codigoRole,
+            codigoUsuarioSC: {
+              [Op.in]: usuariosContexto
+            }
+          },
+          transaction
+        });
+      }
+
+      // 2. INSERTAR la nueva selección
+      if (relaciones && relaciones.length > 0) {
+        await this.model.bulkCreate(relaciones, { transaction });
+      }
+
+      await transaction.commit();
+      return { msg: 'Usuarios sincronizados con el rol exitosamente' };
+
+    } catch (error) {
+      await transaction.rollback();
+      console.error("🔴 ERROR SEQUELIZE:", error);
+      const mensajeReal = error.original ? error.original.message : error.message;
+      throw { statusCode: 500, msg: 'Error al asociar usuarios: ' + mensajeReal };
+    }
+  }
+
   async updateRoleAndUsers(codigoRole, datosRol, usuariosSeleccionados) {
     return await sequelize.transaction(async (t) => {
       // 1. Actualizar el modelo padre (Rol)
@@ -86,50 +149,59 @@ class UsuariosRolesService {
     });
   }
 
-  /**
-   * Sincronización masiva: Actualiza el Usuario y regenera todas sus asociaciones de roles
-   */
-  async updateUserAndRoles(codigoUsuario, datosUsuario, rolesSeleccionados) {
+  async updateUsuarioRole(codigoUsuarioRole, rawData) {
+    console.log('rawData', rawData);
+    console.log('codigoUsuarioRole', codigoUsuarioRole);
+
+    const dataDTO = UsuarioRoleDTO(rawData);
+    console.log('dataDTO', dataDTO);
+
     return await sequelize.transaction(async (t) => {
-      // 1. Actualizar el modelo padre (Usuario)
-      await this.usuarioModel.update(datosUsuario, { where: { codigoUsuario }, transaction: t });
+      // 1. Validar existencia usando el nombre correcto de la columna
+      const usuarioSCDB = await this.model.findOne({
+        where: { codigoUsuarioRole },
+        transaction: t
+      });
 
-      // 2. Limpiar contexto anterior
-      await this.model.destroy({ where: { codigoUsuarioSC: codigoUsuario }, transaction: t });
-
-      // 3. Recreación masiva
-      if (rolesSeleccionados?.length > 0) {
-        const nuevasAsociaciones = rolesSeleccionados.map(rol => {
-          return UsuarioRoleDTO({
-            codigoUsuarioSC: codigoUsuario,
-            codigoRole: rol.codigoRole,
-            codigoEmpresaSC: datosUsuario.codigoEmpresaSC || '',
-            estadoUsuarioRole: true,
-            codigoUsuario: datosUsuario.codigoUsuarioModificacion // Auditoría inyectada por el controlador
-          });
-        });
-        await this.model.bulkCreate(nuevasAsociaciones, { transaction: t });
+      if (!usuarioSCDB) {
+        throw { statusCode: 404, msg: "No existe el usuario SC para actualizar." };
       }
 
-      this.emitSocket('update', 'Usuario y sus roles sincronizados correctamente.');
-      return { success: true };
+      // 2. Ejecutar la actualización
+      await this.model.update(dataDTO, {
+        where: { codigoUsuarioRole },
+        transaction: t
+      });
+
+      // 3. Recuperar el registro actualizado
+      const usuarioSCActualizado = await this.model.findOne({
+        where: { codigoUsuarioRole },
+        transaction: t
+      });
+
+      // 4. Emitir el evento de Socket (Asegúrate de tener 'io' disponible en este scope)
+      if (typeof io !== 'undefined') {
+        io.emit('usuarios-roles-actualizados', {
+          action: 'update',
+          msg: `Usuario Roles actualizado: ${usuarioSCActualizado.codigoUsuarioRole}`
+        });
+      }
+
+      return usuarioSCActualizado;
     });
   }
 
-  async deleteUsuarioRole(usuarioRoleId) {
+  async deleteUsuarioRole(codigoUsuarioRole) {
     return await sequelize.transaction(async (t) => {
-      const registro = await this.model.findOne({ where: { usuarioRoleId }, transaction: t });
+      const registro = await this.model.findOne({ where: { codigoUsuarioRole }, transaction: t });
       if (!registro) throw { statusCode: 404, msg: "Relación no encontrada." };
 
-      await this.model.destroy({ where: { usuarioRoleId }, transaction: t });
+      await this.model.destroy({ where: { codigoUsuarioRole }, transaction: t });
       this.emitSocket('delete', 'Relación Usuario-Rol eliminada.');
       return true;
     });
   }
 
-  /**
-   * Wrapper centralizado para emisión de WebSockets
-   */
   emitSocket(action, msg) {
     io.emit("usuarios-roles-actualizados", { action, msg });
   }

@@ -6,6 +6,8 @@ const { sequelize } = require('../database/connection');
 const bcrypt = require("bcryptjs");
 const { UsuarioModel, UsuarioDTO } = require('../models/usuario');
 const { io } = require('../index');
+const xlsx = require('xlsx');
+const crypto = require('crypto');
 
 class UsuariosService {
   constructor() {
@@ -47,9 +49,6 @@ class UsuariosService {
     return usuario;
   }
 
-  /**
-   * Valida las credenciales de acceso comparando el hash bcrypt
-   */
   async validatePassword(codigoAdministrador, claveActual) {
     const usuarioDB = await this.model.findOne({
       where: { codigoUsuario: codigoAdministrador }
@@ -68,9 +67,6 @@ class UsuariosService {
     return usuarioDB;
   }
 
-  /**
-   * Crea un nuevo usuario encriptando su contraseña
-   */
   async createUsuario(rawData) {
     console.log('data usuario antes dto', rawData);
     const dataDTO = UsuarioDTO(rawData);
@@ -106,9 +102,66 @@ class UsuariosService {
     });
   }
 
-  /**
-   * Actualiza la información general del usuario (excluyendo contraseña)
-   */
+  async cargueMasivoExcel(fileBuffer, usuarioCreador) {
+    const workbook = xlsx.read(fileBuffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    const rawDataArray = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+    if (!rawDataArray || rawDataArray.length === 0) {
+      throw { statusCode: 400, msg: 'El archivo Excel está vacío o no tiene formato válido.' };
+    }
+
+    const usuariosLimpios = [];
+    const erroresValidacion = [];
+
+    rawDataArray.forEach((fila, index) => {
+      try {
+        const rawUsuario = {
+          codigoUsuario: fila.codigoUsuario || crypto.randomUUID(),
+          identificacionUsuario: String(fila.identificacionUsuario || ''),
+          nombreUsuario: fila.nombreUsuario,
+          correoUsuario: fila.correoUsuario,
+          userNameUsuario: fila.userNameUsuario || '',
+          claveUsuario: String(fila.claveUsuario || crypto.randomUUID().substring(0, 8)),
+          descripcionUsuario: fila.descripcionUsuario || '',
+          fotoUsuario: fila.fotoUsuario || 'no-foto.png',
+          usuarioAdministrador: fila.usuarioAdministrador === 'SI' || fila.usuarioAdministrador === true,
+          estadoUsuario: true,
+          codigoUsuarioCreacion: usuarioCreador,
+          fechaCreacion: new Date().toISOString(),
+          codigoUsuarioModificacion: usuarioCreador,
+          fechaModificacion: new Date().toISOString()
+        };
+
+        const usuarioDTO = UsuarioDTO(rawUsuario);
+        usuariosLimpios.push(usuarioDTO);
+      } catch (error) {
+        erroresValidacion.push({ filaExcel: index + 2, detalles: error.details || error });
+      }
+    });
+
+    if (erroresValidacion.length > 0) {
+      throw { statusCode: 400, msg: 'Errores de validación en el archivo.', errores: erroresValidacion };
+    }
+
+    // 2. Ejecutar inserción transaccional
+    const resultado = await sequelize.transaction(async (t) => {
+      try {
+        return await this.model.bulkCreate(usuariosLimpios, { transaction: t });
+      } catch (dbError) {
+        throw { statusCode: 409, msg: 'Error de integridad en BD. Correos o identificaciones duplicadas.', detalle: dbError.message };
+      }
+    });
+
+    // 🟢 3. Emitir el evento de actualización a todas las interfaces conectadas
+    io.emit('usuarios-actualizados', {
+      action: "update",
+      msg: 'Cargue masivo completado. Refrescando tabla...'
+    });
+
+    return resultado;
+  }
+
   async updateUsuario(codigoUsuario, rawData) {
     // El controlador inyecta la auditoría en rawData antes de invocar este método
     const dataDTO = UsuarioDTO(rawData);
@@ -142,9 +195,6 @@ class UsuariosService {
     });
   }
 
-  /**
-   * Endpoint específico para el cambio de contraseña
-   */
   async updateUsuarioPassword(codigoUsuario, data) {
     return await sequelize.transaction(async (t) => {
       const usuarioDB = await this.model.findOne({

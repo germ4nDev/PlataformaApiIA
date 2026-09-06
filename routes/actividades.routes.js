@@ -15,7 +15,7 @@ const {
   createActividad,
   updateActividad,
   deleteActividad,
-} = require("../controllers/actividades");
+} = require("../controllers/actividades.controller");
 
 const router = Router();
 //router.use(validarJWT);
@@ -38,12 +38,7 @@ router.post("/", [
   validarCampos
 ], createActividad);
 
-router.put("/:id", [
-  check('codigoAplicacion', 'El código de la aplicacion es obligatorio').not().isEmpty(),
-  check('codigoSuite', 'El código de la suite es obligatorio').not().isEmpty(),
-  check('codigoModulo', 'El código del modulo es obligatorio').not().isEmpty(),
-  validarCampos
-], updateActividad)
+router.put("/:id", updateActividad)
 
 router.delete("/:id", deleteActividad);
 

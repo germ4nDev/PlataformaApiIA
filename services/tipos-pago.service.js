@@ -3,7 +3,7 @@
     Refactored for: QPLUS Architecture, Service Layer Sanitization & Transactional Integrity
 */
 const { sequelize } = require('../database/connection');
-const { TipoPagoModel, TipoPagoDTO } = require('../models/TipoPago');
+const { TipoPagoModel, TipoPagoDTO } = require('../models/Tipo-pago');
 const { io } = require('../index');
 
 class TiposPagoService {

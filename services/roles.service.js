@@ -27,11 +27,11 @@ class RolesService {
     });
   }
 
-  /**
-   * Crea un nuevo rol de acceso
-   */
   async createRole(rawData) {
+    console.log('role antes', rawData);
+
     const dataDTO = RoleAPDTO(rawData);
+    console.log('role despues dto', dataDTO);
 
     return await sequelize.transaction(async (t) => {
       const nuevo = await this.model.create(dataDTO, { transaction: t });

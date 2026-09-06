@@ -16,7 +16,11 @@ const ActividadSchema = Joi.object({
         .messages({ 'any.required': 'El código de módulo es obligatorio.' }),
     codigoTipoActividad: Joi.string().max(200).required()
         .messages({ 'any.required': 'El código de tipo actividad es obligatorio.' }),
-    actividad: Joi.string().max(4000).required()
+    llavePermiso: Joi.string().max(100).required()
+        .messages({ 'any.required': 'La llavePermiso es obligatoria.' }),
+
+    // 🟢 CORRECCIÓN: Alineado a 500 (Igual que en SQL Server)
+    actividad: Joi.string().max(500).required()
         .messages({ 'any.required': 'El nombre de la actividad es obligatorio.' }),
     descripcion: Joi.string().max(4000).allow('', null).optional(),
     estadoActividad: Joi.boolean().optional().default(true),
@@ -45,6 +49,7 @@ const ActividadDTO = (rawData) => {
         codigoSuite: value.codigoSuite.trim(),
         codigoModulo: value.codigoModulo.trim(),
         codigoTipoActividad: value.codigoTipoActividad.trim(),
+        llavePermiso: value.llavePermiso.trim(),
         actividad: value.actividad.trim(),
         descripcion: value.descripcion || '',
         estadoActividad: value.estadoActividad,
@@ -59,32 +64,39 @@ const ActividadDTO = (rawData) => {
 const ActividadModel = (sequelize) => {
     return sequelize.define('PTLActividades', {
         actividadId: { type: DataTypes.INTEGER, autoIncrement: true },
-        codigoActividad: { type: DataTypes.STRING(50), primaryKey: true, allowNull: false },
-        codigoAplicacion: { type: DataTypes.STRING(50), allowNull: false },
-        codigoSuite: { type: DataTypes.STRING(50), allowNull: false },
-        codigoModulo: { type: DataTypes.STRING(50), allowNull: false },
+        codigoActividad: { type: DataTypes.STRING(200), primaryKey: true, allowNull: false },
+        codigoAplicacion: { type: DataTypes.STRING(200), allowNull: false },
+        codigoSuite: { type: DataTypes.STRING(200), allowNull: false },
+        codigoModulo: { type: DataTypes.STRING(200), allowNull: false },
         codigoTipoActividad: {
+            type: DataTypes.STRING(200),
+            allowNull: false
+        },
+        llavePermiso: {
             type: DataTypes.STRING(100),
             allowNull: false
         },
-        actividad: { type: DataTypes.STRING(100), allowNull: false },
-        descripcion: { type: DataTypes.STRING(255), allowNull: true },
+        // 🟢 CORRECCIÓN: STRING(500) (Igual que nvarchar(500) en SQL Server)
+        actividad: { type: DataTypes.STRING(500), allowNull: false },
+        descripcion: { type: DataTypes.STRING(4000), allowNull: true },
         estadoActividad: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+
+        // 🟢 CORRECCIONES: allowNull en true para coincidir con el check azul de SQL Server
         codigoUsuarioCreacion: {
             type: DataTypes.STRING(200),
-            allowNull: false
+            allowNull: true
         },
         fechaCreacion: {
             type: DataTypes.STRING(100),
-            allowNull: false
+            allowNull: true
         },
         codigoUsuarioModificacion: {
             type: DataTypes.STRING(200),
-            allowNull: false
+            allowNull: true
         },
         fechaModificacion: {
             type: DataTypes.STRING(100),
-            allowNull: false
+            allowNull: true
         }
     }, {
         tableName: 'PTLActividades',

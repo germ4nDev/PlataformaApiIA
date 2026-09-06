@@ -21,9 +21,11 @@ const getActividades = async (req, res = response) => {
 
 const getActividadById = async (req, res = response) => {
   try {
+    console.log('actividad parametros', req.params);
     const { id } = req.params;
-    // Corrección del typo: service.g() -> service.getActividadById()
-    const actividad = await service.getActividadById(id);
+    console.log('actividad code controller', id);
+
+    const actividad = await service.getActividadPorId(id);
 
     // La validación de existencia (!actividad) se eliminó aquí porque 
     // el servicio ya se encarga de lanzar el throw { statusCode: 404 }
@@ -78,8 +80,7 @@ const getActividadByCodeModulo = async (req, res = response) => {
 const createActividad = async (req, res = response) => {
   try {
     // QPLUS: Inyección de contexto de auditoría antes del servicio
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-    const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+    const dataDTO = { ...req.body };
 
     const actividadDB = await service.createActividad(dataDTO);
     return res.status(201).json({ ok: true, actividadDB });
@@ -96,8 +97,9 @@ const updateActividad = async (req, res = response) => {
     const { codigoActividad, ...data } = req.body;
 
     // QPLUS: Hidratación del payload
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-    const dataDTO = { ...data, codigoUsuario: usuarioAccion };
+    const dataDTO = { ...data };
+    console.log('codigo actividad controller', codigoActividad);
+    console.log('actividad modificar controller', dataDTO);
 
     const actividadActualizada = await service.updateActividad(codigoActividad, dataDTO);
     return res.status(200).json({ ok: true, actividadActualizada });

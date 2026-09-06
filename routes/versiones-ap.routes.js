@@ -14,7 +14,7 @@ const {
     createVersionAP,
     updateVersionAP,
     deleteVersionAP
-} = require("../controllers/versiones-ap");
+} = require("../controllers/versiones-ap.controller");
 
 const router = Router();
 

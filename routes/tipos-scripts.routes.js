@@ -11,7 +11,7 @@ const {
     createTipoScript,
     updateTipoScript,
     deleteTipoScript
-} = require("../controllers/tipos-scripts");
+} = require("../controllers/tipos-scripts.controller");
 
 const router = Router();
 

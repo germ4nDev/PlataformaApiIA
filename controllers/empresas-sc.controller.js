@@ -51,10 +51,7 @@ const createEmpresaSC = async (req, res = response) => {
 const updateEmpresaSC = async (req, res = response) => {
   try {
     const { id } = req.params;
-
-    // QPLUS: Hidratación del payload
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-    const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+    const dataDTO = { ...req.body };
 
     const empresaSC = await service.updateEmpresaSC(id, dataDTO);
     return res.status(200).json({ ok: true, empresaSC });

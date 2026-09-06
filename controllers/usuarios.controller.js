@@ -63,6 +63,38 @@ const createUsuario = async (req, res = response) => {
   }
 };
 
+const uploadMasivoUsuarios = async (req, res) => {
+  try {
+    // 1. Verificamos si express-fileupload capturó el archivo
+    if (!req.files || !req.files.archivoExcel) {
+      return res.status(400).json({ ok: false, msg: 'No se detectó ningún archivo Excel.' });
+    }
+
+    // 2. Extraemos el Buffer (.data) que necesita la librería xlsx
+    const archivoBuffer = req.files.archivoExcel.data;
+
+    // express-fileupload manda los campos de texto normales en req.body
+    const usuarioCreador = req.body.usuarioLogueado || 'SISTEMA';
+
+    // 3. Enviamos el Buffer al servicio que ya tenías programado
+    const resultado = await service.cargueMasivoExcel(archivoBuffer, usuarioCreador);
+
+    return res.status(200).json({
+      ok: true,
+      msg: `Se importaron ${resultado.length} usuarios exitosamente.`,
+    });
+
+  } catch (error) {
+    console.error('❌ Error en el cargue masivo:', error);
+    return res.status(error.statusCode || 500).json({
+      ok: false,
+      msg: error.msg || 'Error interno procesando el archivo masivo.',
+      errores: error.errores,
+      detalle: error.detalle || error.message
+    });
+  }
+};
+
 const updateUsuario = async (req, res = response) => {
   try {
     const { id } = req.params;
@@ -117,6 +149,7 @@ module.exports = {
   validatePassword,
   createUsuario,
   updateUsuario,
+  uploadMasivoUsuarios,
   updateUsuarioPassword,
   deleteUsuario
 };

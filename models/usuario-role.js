@@ -1,10 +1,7 @@
-/*
-    Author: German Valencia
-    Refactored for: QPLUS DTO Pattern, RBAC Standardization, Clean Code & Joi Validation
-*/
 const Joi = require('joi');
 const { DataTypes } = require('sequelize');
 
+// 1. ESQUEMA JOI CORREGIDO
 const UsuarioRoleSchema = Joi.object({
   codigoUsuarioRole: Joi.string().max(200).required()
     .messages({ 'any.required': 'El código único de la asignación de rol es obligatorio.' }),
@@ -12,7 +9,8 @@ const UsuarioRoleSchema = Joi.object({
   codigoUsuarioSC: Joi.string().max(200).required()
     .messages({ 'any.required': 'El código del usuario es obligatorio.' }),
 
-  codigoEmpresaSC: Joi.string().max(200).required()
+  // 🟢 allow('', null) permite que el frontend envíe strings vacíos sin fallar
+  codigoEmpresaSC: Joi.string().max(200).allow('', null).required()
     .messages({ 'any.required': 'El código de la empresa (tenant) es obligatorio.' }),
 
   codigoRole: Joi.string().max(200).required()
@@ -20,14 +18,18 @@ const UsuarioRoleSchema = Joi.object({
 
   estadoUsuarioRole: Joi.boolean().optional().default(true),
 
-  codigoUsuarioCreacion: Joi.string().max(200).required(),
-  fechaCreacion: Joi.string().max(100).required(),
+  // 🟢 Flexibilizamos la auditoría para que coincida con la BD
+  codigoUsuarioCreacion: Joi.string().max(200).allow('', null).optional(),
+  fechaCreacion: Joi.string().max(100).allow('', null).optional(),
   codigoUsuarioModificacion: Joi.string().max(200).allow('', null).optional(),
   fechaModificacion: Joi.string().max(100).allow('', null).optional()
 });
 
+
+// 2. DTO CORREGIDO
 const UsuarioRoleDTO = (rawData) => {
-  const { error, value } = UsuarioRoleSchema.validate(rawData, { abortEarly: false });
+  // 🟢 stripUnknown: true limpia variables como "rolesContexto" antes de validar
+  const { error, value } = UsuarioRoleSchema.validate(rawData, { abortEarly: false, stripUnknown: true });
 
   if (error) {
     throw {
@@ -41,9 +43,10 @@ const UsuarioRoleDTO = (rawData) => {
   return {
     codigoUsuarioRole: value.codigoUsuarioRole.trim(),
     codigoUsuarioSC: value.codigoUsuarioSC.trim(),
-    codigoEmpresaSC: value.codigoEmpresaSC.trim(),
+    // 🟢 Validación segura (evita crash si es null)
+    codigoEmpresaSC: value.codigoEmpresaSC ? value.codigoEmpresaSC.trim() : '',
     codigoRole: value.codigoRole.trim(),
-    estadoUsuarioRole: value.estadoUsuarioRole,
+    estadoUsuarioRole: value.estadoUsuarioRole ?? true,
 
     codigoUsuarioCreacion: value.codigoUsuarioCreacion,
     fechaCreacion: value.fechaCreacion || fechaActual,
@@ -52,6 +55,8 @@ const UsuarioRoleDTO = (rawData) => {
   };
 };
 
+
+// 3. MODELO SEQUELIZE CORREGIDO
 const UsuarioRoleModel = (sequelize) => {
   return sequelize.define('PTLUsuariosRole', {
     usuarioRoleId: {
@@ -70,7 +75,7 @@ const UsuarioRoleModel = (sequelize) => {
     },
     codigoEmpresaSC: {
       type: DataTypes.STRING(200),
-      allowNull: false
+      allowNull: false // Ojo: SQL Server lo exige not null según tu imagen
     },
     codigoRole: {
       type: DataTypes.STRING(200),
@@ -81,21 +86,22 @@ const UsuarioRoleModel = (sequelize) => {
       defaultValue: true,
       allowNull: false
     },
+    // 🟢 Actualizado a true para ser idéntico al "Allow Nulls" de tu BD
     codigoUsuarioCreacion: {
       type: DataTypes.STRING(200),
-      allowNull: false
+      allowNull: true
     },
     fechaCreacion: {
       type: DataTypes.STRING(100),
-      allowNull: false
+      allowNull: true
     },
     codigoUsuarioModificacion: {
       type: DataTypes.STRING(200),
-      allowNull: false
+      allowNull: true
     },
     fechaModificacion: {
       type: DataTypes.STRING(100),
-      allowNull: false
+      allowNull: true
     }
   }, {
     tableName: 'PTLUsuariosRole',
@@ -103,8 +109,4 @@ const UsuarioRoleModel = (sequelize) => {
   });
 };
 
-module.exports = {
-  UsuarioRoleModel,
-  UsuarioRoleDTO,
-  UsuarioRoleSchema
-};
+module.exports = { UsuarioRoleModel, UsuarioRoleDTO, UsuarioRoleSchema };

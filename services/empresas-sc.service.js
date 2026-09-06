@@ -5,6 +5,7 @@
 const { sequelize } = require('../database/connection');
 const { EmpresaSCModel, EmpresaSCDTO } = require('../models/empresa-sc');
 const { io } = require('../index');
+const { log } = require('handlebars');
 
 class EmpresaSCService {
   constructor() {
@@ -39,12 +40,13 @@ class EmpresaSCService {
     });
   }
 
-  /**
-   * Actualiza una empresa existente
-   */
   async updateEmpresaSC(codigoEmpresaSC, rawData) {
     // El controlador debe inyectar el codigoUsuario en rawData antes de llamar al servicio
+    console.log('empresa  sc antes', rawData);
+    console.log('codigoEmpresaSC', codigoEmpresaSC);
+
     const dataDTO = EmpresaSCDTO(rawData);
+    console.log('empresa  sc despues', dataDTO);
 
     return await sequelize.transaction(async (t) => {
       const registroDB = await this.model.findOne({
