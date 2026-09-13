@@ -100,8 +100,7 @@ const updateUsuario = async (req, res = response) => {
     const { id } = req.params;
 
     // QPLUS: Hidratación del payload de auditoría
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-    const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+    const dataDTO = { ...req.body };
 
     const usuario = await service.updateUsuario(id, dataDTO);
     return res.status(200).json({ ok: true, usuario });

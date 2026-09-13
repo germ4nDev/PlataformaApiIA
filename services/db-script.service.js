@@ -11,10 +11,6 @@ class DbInitService {
         this.scriptPath = path.join(__dirname, '..', 'database', 'plataforma_db.sql');
     }
 
-    /**
-     * Ejecuta fragmentos de SQL divididos por el delimitador 'GO'
-     * @private
-     */
     async #ejecutarLotes(scriptSql) {
         const lotes = scriptSql.split(/^\s*GO\s*$/im);
         let ejecutados = 0;
@@ -38,11 +34,7 @@ class DbInitService {
         return ejecutados;
     }
 
-    /**
-     * Punto de entrada para inicializar la estructura de la base de datos
-     */
     async ejecutarScriptBD() {
-        // Verificación preventiva de existencia
         try {
             await fs.access(this.scriptPath);
         } catch {
@@ -55,7 +47,6 @@ class DbInitService {
 
         const sqlScript = await fs.readFile(this.scriptPath, 'utf-8');
 
-        // Ejecución secuencial controlada
         const totalLotes = await this.#ejecutarLotes(sqlScript);
 
         return {

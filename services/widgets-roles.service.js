@@ -3,39 +3,39 @@
     Refactored for: QPLUS Architecture, Service Layer Sanitization & Transactional Integrity
 */
 const { sequelize } = require("../database/connection");
-const { ActividadRoleModel, ActividadRoleDTO } = require("../models/actividad-role.model");
+const { WidgetRoleModel, WidgetRoleDTO } = require("../models/widget-role");
 
 // 🟢 1. IMPORTA AQUÍ EL MODELO DE ACTIVIDADES MAESTRAS
-// (Por favor ajusta la ruta "../models/actividad" y el nombre "ActividadModel" según como lo tengas en tu proyecto)
-const { ActividadModel } = require("../models/actividad");
+// (Por favor ajusta la ruta "../models/widget" y el nombre "WidgetMaestroModel" según como lo tengas en tu proyecto)
+const { WidgetMaestroModel } = require("../models/widget");
 
 const { io } = require("../index");
 
-class ActividadesRolesService {
+class WidgetesRolesService {
   constructor() {
-    this.model = ActividadRoleModel(sequelize);
+    this.model = WidgetRoleModel(sequelize);
 
-    this.actividadModel = ActividadModel(sequelize);
+    this.widgetModel = WidgetMaestroModel(sequelize);
 
-    this.model.belongsTo(this.actividadModel, {
-      foreignKey: 'codigoActividad',
-      targetKey: 'codigoActividad',
-      as: 'actividad'
+    this.model.belongsTo(this.widgetModel, {
+      foreignKey: 'codigoWidget',
+      targetKey: 'codigoWidget',
+      as: 'widget'
     });
   }
 
-  async getActividadesRoles() {
+  async getWidgetsRoles() {
     return await this.model.findAll();
   }
 
-  async getPorCodigoActividad(codigoActividad) {
-    const registros = await this.model.findAll({ where: { codigoActividad } });
+  async getPorCodigoWidget(codigoWidget) {
+    const registros = await this.model.findAll({ where: { codigoWidget } });
     if (!registros || registros.length === 0)
-      throw { statusCode: 404, msg: "No se encontraron registros para la actividad especificada." };
+      throw { statusCode: 404, msg: "No se encontraron registros para la widget especificada." };
     return registros;
   }
 
-  async getActividadByCodeRole(codigoRole) {
+  async getWidgetByCodeRole(codigoRole) {
     try {
       const data = await this.model.findAll({
         where: {
@@ -44,12 +44,12 @@ class ActividadesRolesService {
         },
         include: [
           {
-            model: this.actividadModel,
-            as: 'actividad',
-            attributes: ['codigoActividad', 'llavePermiso', 'actividad', 'estadoActividad'],
+            model: this.widgetModel,
+            as: 'widget',
+            attributes: ['codigoWidget', 'llavePermiso', 'widget', 'estadoWidget'],
 
             where: {
-              estadoActividad: true
+              estadoWidget: true
             },
 
             required: true
@@ -62,30 +62,30 @@ class ActividadesRolesService {
       return { ok: true, data: data };
 
     } catch (error) {
-      console.error('❌ Error al cruzar actividades por rol:', error);
+      console.error('❌ Error al cruzar widgetes por rol:', error);
       throw error;
     }
   }
 
-  async createActividadRole(rawData) {
+  async createWidgetRole(rawData) {
     try {
-      const dataDTO = ActividadRoleDTO(rawData);
+      const dataDTO = WidgetRoleDTO(rawData);
 
       return await sequelize.transaction(async (t) => {
         const existe = await this.model.findOne({
           where: {
-            codigoActividad: dataDTO.codigoActividad,
+            codigoWidget: dataDTO.codigoWidget,
             codigoRole: dataDTO.codigoRole,
           },
           transaction: t
         });
 
-        if (existe) throw { statusCode: 400, msg: "Esta relación Actividad-Rol ya existe." };
+        if (existe) throw { statusCode: 400, msg: "Esta relación Widget-Rol ya existe." };
 
         const nuevaRelacion = await this.model.create(dataDTO, { transaction: t });
 
         if (typeof io !== 'undefined') {
-          io.emit('actividades-roles-actualizadas', {
+          io.emit('widgetes-roles-actualizadas', {
             action: 'create',
             msg: `Relación creada`
           });
@@ -95,74 +95,71 @@ class ActividadesRolesService {
         return nuevaRelacion;
       });
     } catch (error) {
-      console.error(`Error en createActividadRole:`, error);
+      console.error(`Error en createWidgetRole:`, error);
       throw error;
     }
   }
 
-  async updateActividadRole(id, rawData) {
+  async updateWidgetRole(id, rawData) {
     try {
-      const dataDTO = ActividadRoleDTO(rawData);
+      const dataDTO = WidgetRoleDTO(rawData);
 
       return await sequelize.transaction(async (t) => {
         const registroDB = await this.model.findOne({
-          where: { codigoActividadRole: id },
+          where: { codigoWidgetRole: id },
           transaction: t
         });
 
         if (!registroDB) throw { statusCode: 404, msg: "No se encontró el registro para actualizar." };
 
         await this.model.update(dataDTO, {
-          where: { codigoActividadRole: id },
+          where: { codigoWidgetRole: id },
           transaction: t
         });
 
-        io.emit('actividades-roles-actualizadas', {
+        io.emit('widgetes-roles-actualizadas', {
           action: 'update',
           msg: `Relación creada`
         });
 
         return await this.model.findOne({
-          where: { codigoActividadRole: id },
+          where: { codigoWidgetRole: id },
           transaction: t
         });
 
       });
     } catch (error) {
-      console.error(`Error en updateActividadRole:`, error);
+      console.error(`Error en updateWidgetRole:`, error);
       throw error;
     }
   }
 
-  async deleteActividadRole(id) {
+  async deleteWidgetRole(id) {
     return await sequelize.transaction(async (t) => {
       const eliminado = await this.model.destroy({
-        where: { codigoActividadRole: id },
+        where: { codigoWidgetRole: id },
         transaction: t
       });
 
       if (eliminado === 0) throw { statusCode: 404, msg: "No se encontró el registro para eliminar." };
 
-      io.emit("actividades-roles-actualizadas", { action: "delete", msg: "Relación eliminada" });
+      io.emit("widgetes-roles-actualizadas", { action: "delete", msg: "Relación eliminada" });
 
       return true;
     });
   }
 
-  async syncActividadesRoles(codigoActividad, rawDataArray) {
+  async syncWidgetsRoles(codigoWidget, rawDataArray) {
     try {
-      // 🟢 NUEVO: Garantizamos que siempre sea un Arreglo nativo
       const arregloReal = Array.isArray(rawDataArray)
         ? rawDataArray
         : Object.values(rawDataArray || {});
 
-      // 1. Ahora sí usamos .map() sin riesgo de crash
-      const dataDTOArray = arregloReal.map(item => ActividadRoleDTO(item));
+      const dataDTOArray = arregloReal.map(item => WidgetRoleDTO(item));
 
       return await sequelize.transaction(async (t) => {
-        // ... (El resto de tu código queda exactamente igual)
         await this.model.destroy({
-          where: { codigoActividad: codigoActividad },
+          where: { codigoWidget: codigoWidget },
           transaction: t
         });
 
@@ -172,16 +169,16 @@ class ActividadesRolesService {
         }
 
         if (typeof io !== 'undefined') {
-          io.emit('actividades-roles-actualizadas', { action: 'sync', msg: 'Sincronizado' });
+          io.emit('widgetes-roles-actualizadas', { action: 'sync', msg: 'Sincronizado' });
         }
 
         return nuevosRegistros;
       });
     } catch (error) {
-      console.error(`❌ Error en syncActividadesRoles:`, error);
+      console.error(`❌ Error en syncWidgetesRoles:`, error);
       throw error;
     }
   }
 }
 
-module.exports = ActividadesRolesService;
+module.exports = WidgetesRolesService;

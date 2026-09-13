@@ -12,6 +12,7 @@ const {
     getUsuariosSC,
     getUsuarioSCById,
     getUsuariosSCBySuscriptorCode,
+    uploadMasivoUsuariosSC,
     createUsuarioSC,
     updateUsuarioSC,
     deleteUsuarioSC
@@ -23,25 +24,16 @@ const router = Router();
 
 router.get("/", getUsuariosSC);
 
-router.get("/:id", validarJWT, getUsuarioSCById);
+router.get("/:id", getUsuarioSCById);
 
 router.get("/suscriptor/:codigoSuscriptor", validarJWT, getUsuariosSCBySuscriptorCode);
 
-router.post("/", [
-    check('codigoUsuarioSC', 'El código de usuario es obligatorio').not().isEmpty(),
-    check('codigoUsuario', 'El código de usuario es obligatorio').not().isEmpty(),
-    check('codigoSuscriptor', 'El código de suscriptor es obligatorio').not().isEmpty(),
-    validarJWT,
-    validarCampos
-], createUsuarioSC);
+router.post('/cargue-masivo', uploadMasivoUsuariosSC);
 
-router.put("/:id", [
-    check('codigoUsuario', 'El código de usuario es obligatorio').not().isEmpty(),
-    check('codigoSuscriptor', 'El código de suscriptor es obligatorio').not().isEmpty(),
-    validarJWT,
-    validarCampos
-], updateUsuarioSC);
+router.post("/", createUsuarioSC);
 
-router.delete("/:id", validarJWT, deleteUsuarioSC);
+router.put("/:id", updateUsuarioSC);
+
+router.delete("/:id", deleteUsuarioSC);
 
 module.exports = router;

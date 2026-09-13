@@ -15,10 +15,10 @@ const UsuarioSCSchema = Joi.object({
   codigoSuscriptor: Joi.string().max(200).required()
     .messages({ 'any.required': 'El código del suscriptor (Tenant) es obligatorio.' }),
 
-  estadoUsuarioSC: Joi.boolean().optional().default(true),
+  estadoUsuarioSC: Joi.boolean().required().default(true),
 
-  codigoUsuarioCreacion: Joi.string().max(200).required(),
-  fechaCreacion: Joi.string().max(100).required(),
+  codigoUsuarioCreacion: Joi.string().max(200).max(200).allow('', null).optional(),
+  fechaCreacion: Joi.string().max(100).allow('', null).optional(),
   codigoUsuarioModificacion: Joi.string().max(200).allow('', null).optional(),
   fechaModificacion: Joi.string().max(100).allow('', null).optional()
 });
@@ -75,19 +75,19 @@ const UsuarioSCModel = (sequelize) => {
     },
     codigoUsuarioCreacion: {
       type: DataTypes.STRING(200),
-      allowNull: false
+      allowNull: true
     },
     fechaCreacion: {
       type: DataTypes.STRING(100),
-      allowNull: false
+      allowNull: true
     },
     codigoUsuarioModificacion: {
       type: DataTypes.STRING(200),
-      allowNull: false
+      allowNull: true
     },
     fechaModificacion: {
       type: DataTypes.STRING(100),
-      allowNull: false
+      allowNull: true
     }
   }, {
     tableName: 'PTLUsuariosSC',

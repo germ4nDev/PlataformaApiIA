@@ -3,9 +3,9 @@
     Refactored for: QPLUS Architecture, Context Injection, Error Handling & Socket.io Real-Time Sync
 */
 const { response } = require("express");
-const ActividadesRolesService = require("../services/actividades-roles.service");
+const WidgetsRolesService = require("../services/widgets-roles.service");
 
-const service = new ActividadesRolesService();
+const service = new WidgetsRolesService();
 
 /**
  * Función auxiliar para emitir la señal de socket de forma limpia
@@ -21,7 +21,7 @@ const emitirActualizacionPermisos = (req, codigoRole) => {
   if (codigoRole) {
     io.emit('permisos_actualizados', {
       codigoRole: codigoRole,
-      mensaje: 'Se actualizaron los permisos/actividades para este rol'
+      mensaje: 'Se actualizaron los permisos/widgets para este rol'
     });
     console.log(`📡 ÉXITO: Socket emitido para el rol [${codigoRole}]`);
   } else {
@@ -32,11 +32,12 @@ const emitirActualizacionPermisos = (req, codigoRole) => {
   }
 };
 
-const getActividadesRoles = async (req, res = response) => {
+const getWidgetsRoles = async (req, res = response) => {
   try {
-    const actividadesRoles = await service.getActividadesRoles();
-    console.log('retornar actividadesRoles', actividadesRoles);
-    return res.status(200).json({ ok: true, actividadesRoles });
+    const widgetsRoles = await service.getWidgetsRoles();
+    console.log('retornar widgetRoles', widgetsRoles);
+
+    return res.status(200).json({ ok: true, widgetsRoles });
   } catch (error) {
     return res.status(error.statusCode || 500).json({
       ok: false,
@@ -45,10 +46,10 @@ const getActividadesRoles = async (req, res = response) => {
   }
 };
 
-const getActividadByCodeActividad = async (req, res = response) => {
+const getWidgetByCodeWidget = async (req, res = response) => {
   try {
     const { ac } = req.params;
-    const data = await service.getActividadByCodeActividad(ac);
+    const data = await service.getWidgetByCodeWidget(ac);
     return res.status(200).json({ ok: true, data });
   } catch (error) {
     return res.status(error.statusCode || 400).json({
@@ -58,12 +59,12 @@ const getActividadByCodeActividad = async (req, res = response) => {
   }
 };
 
-const getActividadByCodeRole = async (req, res = response) => {
+const getWidgetByCodeRole = async (req, res = response) => {
   try {
     const { ro } = req.params;
     console.log('consultar el role', ro);
 
-    const data = await service.getActividadByCodeRole(ro);
+    const data = await service.getWidgetByCodeRole(ro);
     return res.status(200).json({ ok: true, data });
   } catch (error) {
     console.log('🚨 ERROR REAL DE SEQUELIZE:', error);
@@ -76,19 +77,19 @@ const getActividadByCodeRole = async (req, res = response) => {
   }
 };
 
-const createActividadRole = async (req, res = response) => {
+const createWidgetRole = async (req, res = response) => {
   try {
     const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
     const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
 
     // Guarda en la base de datos
-    const nuevaActividad = await service.createActividadRole(dataDTO);
+    const nuevaWidget = await service.createWidgetRole(dataDTO);
 
-    const codigoRoleInvolucrado = dataDTO.codigoRole || nuevaActividad?.codigoRole;
+    const codigoRoleInvolucrado = dataDTO.codigoRole || nuevaWidget?.codigoRole;
 
     emitirActualizacionPermisos(req, codigoRoleInvolucrado);
 
-    return res.status(201).json({ ok: true, nuevaActividad });
+    return res.status(201).json({ ok: true, nuevaWidget });
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
@@ -97,20 +98,20 @@ const createActividadRole = async (req, res = response) => {
   }
 };
 
-const createBulkActividadesRoles = async (req, res = response) => {
+const createBulkWidgetsRoles = async (req, res = response) => {
   try {
     const { id } = req.params; // Generalmente este 'id' es el código del rol o actividad según tu diseño
     const dataDTO = { ...req.body };
-    console.log('codigoActividad / Parámetro:', id);
+    console.log('codigoWidget / Parámetro:', id);
     console.log('datos insertar:', dataDTO);
 
-    const nuevaActividad = await service.syncActividadesRoles(id, dataDTO);
+    const nuevaWidget = await service.syncWidgetsRoles(id, dataDTO);
 
     // 🟢 SOCKET.IO: Si el ID o el body contienen el código del rol, lo disparamos
-    const codigoRoleInvolucrado = dataDTO.codigoRole || id;
+    const codigoRoleInvolucrado = dataDTO.codigoWidget || id;
     emitirActualizacionPermisos(req, codigoRoleInvolucrado);
 
-    return res.status(201).json({ ok: true, nuevaActividad });
+    return res.status(201).json({ ok: true, nuevaWidget });
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
@@ -119,12 +120,12 @@ const createBulkActividadesRoles = async (req, res = response) => {
   }
 };
 
-const updateActividadRole = async (req, res = response) => {
+const updateWidgetRole = async (req, res = response) => {
   try {
     const { id } = req.params;
     const dataDTO = { ...req.body };
 
-    const actividadActualizada = await service.updateActividadRole(id, dataDTO);
+    const actividadActualizada = await service.updateWidgetRole(id, dataDTO);
 
     // 🟢 SOCKET.IO: Emitimos la actualización si viene el rol en el body o la respuesta
     const codigoRoleInvolucrado = dataDTO.codigoRole || actividadActualizada?.codigoRole;
@@ -139,15 +140,15 @@ const updateActividadRole = async (req, res = response) => {
   }
 };
 
-const deleteActividadRole = async (req, res = response) => {
+const deleteWidgetRole = async (req, res = response) => {
   try {
     const { id } = req.params;
 
     // Opcional: Si necesitas el código del rol antes de borrar, 
     // puedes consultar el registro previamente en el servicio.
-    const registroAEliminar = await service.getActividadRoleById ? await service.getActividadRoleById(id) : null;
+    const registroAEliminar = await service.getWidgetRoleById ? await service.getWidgetRoleById(id) : null;
 
-    await service.deleteActividadRole(id);
+    await service.deleteWidgetRole(id);
 
     // 🟢 SOCKET.IO: Si pudimos obtener el rol asociado al registro borrado, lo notificamos
     if (registroAEliminar?.codigoRole) {
@@ -168,11 +169,11 @@ const deleteActividadRole = async (req, res = response) => {
 };
 
 module.exports = {
-  getActividadesRoles,
-  getActividadByCodeActividad,
-  createBulkActividadesRoles,
-  getActividadByCodeRole,
-  createActividadRole,
-  updateActividadRole,
-  deleteActividadRole,
+  getWidgetsRoles,
+  getWidgetByCodeWidget,
+  createBulkWidgetsRoles,
+  getWidgetByCodeRole,
+  createWidgetRole,
+  updateWidgetRole,
+  deleteWidgetRole,
 };

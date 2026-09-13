@@ -4,9 +4,8 @@
     Ruta: /api/usuarios
 */
 const { Router } = require("express");
-const { check } = require("express-validator");
-const { validarCampos } = require("../middlewares/validar-campos");
 const { validarJWT } = require("../middlewares/validar-jwt");
+const { validarPermiso } = require('../middlewares/validar-permiso');
 // const multer = require('multer');
 
 const {
@@ -30,32 +29,24 @@ router.get("/", getUsuarios);
 
 router.get("/:id", getUsuarioById);
 
-router.post('/cargue-masivo', uploadMasivoUsuarios);
+router.post('/cargue-masivo', [
+  validarPermiso('ACT_USR_CARGUE')
+], uploadMasivoUsuarios);
 
-router.post("/validate-password", [
-  validarJWT,
-  check('codigoAdministrador', 'El código de administrador es obligatorio').not().isEmpty(),
-  check('claveActual', 'La clave actual es obligatoria').not().isEmpty(),
-  validarCampos
-], validatePassword);
+router.post("/validate-password", validatePassword);
 
 router.post("/", [
-  check('nombreUsuario', 'El nombre de usuario es obligatorio').not().isEmpty(),
-  check('identificacionUsuario', 'La identificación es obligatoria').not().isEmpty(),
-  check('claveUsuario', 'La contraseña es obligatoria').not().isEmpty(),
-  validarCampos
+  validarPermiso('ACT_USR_CREAR')
 ], createUsuario);
 
 router.put("/:id", [
-  validarCampos
+  validarPermiso('ACT_USR_ACTUALIZAR')
 ], updateUsuario);
 
-router.put("/password/:id", [
-  validarJWT,
-  check('claveUsuario', 'La nueva contraseña es obligatoria').not().isEmpty(),
-  validarCampos
-], updateUsuarioPassword);
+router.put("/password/:id", updateUsuarioPassword);
 
-router.delete("/:id", deleteUsuario);
+router.delete("/:id", [
+  validarPermiso('ACT_USR_ELIMINAR')
+], deleteUsuario);
 
 module.exports = router;

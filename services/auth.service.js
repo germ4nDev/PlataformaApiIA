@@ -106,6 +106,29 @@ class AuthService {
     };
   }
 
+  async cerrarSesion(req, res) {
+    try {
+      // Asumiendo que el middleware de autenticación te deja el codigoUsuario (o viene en el body/params)
+      const codigoUsuario = req.body.codigoUsuario || req.usuario?.codigoUsuario;
+
+      if (codigoUsuario) {
+        // 1. Pasamos isOnline a false en la base de datos
+        await PTLUsuarios.update(
+          { isOnline: false },
+          { where: { codigoUsuario } }
+        );
+
+        // 2. Emitimos el evento global para que todos los dashboards actualicen el contador
+        // (Si tienes acceso a 'io' en este controlador)
+        global.io.emit("usuariosActualizados");
+      }
+
+      return res.status(200).json({ success: true, message: "Sesión cerrada correctamente" });
+    } catch (error) {
+      return res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
   /**
    * Valida permisos basados en el RBAC del sistema
    */
@@ -113,6 +136,7 @@ class AuthService {
     if (!roles || !Array.isArray(roles)) return false;
     return roles.some((rol) => rol.nombre === roleToCheck);
   }
+
 }
 
 module.exports = AuthService;

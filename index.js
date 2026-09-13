@@ -13,6 +13,17 @@ const fileUpload = require('express-fileupload');
 const { iniciarVigilanteSupertransporte } = require('./controllers/torre-control/dashboard/alertas.cron');
 const cors = require("cors");
 const cron = require('node-cron');
+const { UsuarioModel } = require('./models/usuario');
+const PTLUsuarios = UsuarioModel(sequelize);
+
+(async () => {
+  try {
+    await PTLUsuarios.update({ isOnline: false }, { where: { isOnline: true } });
+    console.log('🧹 Estados de conexión de usuarios reiniciados a offline.');
+  } catch (e) {
+    console.error('Error al limpiar estados de socket:', e);
+  }
+})();
 
 // 🟢 Importación de tu nuevo servicio Cron
 const SuscripcionCronService = require('./services/cron.service');
@@ -72,6 +83,7 @@ app.use(fileUpload({
 // ================================================
 
 // PLATAFORMA
+app.use('/api/dashboard', require("./routes/dashboard.routes"));
 app.use("/api/actividades", require("./routes/actividades.routes"));
 app.use("/api/actividades-roles", require("./routes/actividades-roles.routes"));
 app.use("/api/tipos-actividad", require("./routes/tipos-actividad.routes"));
@@ -97,6 +109,9 @@ app.use('/api/tipos-pago', require('./routes/tipos-pago.routes'));
 app.use('/api/tipos-paquete', require('./routes/tipos-paquete.routes'));
 app.use('/api/tipos-roles', require('./routes/tipos-roles.routes'));
 app.use('/api/email', require('./routes/email.routes'));
+app.use('/api/widgets', require('./routes/widgets.routes'));
+app.use('/api/widgets-roles', require('./routes/widget-roles.routes'));
+app.use('/api/layout', require('./routes/layout.routes'));
 
 // APLICACIONES
 app.use("/api/aplicaciones", require("./routes/aplicaciones"));
@@ -146,11 +161,51 @@ console.log('Servidor inicializando procesos...');
 // =======================================================
 // === INICIALIZACIÓN DE SOCKETS Y BASE DE DATOS ===
 // =======================================================
-io.on("connection", (socket) => {
+io.on("connection", async (socket) => {
   console.log("Cliente conectado:", socket.id);
 
-  socket.on("disconnect", () => {
+  // Extraemos el código de usuario que envía Angular en el auth
+  const codigoUsuario = socket.handshake.auth?.codigoUsuario || socket.handshake.query?.codigoUsuario;
+
+  if (codigoUsuario) {
+    // 🟢 Guardamos el código directamente en la instancia del socket
+    socket.codigoUsuario = codigoUsuario;
+
+    try {
+      await PTLUsuarios.update(
+        { isOnline: true, ultimaConexion: new Date() },
+        { where: { codigoUsuario } }
+      );
+
+      io.emit("usuariosActualizados");
+      console.log(`🟢 Usuario ${codigoUsuario} marcado como Online.`);
+    } catch (error) {
+      console.error("Error al actualizar usuario a Online:", error);
+    }
+  } else {
+    console.warn(`⚠️ El socket ${socket.id} se conectó de forma anónima.`);
+  }
+
+  // El evento disconnect se disparará automáticamente al cerrar la X del navegador
+  socket.on("disconnect", async () => {
     console.log("Cliente desconectado:", socket.id);
+
+    // 🟢 Recuperamos el codigoUsuario que guardamos en la instancia
+    const usuarioDesconectado = socket.codigoUsuario;
+
+    if (usuarioDesconectado) {
+      try {
+        await PTLUsuarios.update(
+          { isOnline: false },
+          { where: { codigoUsuario: usuarioDesconectado } }
+        );
+
+        io.emit("usuariosActualizados");
+        console.log(`🔴 Usuario ${usuarioDesconectado} marcado como Offline por cierre de navegador/red.`);
+      } catch (error) {
+        console.error("Error al actualizar usuario a Offline:", error);
+      }
+    }
   });
 });
 

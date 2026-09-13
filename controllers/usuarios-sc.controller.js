@@ -47,7 +47,10 @@ const getUsuariosSCBySuscriptorCode = async (req, res = response) => {
 
 const createUsuarioSC = async (req, res = response) => {
     try {
+        console.log('userSC antes', req.body);
+
         const dataDTO = { ...req.body };
+        console.log('userSC despues', dataDTO);
 
         const usuarioSC = await service.createUsuarioSC(dataDTO);
         return res.status(201).json({ ok: true, usuarioSC });
@@ -55,6 +58,42 @@ const createUsuarioSC = async (req, res = response) => {
         return res.status(error.statusCode || 400).json({
             ok: false,
             msg: error.msg || "Error al crear el usuarioSC suscriptor."
+        });
+    }
+};
+
+const uploadMasivoUsuariosSC = async (req, res = response) => {
+    try {
+        // 1. Validamos que express-fileupload haya capturado el archivo 'file'
+        if (!req.files || !req.files.file) {
+            return res.status(400).json({ ok: false, msg: 'No se detectó ningún archivo Excel en la petición.' });
+        }
+
+        // 2. Extraemos el buffer y las variables del body
+        const fileBuffer = req.files.file.data;
+        const { codigoSuscriptor } = req.body;
+        const usuarioCreador = req.usuario?.codigoUsuario || 'SISTEMA';
+
+        if (!codigoSuscriptor) {
+            return res.status(400).json({ ok: false, msg: 'Falta el código del suscriptor.' });
+        }
+
+        // 3. Llamamos al servicio transaccional
+        const resultado = await service.cargueMasivoUsuariosSC(fileBuffer, codigoSuscriptor, usuarioCreador);
+
+        return res.status(200).json({
+            ok: true,
+            msg: `Cargue masivo completado exitosamente.`,
+            ...resultado
+        });
+
+    } catch (error) {
+        console.error('❌ Error en Controlador de Cargue Masivo UsuariosSC:', error);
+        return res.status(error.statusCode || 500).json({
+            ok: false,
+            msg: error.msg || 'Error interno al procesar el archivo Excel.',
+            errores: error.errores || null,
+            detalle: error.detalle || null
         });
     }
 };
@@ -98,6 +137,7 @@ module.exports = {
     getUsuariosSC,
     getUsuarioSCById,
     getUsuariosSCBySuscriptorCode,
+    uploadMasivoUsuariosSC,
     createUsuarioSC,
     updateUsuarioSC,
     deleteUsuarioSC

@@ -89,7 +89,7 @@ class UsuariosService {
       // Encriptación de seguridad
       const salt = bcrypt.genSaltSync();
       dataDTO.claveUsuario = await bcrypt.hash(dataDTO.claveUsuario, salt);
-      dataDTO.fotoUsuario = 'no-imagen.png';
+      dataDTO.fotoUsuario = 'no_imagen.png';
 
       const usuarioDB = await this.model.create(dataDTO, { transaction: t });
 
@@ -124,7 +124,7 @@ class UsuariosService {
           userNameUsuario: fila.userNameUsuario || '',
           claveUsuario: String(fila.claveUsuario || crypto.randomUUID().substring(0, 8)),
           descripcionUsuario: fila.descripcionUsuario || '',
-          fotoUsuario: fila.fotoUsuario || 'no-foto.png',
+          fotoUsuario: fila.fotoUsuario || 'no_imagen.png',
           usuarioAdministrador: fila.usuarioAdministrador === 'SI' || fila.usuarioAdministrador === true,
           estadoUsuario: true,
           codigoUsuarioCreacion: usuarioCreador,
@@ -163,26 +163,44 @@ class UsuariosService {
   }
 
   async updateUsuario(codigoUsuario, rawData) {
-    // El controlador inyecta la auditoría en rawData antes de invocar este método
+    if (rawData.fotoUsuario == "") (
+      rawData.fotoUsuario = 'mantenerFoto'
+    )
+    console.log('data usuario antes dto', rawData);
     const dataDTO = UsuarioDTO(rawData);
+    console.log('data usuario despues dto', dataDTO);
 
     return await sequelize.transaction(async (t) => {
       const usuarioDB = await this.model.findOne({
-        where: { codigoUsuario },
+        where: { codigoUsuario: dataDTO.codigoUsuario },
         transaction: t
       });
 
       if (!usuarioDB) {
         throw { statusCode: 404, msg: "No existe el usuario con ese ID para actualizar." };
       }
+      console.log('data usuario encontrado', usuarioDB.dataValues);
+      const usuActualizar = usuarioDB.dataValues;
 
-      await this.model.update(dataDTO, {
-        where: { codigoUsuario },
+      if (rawData.claveUsuario != usuActualizar.claveUsuario) {
+        console.log('cambiar clave', usuActualizar.claveUsuario);
+        const salt = bcrypt.genSaltSync();
+        const hashedPassword = await bcrypt.hash(rawData.claveUsuario, salt);
+        usuActualizar.claveUsuario = hashedPassword
+      }
+
+      if (rawData.fotoUsuario != 'mantenerFoto') {
+        usuActualizar.fotoUsuario = rawData.fotoUsuario
+      }
+      console.log('data usuario despues dto', usuActualizar);
+
+      await this.model.update(usuActualizar, {
+        where: { codigoUsuario: dataDTO.codigoUsuario },
         transaction: t
       });
 
       const usuarioActualizado = await this.model.findOne({
-        where: { codigoUsuario },
+        where: { codigoUsuario: dataDTO.codigoUsuario },
         transaction: t
       });
 

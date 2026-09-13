@@ -1,3 +1,7 @@
+/*
+    Author: German Valencia
+    Refactored for: QPLUS DTO Pattern, Entity Standardization, Joi Validation & SQL Server precision
+*/
 const Joi = require('joi');
 const { DataTypes } = require('sequelize');
 
@@ -12,6 +16,11 @@ const UsuarioSchema = Joi.object({
   fotoUsuario: Joi.string().max(100).allow('', null).optional().default('no-foto.png'),
   usuarioAdministrador: Joi.boolean().optional().default(false),
   estadoUsuario: Joi.boolean().optional().default(true),
+
+  // 🟢 Campos de control de conexión por Socket
+  isOnline: Joi.boolean().optional().default(false),
+  ultimaConexion: Joi.date().allow(null, '').optional(),
+
   codigoUsuarioCreacion: Joi.string().max(200).required(),
   fechaCreacion: Joi.string().max(100).required(),
   codigoUsuarioModificacion: Joi.string().max(200).allow('', null).optional(),
@@ -41,6 +50,11 @@ const UsuarioDTO = (rawData) => {
     fotoUsuario: value.fotoUsuario.trim(),
     usuarioAdministrador: value.usuarioAdministrador,
     estadoUsuario: value.estadoUsuario,
+
+    // 🟢 Mapeo seguro en el DTO
+    isOnline: value.isOnline ?? false,
+    ultimaConexion: value.ultimaConexion || null,
+
     codigoUsuarioCreacion: value.codigoUsuarioCreacion,
     fechaCreacion: value.fechaCreacion || fechaActual,
     codigoUsuarioModificacion: value.codigoUsuarioModificacion || value.codigoUsuarioCreacion,
@@ -62,7 +76,16 @@ const UsuarioModel = (sequelize) => {
     fotoUsuario: { type: DataTypes.STRING(100), allowNull: true, defaultValue: 'no-foto.png' },
     usuarioAdministrador: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
 
-    estadoUsuario: { type: DataTypes.BOOLEAN, defaultValue: true }, // Se deja igual, la BD acepta nulos aquí.
+    estadoUsuario: { type: DataTypes.BOOLEAN, defaultValue: true },
+    isOnline: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
+    },
+    ultimaConexion: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
     codigoUsuarioCreacion: { type: DataTypes.STRING(200), allowNull: true },
     fechaCreacion: { type: DataTypes.STRING(100), allowNull: true },
     codigoUsuarioModificacion: { type: DataTypes.STRING(200), allowNull: true },
