@@ -17,9 +17,8 @@ const UsuarioSchema = Joi.object({
   usuarioAdministrador: Joi.boolean().optional().default(false),
   estadoUsuario: Joi.boolean().optional().default(true),
 
-  // 🟢 Campos de control de conexión por Socket
   isOnline: Joi.boolean().optional().default(false),
-  ultimaConexion: Joi.date().allow(null, '').optional(),
+  ultimaConexion: Joi.string().max(100).allow(null, '').optional(),
 
   codigoUsuarioCreacion: Joi.string().max(200).required(),
   fechaCreacion: Joi.string().max(100).required(),
@@ -51,7 +50,6 @@ const UsuarioDTO = (rawData) => {
     usuarioAdministrador: value.usuarioAdministrador,
     estadoUsuario: value.estadoUsuario,
 
-    // 🟢 Mapeo seguro en el DTO
     isOnline: value.isOnline ?? false,
     ultimaConexion: value.ultimaConexion || null,
 
@@ -79,11 +77,11 @@ const UsuarioModel = (sequelize) => {
     estadoUsuario: { type: DataTypes.BOOLEAN, defaultValue: true },
     isOnline: {
       type: DataTypes.BOOLEAN,
-      allowNull: false,
+      allowNull: true,
       defaultValue: false
     },
     ultimaConexion: {
-      type: DataTypes.DATE,
+      type: DataTypes.STRING(100),
       allowNull: true
     },
     codigoUsuarioCreacion: { type: DataTypes.STRING(200), allowNull: true },

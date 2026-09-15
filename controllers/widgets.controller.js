@@ -58,6 +58,7 @@ const createWidget = async (req, res = response) => {
 const updateWidget = async (req, res = response) => {
     try {
         const { id } = req.params;
+        console.log('actualizar antes', req.body);
 
         // QPLUS: Hidratación del payload de auditoría
         const dataDTO = { ...req.body };

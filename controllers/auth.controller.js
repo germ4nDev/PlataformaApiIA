@@ -4,7 +4,7 @@
 */
 const { response } = require("express");
 const AuthService = require("../services/auth.service");
-
+const { getIO } = require('../helpers/socket.helper');
 const service = new AuthService();
 
 const login = async (req, res = response) => {
@@ -12,7 +12,20 @@ const login = async (req, res = response) => {
     const { username, password } = req.body;
     const { usuario, token } = await service.login(username, password);
 
-    // QPLUS: En Auth, mantenemos token y usuario en el root del payload
+    try {
+      const io = getIO();
+      io.emit("actualizacion-datos-widget", {
+        codigoWidget: 'WDG_PLAT_KPI_USUARIOS',
+        payload: {
+          evento: 'nuevo_login',
+          ultimoUsuario: usuario.userNameUsuario,
+          timestamp: new Date().toISOString()
+        }
+      });
+    } catch (errorSocket) {
+      console.warn("⚠️ Advertencia: No se pudo emitir la señal en tiempo real al tablero:", errorSocket.message);
+    }
+
     return res.status(200).json({
       ok: true,
       token,
@@ -81,6 +94,6 @@ const verificarUserInRole = async (req, res = response) => {
 module.exports = {
   login,
   renewToken,
-  verificarClaveActual, // Typo corregido: de 'verificaar' a 'verificar'
+  verificarClaveActual,
   verificarUserInRole,
 };

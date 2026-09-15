@@ -11,7 +11,7 @@ const {
   renewToken,
   verificarClaveActual,
   verificarUserInRole,
-} = require("../controllers/auth");
+} = require("../controllers/auth.controller");
 
 const router = Router();
 

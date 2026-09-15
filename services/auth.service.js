@@ -6,7 +6,7 @@ const bcrypt = require("bcryptjs");
 const { sequelize } = require('../database/connection');
 const { generarJWT } = require("../helpers/jwt");
 const { UsuarioModel } = require('../models/usuario');
-const { io } = require('../index');
+const { getIO } = require('../helpers/socket.helper');
 
 class AuthService {
   constructor() {
@@ -33,11 +33,16 @@ class AuthService {
       usuarioDB.fotoUsuario
     );
 
-    // Notificación en tiempo real (Socket.io)
-    io.emit('autenticaciones-actualizadas', {
-      action: 'login',
-      msg: `Sesión iniciada: ${usuarioDB.userNameUsuario}`
-    });
+    // 🟢 PROTECCIÓN DEL SOCKET (Evita el Error 500)
+    try {
+      const io = getIO();
+      io.emit('autenticaciones-actualizadas', {
+        action: 'login',
+        msg: `Sesión iniciada: ${usuarioDB.userNameUsuario}`
+      });
+    } catch (errorSocket) {
+      console.warn("⚠️ No se pudo emitir la notificación de login por socket:", errorSocket.message);
+    }
 
     // Respuesta limpia (sin clave)
     return {
