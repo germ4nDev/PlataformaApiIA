@@ -6,6 +6,8 @@ const { Router } = require("express");
 const { check } = require("express-validator");
 const { validarCampos } = require("../middlewares/validar-campos");
 const { validarJWT } = require("../middlewares/validar-jwt");
+const { validarSesion } = require("../middlewares/validar-sesion");
+
 const {
     getBibliotecas,
     getBibliotecaByCode,
@@ -15,25 +17,17 @@ const {
 } = require("../controllers/bibliotecas");
 
 const router = Router();
+// router.use(validarSesion);
 
 router.get("/", getBibliotecas);
 
 router.get("/:id", validarJWT, getBibliotecaByCode);
 
-router.post("/", [
-    check('codigoBiblioteca', 'El código de la biblioteca es obligatorio').not().isEmpty(),
-    check('codigoAplicacion', 'El código de la aplicacion es obligatorio').not().isEmpty(),
-    validarJWT,
-    validarCampos
-], createBiblioteca);
+router.post("/", [validarJWT, validarSesion], createBiblioteca);
 
-router.put("/:id", [
-    check('codigoAplicacion', 'El código de la aplicacion es obligatorio').not().isEmpty(),
-    validarJWT,
-    validarCampos
-], updateBiblioteca);
+router.put("/:id", [validarJWT, validarSesion], updateBiblioteca);
 
-router.delete("/:id", validarJWT, deleteBiblioteca);
+router.delete("/:id", [validarJWT, validarSesion], deleteBiblioteca);
 
 
 module.exports = router;

@@ -2,9 +2,9 @@
     Author: Juan Valencia
 */
 const { Router } = require("express");
-const { check } = require("express-validator");
-const { validarCampos } = require("../middlewares/validar-campos");
 const { validarJWT } = require("../middlewares/validar-jwt");
+const { validarSesion } = require("../middlewares/validar-sesion");
+
 const {
     getTiposScripts,
     getTipoScriptById,
@@ -15,20 +15,17 @@ const {
 
 const router = Router();
 
-router.use(validarJWT);
+// router.use(validarSesion);
+// router.use(validarJWT);
 
 router.get("/", getTiposScripts);
+
 router.get("/:id", getTipoScriptById);
 
-router.post("/", [
-    check('nombreTipo', 'El nombre del tipo es obligatorio').not().isEmpty(),
-    validarCampos
-], createTipoScript);
+router.post("/", [validarJWT, validarSesion], createTipoScript);
 
-router.put("/:id", [
-    validarCampos
-], updateTipoScript);
+router.put("/:id", [validarJWT, validarSesion], updateTipoScript);
 
-router.delete("/:id", deleteTipoScript);
+router.delete("/:id", [validarJWT, validarSesion], deleteTipoScript);
 
 module.exports = router;

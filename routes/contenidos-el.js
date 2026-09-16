@@ -6,6 +6,8 @@ const { Router } = require("express");
 const { check } = require("express-validator");
 const { validarCampos } = require("../middlewares/validar-campos");
 const { validarJWT } = require("../middlewares/validar-jwt");
+const { validarSesion } = require("../middlewares/validar-sesion");
+
 const {
     getContenidos,
     getContenidoByCode,
@@ -15,24 +17,16 @@ const {
 } = require("../controllers/contenidos-el");
 
 const router = Router();
+// router.use(validarSesion);
 
 router.get("/", validarJWT, getContenidos);
 
 router.get("/:id", validarJWT, getContenidoByCode);
 
-router.post("/", [
-    check('codigoContenido', 'El código del contenido es obligatorio').not().isEmpty(),
-    check('codigoEnlace', 'El código del emlace es obligatorio').not().isEmpty(),
-    validarJWT,
-    validarCampos
-], createContenido);
+router.post("/", [validarJWT, validarSesion], createContenido);
 
-router.put("/:id", [
-    check('codigoEnlace', 'El código del emlace es obligatorio').not().isEmpty(),
-    validarJWT,
-    validarCampos
-], updateContenido);
+router.put("/:id", [validarJWT, validarSesion], updateContenido);
 
-router.delete("/:id", validarJWT, deleteContenido);
+router.delete("/:id", [validarJWT, validarSesion], validarJWT, deleteContenido);
 
 module.exports = router;

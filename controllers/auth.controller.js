@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Refactored for: QPLUS Architecture, Clean Error Handling & Auth Standards
+    Refactored for: QPLUS Architecture, Clean Error Handling, Auth Standards & Sesiones
 */
 const { response } = require("express");
 const AuthService = require("../services/auth.service");
@@ -10,7 +10,12 @@ const service = new AuthService();
 const login = async (req, res = response) => {
   try {
     const { username, password } = req.body;
-    const { usuario, token } = await service.login(username, password);
+
+    // 🟢 1. Extraemos TODO, incluyendo el codigoSesion, y enviamos la metadata
+    const { usuario, token, codigoSesion } = await service.login(username, password, {
+      dispositivo: req.headers['user-agent'],
+      ip: req.ip
+    });
 
     try {
       const io = getIO();
@@ -26,15 +31,22 @@ const login = async (req, res = response) => {
       console.warn("⚠️ Advertencia: No se pudo emitir la señal en tiempo real al tablero:", errorSocket.message);
     }
 
+    // 🟢 2. Devolvemos el codigoSesion en el JSON de respuesta
     return res.status(200).json({
       ok: true,
       token,
       usuario,
+      codigoSesion // ¡El eslabón perdido!
     });
   } catch (error) {
+    // 🟢 ¡ESTO ES LO QUE NECESITAMOS! Imprimimos el error real completo en la terminal de Node
+    console.error("🔥 [ERROR CRÍTICO EN LOGIN DETALLADO]:", error);
+    console.error("Stack trace:", error.stack);
+
     return res.status(error.statusCode || 500).json({
       ok: false,
-      msg: error.msg || "Error de sistema. Hable con el administrador."
+      // 🟢 Opcional temporal: devuélvelo al frontend también para verlo en pantalla si gustas
+      msg: error.msg || error.message || "Error de sistema. Hable con el administrador."
     });
   }
 };
@@ -91,9 +103,25 @@ const verificarUserInRole = async (req, res = response) => {
   }
 };
 
+// 🟢 3. Añadimos el controlador de cerrarSesion
+const cerrarSesion = async (req, res = response) => {
+  try {
+    const codigoUsuario = req.body.codigoUsuario || req.usuario?.codigoUsuario;
+    const response = await service.cerrarSesion(codigoUsuario);
+
+    return res.status(200).json(response);
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({
+      ok: false,
+      msg: error.msg || "Error de sistema al cerrar sesión."
+    });
+  }
+};
+
 module.exports = {
   login,
   renewToken,
   verificarClaveActual,
   verificarUserInRole,
+  cerrarSesion // 🟢 Exportamos el método
 };

@@ -6,6 +6,8 @@
 const { Router } = require("express");
 const { validarJWT } = require("../middlewares/validar-jwt");
 const { validarPermiso } = require('../middlewares/validar-permiso');
+const { validarSesion } = require("../middlewares/validar-sesion");
+const { actualizarContextoSesion } = require('../controllers/contexto.controller');
 
 const {
   getSesionesActivas,
@@ -17,20 +19,20 @@ const {
 
 const router = Router();
 
+// router.use(validarSesion);
 // router.use(validarJWT);
+// , [ validarPermiso('ACT_SESIONES_VER') ],
 
-router.get("/", [
-  validarPermiso('ACT_SESIONES_VER')
-], getSesionesActivas);
+router.get("/", getSesionesActivas);
 
-router.get("/:id", [
-  validarPermiso('ACT_SESIONES_VER')
-], getSesionById);
+router.get("/:id", getSesionById);
 
 router.post("/", registrarSesion);
 
-router.put("/contexto/:id", actualizarContextoNavegacion);
+router.post('/contexto', actualizarContextoSesion);
 
-router.delete("/:id", cerrarSesion);
+router.put("/contexto/:id", [validarJWT, validarSesion], actualizarContextoNavegacion);
+
+router.delete("/:id", [validarJWT, validarSesion], cerrarSesion);
 
 module.exports = router;

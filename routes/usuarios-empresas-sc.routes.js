@@ -3,9 +3,9 @@
     Ruta: /api/usuarios-empresas
 */
 const { Router } = require("express");
-const { check } = require("express-validator");
-const { validarCampos } = require("../middlewares/validar-campos");
 const { validarJWT } = require("../middlewares/validar-jwt");
+const { validarSesion } = require("../middlewares/validar-sesion");
+
 const {
     getUsuariosEmpresas,
     getUsuarioEmpresaById,
@@ -16,24 +16,17 @@ const {
 
 const router = Router();
 
+// router.use(validarSesion);
 // router.use(validarJWT);
 
 router.get("/", getUsuariosEmpresas);
 
-router.get("/:id", validarJWT, getUsuarioEmpresaById);
+router.get("/:id", getUsuarioEmpresaById);
 
-router.post("/", [
-    check('codigoUsuario', 'El código de usuario es obligatorio').not().isEmpty(),
-    check('codigoSuscriptor', 'El código de suscriptor es obligatorio').not().isEmpty(),
-    validarJWT,
-    validarCampos
-], createUsuarioEmpresa);
+router.post("/", [validarJWT, validarSesion], createUsuarioEmpresa);
 
-router.put("/:id", [
-    validarJWT,
-    validarCampos
-], updateUsuarioEmpresa);
+router.put("/:id", [validarJWT, validarSesion], updateUsuarioEmpresa);
 
-router.delete("/:id", validarJWT, deleteUsuarioEmpresa);
+router.delete("/:id", [validarJWT, validarSesion], validarJWT, deleteUsuarioEmpresa);
 
 module.exports = router;

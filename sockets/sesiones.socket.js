@@ -62,6 +62,40 @@ function configurarSockets(io) {
       }
     });
 
+    socket.on('actualizar-contexto', async (data) => {
+      try {
+        if (!data.codigoSesion) return;
+
+        const camposAActualizar = {
+          ultimaActividad: data.fechaActualizacion
+        };
+
+        if (data.codigoSuscriptor !== undefined) {
+          camposAActualizar.codigoSuscriptor = data.codigoSuscriptor;
+        }
+
+        if (data.codigoAplicacion !== undefined) {
+          camposAActualizar.codigoAplicacion = data.codigoAplicacion;
+        }
+
+        if (data.codigoSuite !== undefined) {
+          camposAActualizar.codigoSuite = data.codigoSuite;
+        }
+
+        if (data.codigoModulo !== undefined) {
+          camposAActualizar.codigoModulo = data.codigoModulo;
+        }
+
+        // Ejecutamos el UPDATE con tu modelo de Sequelize
+        await Sesion.update(camposAActualizar, {
+          where: { codigoSesion: data.codigoSesion }
+        });
+
+      } catch (error) {
+        console.error('Error actualizando el contexto de la sesión:', error);
+      }
+    });
+
     // Desconexión (Capa 8)
     socket.on('disconnect', async () => {
       try {

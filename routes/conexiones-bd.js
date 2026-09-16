@@ -2,6 +2,8 @@ const { Router } = require("express");
 const { check } = require("express-validator");
 const { validarCampos } = require("../middlewares/validar-campos");
 const { validarJWT } = require("../middlewares/validar-jwt");
+const { validarSesion } = require("../middlewares/validar-sesion");
+
 const {
     getConexiones,
     getConexionById,
@@ -12,22 +14,17 @@ const {
 
 const router = Router();
 
-router.use(validarJWT);
+// router.use(validarJWT);
+// router.use(validarSesion);
 
 router.get("/", getConexiones);
+
 router.get("/:id", getConexionById);
 
-router.post("/", [
-    check('codigoConexion', 'El código de conexión es obligatorio').not().isEmpty(),
-    check('nombreConexion', 'El nombre descriptivo es obligatorio').not().isEmpty(),
-    check('stringConexion', 'El string de conexión es obligatorio').not().isEmpty(),
-    validarCampos
-], createConexion);
+router.post("/", [validarJWT, validarSesion], createConexion);
 
-router.put("/:id", [
-    validarCampos
-], updateConexion);
+router.put("/:id", [validarJWT, validarSesion], updateConexion);
 
-router.delete("/:id", deleteConexion);
+router.delete("/:id", [validarJWT, validarSesion], deleteConexion);
 
 module.exports = router;

@@ -5,6 +5,7 @@
 const { Router } = require("express");
 const { check } = require("express-validator");
 const { validarCampos } = require("../middlewares/validar-campos");
+const { validarSesion } = require("../middlewares/validar-sesion");
 const { validarJWT } = require("../middlewares/validar-jwt");
 const {
   getActividades,
@@ -19,6 +20,7 @@ const {
 
 const router = Router();
 //router.use(validarJWT);
+// router.use(validarSesion);
 
 router.get("/", getActividades);
 
@@ -30,16 +32,10 @@ router.get("/suite/:id", getActividadByCodeSuite);
 
 router.get("/modulo/:id", getActividadByCodeModulo);
 
-router.post("/", [
-  check('codigoActividad', 'El código de actividad es obligatorio').not().isEmpty(),
-  check('codigoAplicacion', 'El código de la aplicacion es obligatorio').not().isEmpty(),
-  check('codigoSuite', 'El código de la suite es obligatorio').not().isEmpty(),
-  check('codigoModulo', 'El código del modulo es obligatorio').not().isEmpty(),
-  validarCampos
-], createActividad);
+router.post("/", [validarJWT, validarSesion], createActividad);
 
-router.put("/:id", updateActividad)
+router.put("/:id", [validarJWT, validarSesion], updateActividad)
 
-router.delete("/:id", deleteActividad);
+router.delete("/:id", [validarJWT, validarSesion], deleteActividad);
 
 module.exports = router;

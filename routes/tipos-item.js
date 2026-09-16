@@ -3,9 +3,9 @@
     Ruta: /api/seguimientos
 */
 const { Router } = require("express");
-const { check } = require("express-validator");
-const { validarCampos } = require("../middlewares/validar-campos");
 const { validarJWT } = require("../middlewares/validar-jwt");
+const { validarSesion } = require("../middlewares/validar-sesion");
+
 const {
   getTiposItem,
   getTipoItemById,
@@ -16,20 +16,17 @@ const {
 
 const router = Router();
 
-router.use(validarJWT);
+// router.use(validarSesion);
+// router.use(validarJWT);
 
 router.get("/", getTiposItem);
+
 router.get("/:id", getTipoItemById);
 
-router.post("/", [
-  check('nombreTipo', 'El nombre del tipo es obligatorio').not().isEmpty(),
-  validarCampos
-], createTipoItem);
+router.post("/", [validarJWT, validarSesion], createTipoItem);
 
-router.put("/:id", [
-  validarCampos
-], updateTipoItem);
+router.put("/:id", [validarJWT, validarSesion], updateTipoItem);
 
-router.delete("/:id", deleteTipoItem);
+router.delete("/:id", [validarJWT, validarSesion], deleteTipoItem);
 
 module.exports = router;

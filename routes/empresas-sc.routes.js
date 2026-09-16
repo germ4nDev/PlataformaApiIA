@@ -1,7 +1,7 @@
 const { Router } = require("express");
-const { check } = require("express-validator");
-const { validarCampos } = require("../middlewares/validar-campos");
 const { validarJWT } = require("../middlewares/validar-jwt");
+const { validarSesion } = require("../middlewares/validar-sesion");
+
 const {
   getEmpresasSC,
   getEmpresaSCById,
@@ -11,6 +11,7 @@ const {
 } = require("../controllers/empresas-sc.controller");
 
 const router = Router();
+// router.use(validarSesion);
 
 // router.use(validarJWT);
 
@@ -18,10 +19,10 @@ router.get("/", getEmpresasSC);
 
 router.get("/:id", getEmpresaSCById);
 
-router.post("/", createEmpresaSC);
+router.post("/", [validarJWT, validarSesion], createEmpresaSC);
 
-router.put("/:id", updateEmpresaSC);
+router.put("/:id", [validarJWT, validarSesion], updateEmpresaSC);
 
-router.delete("/:id", deleteEmpresaSC);
+router.delete("/:id", [validarJWT, validarSesion], deleteEmpresaSC);
 
 module.exports = router;

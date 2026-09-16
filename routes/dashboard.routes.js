@@ -1,9 +1,11 @@
 // dashboard.routes.js
 const { Router } = require('express');
 const dashboardController = require('./../controllers/dashboard.controller');
-// const { validarJWT } = require('../middlewares/validar-jwt'); // Opcional si proteges las rutas con auth
+const { validarSesion } = require("../middlewares/validar-sesion");
+const { validarJWT } = require('../middlewares/validar-jwt'); // Opcional si proteges las rutas con auth
 
 const router = Router();
+// router.use(validarSesion);
 
 // Endpoints del Dashboard
 router.get('/usuarios-conectados', dashboardController.obtenerUsuariosConectados);

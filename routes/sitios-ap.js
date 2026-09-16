@@ -3,9 +3,9 @@
     Ruta: /api/sitio-ap
 */
 const { Router } = require("express");
-const { check } = require("express-validator");
-const { validarCampos } = require("../middlewares/validar-campos");
 const { validarJWT } = require("../middlewares/validar-jwt");
+const { validarSesion } = require("../middlewares/validar-sesion");
+
 const {
     getSitios,
     getSitioById,
@@ -16,21 +16,17 @@ const {
 
 const router = Router();
 
-router.use(validarJWT);
+// router.use(validarSesion);
+// router.use(validarJWT);
 
 router.get("/", getSitios);
+
 router.get("/:id", getSitioById);
 
-router.post("/", [
-    check('nombreSitio', 'El nombre es obligatorio').not().isEmpty(),
-    check('urlSitio', 'La URL del sitio es obligatoria').not().isEmpty(),
-    validarCampos
-], createSitio);
+router.post("/", [validarJWT, validarSesion], createSitio);
 
-router.put("/:id", [
-    validarCampos
-], updateSitio);
+router.put("/:id", [validarJWT, validarSesion], updateSitio);
 
-router.delete("/:id", deleteSitio);
+router.delete("/:id", [validarJWT, validarSesion], deleteSitio);
 
 module.exports = router;

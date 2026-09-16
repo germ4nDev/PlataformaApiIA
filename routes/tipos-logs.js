@@ -3,9 +3,9 @@
     Ruta: /api/seguimientos
 */
 const { Router } = require("express");
-const { check } = require("express-validator");
-const { validarCampos } = require("../middlewares/validar-campos");
 const { validarJWT } = require("../middlewares/validar-jwt");
+const { validarSesion } = require("../middlewares/validar-sesion");
+
 const {
   getTiposLogs,
   getTipoLogById,
@@ -16,20 +16,17 @@ const {
 
 const router = Router();
 
-router.use(validarJWT);
+// router.use(validarSesion);
+// router.use(validarJWT);
 
 router.get("/", getTiposLogs);
+
 router.get("/:id", getTipoLogById);
 
-router.post("/", [
-  check('nombreTipoLog', 'El nombre del tipo de log es obligatorio').not().isEmpty(),
-  validarCampos
-], createTipoLog);
+router.post("/", [validarJWT, validarSesion], createTipoLog);
 
-router.put("/:id", [
-  validarCampos
-], updateTipoLog);
+router.put("/:id", [validarJWT, validarSesion], updateTipoLog);
 
-router.delete("/:id", deleteTipoLog);
+router.delete("/:id", [validarJWT, validarSesion], deleteTipoLog);
 
 module.exports = router;

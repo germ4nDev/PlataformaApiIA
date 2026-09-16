@@ -2,6 +2,8 @@ const { Router } = require("express");
 const { check } = require("express-validator");
 const { validarCampos } = require("../middlewares/validar-campos");
 const { validarJWT } = require("../middlewares/validar-jwt");
+const { validarSesion } = require("../middlewares/validar-sesion");
+
 const {
     getClasesTickets,
     getClaseTicketById,
@@ -12,21 +14,17 @@ const {
 
 const router = Router();
 
-router.use(validarJWT);
+//router.use(validarJWT);
+// router.use(validarSesion);
 
 router.get("/", getClasesTickets);
+
 router.get("/:id", getClaseTicketById);
 
-router.post("/", [
-    check('codigoClase', 'El código es obligatorio').not().isEmpty(),
-    check('claseTicket', 'El nombre de la clase es obligatorio').not().isEmpty(),
-    validarCampos
-], createClaseTicket);
+router.post("/", [validarJWT, validarSesion], createClaseTicket);
 
-router.put("/:id", [
-    validarCampos
-], updateClaseTicket);
+router.put("/:id", [validarJWT, validarSesion], updateClaseTicket);
 
-router.delete("/:id", deleteClaseTicket);
+router.delete("/:id", [validarJWT, validarSesion], deleteClaseTicket);
 
 module.exports = router;

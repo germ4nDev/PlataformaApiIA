@@ -1,7 +1,7 @@
 const { Router } = require("express");
-const { check } = require("express-validator");
-const { validarCampos } = require("../middlewares/validar-campos");
 const { validarJWT } = require("../middlewares/validar-jwt");
+const { validarSesion } = require("../middlewares/validar-sesion");
+
 const {
   getWidgetsRoles,
   getWidgetByCodeWidget,
@@ -14,6 +14,7 @@ const {
 
 const router = Router();
 //router.use(validarJWT);
+// router.use(validarSesion);
 
 router.get("/", getWidgetsRoles);
 
@@ -21,18 +22,12 @@ router.get("/acti/:ac", getWidgetByCodeWidget);
 
 router.get("/role/:ro", getWidgetByCodeRole);
 
-router.post("/bulk/:id", createBulkWidgetsRoles);
+router.post("/bulk/:id", [validarJWT, validarSesion], createBulkWidgetsRoles);
 
-router.post("/", [
-  check('codigoWidget', 'El código de actividad es obligatorio').not().isEmpty(),
-  check('codigoRole', 'El código de rol es obligatorio').not().isEmpty(),
-  validarCampos
-], createWidgetRole);
+router.post("/", [validarJWT, validarSesion], createWidgetRole);
 
-router.put("/:id", [
-  validarCampos
-], updateWidgetRole);
+router.put("/:id", [validarJWT, validarSesion], updateWidgetRole);
 
-router.delete("/:id", deleteWidgetRole);
+router.delete("/:id", [validarJWT, validarSesion], deleteWidgetRole);
 
 module.exports = router;

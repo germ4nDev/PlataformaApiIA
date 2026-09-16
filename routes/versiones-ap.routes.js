@@ -4,9 +4,8 @@
     Ruta: /api/versiones-ap
 */
 const { Router } = require("express");
-const { check } = require("express-validator");
-const { validarCampos } = require("../middlewares/validar-campos");
 const { validarJWT } = require("../middlewares/validar-jwt");
+const { validarSesion } = require("../middlewares/validar-sesion");
 
 const {
     getVersionesAP,
@@ -18,20 +17,17 @@ const {
 
 const router = Router();
 
-router.use(validarJWT);
+// router.use(validarSesion);
+// router.use(validarJWT);
 
 router.get("/", getVersionesAP);
+
 router.get("/:id", getVersionAPById);
 
-router.post("/", [
-    check('nombreVersion', 'El nombre de la versión es obligatorio').not().isEmpty(),
-    validarCampos
-], createVersionAP);
+router.post("/", [validarJWT, validarSesion], createVersionAP);
 
-router.put("/:id", [
-    validarCampos
-], updateVersionAP);
+router.put("/:id", [validarJWT, validarSesion], updateVersionAP);
 
-router.delete("/:id", deleteVersionAP);
+router.delete("/:id", [validarJWT, validarSesion], deleteVersionAP);
 
 module.exports = router;

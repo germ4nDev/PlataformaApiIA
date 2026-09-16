@@ -4,9 +4,9 @@
     Ruta: /api/tickets
 */
 const { Router } = require("express");
-const { check } = require("express-validator");
-const { validarCampos } = require("../middlewares/validar-campos");
 const { validarJWT } = require("../middlewares/validar-jwt");
+const { validarSesion } = require("../middlewares/validar-sesion");
+
 const {
     getTickets,
     getTicketById,
@@ -17,21 +17,17 @@ const {
 
 const router = Router();
 
-router.use(validarJWT);
+// router.use(validarSesion);
+// router.use(validarJWT);
 
 router.get("/", getTickets);
+
 router.get("/:id", getTicketById);
 
-router.post("/", [
-    check('nombreTicket', 'El nombre del ticket es obligatorio').not().isEmpty(),
-    check('descripcionTicket', 'La descripción es obligatoria').not().isEmpty(),
-    validarCampos
-], createTicket);
+router.post("/", [validarJWT, validarSesion], createTicket);
 
-router.put("/:id", [
-    validarCampos
-], updateTicket);
+router.put("/:id", [validarJWT, validarSesion], updateTicket);
 
-router.delete("/:id", deleteTicket);
+router.delete("/:id", [validarJWT, validarSesion], deleteTicket);
 
 module.exports = router;

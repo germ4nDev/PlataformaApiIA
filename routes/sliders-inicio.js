@@ -4,9 +4,9 @@
     Ruta: /api/slidersInicio
 */
 const { Router } = require("express");
-const { check } = require("express-validator");
-const { validarCampos } = require("../middlewares/validar-campos");
-const { validarJWT } = require("../middlewares/validar-jwt");
+// const { validarJWT } = require("../middlewares/validar-jwt");
+// const { validarSesion } = require("../middlewares/validar-sesion");
+
 const {
     getSliders,
     getSliderById,
@@ -16,15 +16,16 @@ const {
 } = require("../controllers/sliders-inicio");
 
 const router = Router();
+// router.use(validarSesion);
 
 router.get("/", getSliders);
 
-router.get("/:id", [validarJWT], getSliderById);
+router.get("/:id", getSliderById);
 
-router.post("/", [validarJWT], createSlider);
+router.post("/", createSlider);
 
-router.put("/:id", [validarJWT], updateSlider);
+router.put("/:id", updateSlider);
 
-router.delete("/:id", [validarJWT], deleteSlider);
+router.delete("/:id", deleteSlider);
 
 module.exports = router;

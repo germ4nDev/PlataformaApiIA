@@ -6,6 +6,7 @@
 const { Router } = require("express");
 const { validarJWT } = require("../middlewares/validar-jwt");
 const { validarPermiso } = require('../middlewares/validar-permiso');
+const { validarSesion } = require("../middlewares/validar-sesion");
 
 const {
   getLayoutByUsuario,
@@ -14,11 +15,12 @@ const {
 
 const router = Router();
 
+// router.use(validarSesion);
 // Opcional: Proteger las rutas con JWT si ya lo tienes implementado
 // router.use(validarJWT);
 
 router.get("/:codigoUsuario", getLayoutByUsuario);
 
-router.post("/", saveOrUpdateLayout);
+router.post("/", [validarJWT, validarSesion], saveOrUpdateLayout);
 
 module.exports = router;

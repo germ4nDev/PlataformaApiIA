@@ -3,9 +3,9 @@
     Ruta: /api/clasesTcket
 */
 const { Router } = require("express");
-const { check } = require("express-validator");
-const { validarCampos } = require("../middlewares/validar-campos");
 const { validarJWT } = require("../middlewares/validar-jwt");
+const { validarSesion } = require("../middlewares/validar-sesion");
+
 const {
     getFormatosGaleria,
     getFormatoGaleriaById,
@@ -16,23 +16,17 @@ const {
 
 const router = Router();
 
+// router.use(validarSesion);
 // router.use(validarJWT);
 
 router.get("/", getFormatosGaleria);
 
-router.get("/:id", validarJWT, getFormatoGaleriaById);
+router.get("/:id", getFormatoGaleriaById);
 
-router.post("/", [
-    check('nombreFormato', 'El nombre del formato es obligatorio').not().isEmpty(),
-    validarJWT,
-    validarCampos
-], createFormatoGaleria);
+router.post("/", [validarJWT, validarSesion], createFormatoGaleria);
 
-router.put("/:id", [
-    validarJWT,
-    validarCampos
-], updateFormatoGaleria);
+router.put("/:id", [validarJWT, validarSesion], updateFormatoGaleria);
 
-router.delete("/:id", validarJWT, deleteFormatoGaleria);
+router.delete("/:id", [validarJWT, validarSesion], validarJWT, deleteFormatoGaleria);
 
 module.exports = router;

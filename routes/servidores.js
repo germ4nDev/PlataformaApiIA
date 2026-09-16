@@ -3,9 +3,9 @@
     Ruta: /api/seguimientos
 */
 const { Router } = require("express");
-const { check } = require("express-validator");
-const { validarCampos } = require("../middlewares/validar-campos");
 const { validarJWT } = require("../middlewares/validar-jwt");
+const { validarSesion } = require("../middlewares/validar-sesion");
+
 const {
     getServidores,
     getServidorById,
@@ -16,21 +16,17 @@ const {
 
 const router = Router();
 
-router.use(validarJWT);
+router.use(validarSesion);
+// router.use(validarJWT);
 
 router.get("/", getServidores);
+
 router.get("/:id", getServidorById);
 
-router.post("/", [
-    check('nombreServidor', 'El nombre es obligatorio').not().isEmpty(),
-    check('ipServidor', 'La IP del servidor es obligatoria').not().isEmpty(),
-    validarCampos
-], createServidor);
+router.post("/", [validarJWT, validarSesion], createServidor);
 
-router.put("/:id", [
-    validarCampos
-], updateServidor);
+router.put("/:id", [validarJWT, validarSesion], updateServidor);
 
-router.delete("/:id", deleteServidor);
+router.delete("/:id", [validarJWT, validarSesion], deleteServidor);
 
 module.exports = router;

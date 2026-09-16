@@ -2,6 +2,8 @@ const { Router } = require("express");
 const { check } = require("express-validator");
 const { validarCampos } = require("../middlewares/validar-campos");
 const { validarJWT } = require("../middlewares/validar-jwt");
+const { validarSesion } = require("../middlewares/validar-sesion");
+
 const {
     getColoresSettings,
     getColorSettingById,
@@ -12,20 +14,17 @@ const {
 
 const router = Router();
 
-router.use(validarJWT);
+// router.use(validarJWT);
+// router.use(validarSesion);
 
 router.get("/", getColoresSettings);
+
 router.get("/:id", getColorSettingById);
 
-router.post("/", [
-    check('colorNav', 'El color principal es obligatorio').not().isEmpty(),
-    validarCampos
-], createColorSetting);
+router.post("/", [validarJWT, validarSesion], createColorSetting);
 
-router.put("/:id", [
-    validarCampos
-], updateColorSetting);
+router.put("/:id", [validarJWT, validarSesion], updateColorSetting);
 
-router.delete("/:id", deleteColorSetting);
+router.delete("/:id", [validarJWT, validarSesion], deleteColorSetting);
 
 module.exports = router;

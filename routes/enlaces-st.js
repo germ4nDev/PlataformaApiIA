@@ -3,9 +3,9 @@
     Ruta: /api/seguimientos
 */
 const { Router } = require("express");
-const { check } = require("express-validator");
-const { validarCampos } = require("../middlewares/validar-campos");
 const { validarJWT } = require("../middlewares/validar-jwt");
+const { validarSesion } = require("../middlewares/validar-sesion");
+
 const {
     getEnlaces,
     getEnlaceById,
@@ -15,22 +15,17 @@ const {
 } = require("../controllers/enlaces-st");
 
 const router = Router();
-
-router.use(validarJWT);
+//router.use(validarSesion);
+// router.use(validarJWT);
 
 router.get("/", getEnlaces);
+
 router.get("/:id", getEnlaceById);
 
-router.post("/", [
-    check('nombreEnlace', 'El nombre del enlace es obligatorio').not().isEmpty(),
-    check('urlEnlace', 'La URL es obligatoria').not().isEmpty(),
-    validarCampos
-], createEnlace);
+router.post("/", [validarJWT, validarSesion], createEnlace);
 
-router.put("/:id", [
-    validarCampos
-], updateEnlace);
+router.put("/:id", [validarJWT, validarSesion], updateEnlace);
 
-router.delete("/:id", deleteEnlace);
+router.delete("/:id", [validarJWT, validarSesion], deleteEnlace);
 
 module.exports = router;

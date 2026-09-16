@@ -6,6 +6,8 @@ const { Router } = require("express");
 const { check } = require("express-validator");
 const { validarCampos } = require("../middlewares/validar-campos");
 const { validarJWT } = require("../middlewares/validar-jwt");
+const { validarSesion } = require("../middlewares/validar-sesion");
+
 const {
     getAplicaciones,
     getAplicacionByCode,
@@ -15,22 +17,16 @@ const {
 } = require("../controllers/aplicaciones");
 
 const router = Router();
+// router.use(validarSesion);
 
-router.get("/", validarJWT, getAplicaciones);
+router.get("/", getAplicaciones);
 
-router.get("/:code", validarJWT, getAplicacionByCode);
+router.get("/:code", getAplicacionByCode);
 
-router.post("/", [
-    check('codigoAplicacion', 'El código de la aplicacion es obligatorio').not().isEmpty(),
-    validarJWT,
-    validarCampos
-], createAplicacion);
+router.post("/", [validarJWT, validarSesion], createAplicacion);
 
-router.put("/:id", [
-    validarJWT,
-    validarCampos
-], updateAplicacion);
+router.put("/:id", [validarJWT, validarSesion], updateAplicacion);
 
-router.delete("/:id", validarJWT, deleteAplicacion);
+router.delete("/:id", [validarJWT, validarSesion], deleteAplicacion);
 
 module.exports = router;

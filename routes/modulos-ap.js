@@ -3,9 +3,9 @@
     Ruta: /api/usuarios-roles
 */
 const { Router } = require("express");
-const { check } = require("express-validator");
-const { validarCampos } = require("../middlewares/validar-campos");
 const { validarJWT } = require("../middlewares/validar-jwt");
+const { validarSesion } = require("../middlewares/validar-sesion");
+
 const {
     getModulos,
     getModuloById,
@@ -16,23 +16,17 @@ const {
 
 const router = Router();
 
+// router.use(validarSesion);
 // router.use(validarJWT);
 
 router.get("/", getModulos);
+
 router.get("/:id", validarJWT, getModuloById);
 
-router.post("/", [
-    check('codigoModulo', 'El código es obligatorio').not().isEmpty(),
-    check('nombreModulo', 'El nombre es obligatorio').not().isEmpty(),
-    validarJWT,
-    validarCampos
-], createModulo);
+router.post("/", [validarJWT, validarSesion], createModulo);
 
-router.put("/:id", [
-    validarJWT,
-    validarCampos
-], updateModulo);
+router.put("/:id", [validarJWT, validarSesion], updateModulo);
 
-router.delete("/:id", validarJWT, deleteModulo);
+router.delete("/:id", [validarJWT, validarSesion], deleteModulo);
 
 module.exports = router;

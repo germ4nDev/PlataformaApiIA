@@ -8,16 +8,19 @@ const { generarJWT } = require("../helpers/jwt");
 const { UsuarioModel } = require('../models/usuario');
 const { getIO } = require('../helpers/socket.helper');
 
+// 🟢 1. Importamos el servicio de sesiones
+const SesionesService = require('./sesiones.service');
+
 class AuthService {
   constructor() {
     this.model = UsuarioModel(sequelize);
+    this.sesionesService = new SesionesService(); // 🟢 Instanciamos el servicio
   }
 
-  async login(username, password) {
+  async login(username, password, metadata = {}) {
     const usuarioDB = await this.model.findOne({
       where: { userNameUsuario: username }
     });
-    console.log('usuarioDB', usuarioDB);
 
     if (!usuarioDB) throw { statusCode: 404, msg: "Usuario no encontrado." };
     if (!usuarioDB.estadoUsuario) throw { statusCode: 403, msg: "El usuario se encuentra inactivo." };
@@ -33,7 +36,16 @@ class AuthService {
       usuarioDB.fotoUsuario
     );
 
-    // 🟢 PROTECCIÓN DEL SOCKET (Evita el Error 500)
+    // 🟢 2. REGISTRAMOS LA SESIÓN EN LA BASE DE DATOS
+    const nuevaSesion = await this.sesionesService.registrarSesion({
+      codigoUsuario: usuarioDB.codigoUsuario,
+      nombreUsuario: usuarioDB.nombreUsuario, // <-- ¡AQUÍ ESTABA EL FALTANTE!
+      correoUsuario: usuarioDB.correoUsuario, // <-- Por si tu DTO también lo exige
+      dispositivo: metadata.dispositivo || 'Web',
+      ip: metadata.ip || '0.0.0.0'
+    });
+
+    // Notificación por socket de autenticación
     try {
       const io = getIO();
       io.emit('autenticaciones-actualizadas', {
@@ -44,7 +56,7 @@ class AuthService {
       console.warn("⚠️ No se pudo emitir la notificación de login por socket:", errorSocket.message);
     }
 
-    // Respuesta limpia (sin clave)
+    // 🟢 3. RETORNAMOS EL CODIGO DE SESION AL FRONTEND
     return {
       usuario: {
         codigoUsuario: usuarioDB.codigoUsuario,
@@ -52,31 +64,28 @@ class AuthService {
         userNameUsuario: usuarioDB.userNameUsuario,
         correoUsuario: usuarioDB.correoUsuario,
         usuarioAdministrador: usuarioDB.usuarioAdministrador,
-        fotoUsuario: usuarioDB.fotoUsuario
+        fotoUsuario: usuarioDB.fotoUsuario,
+        codigoSesion: nuevaSesion.codigoSesion // 🟢 Ahora vive dentro del contexto del usuario
       },
       token
     };
   }
 
   async verificarClave(username, password) {
-    // 1. Validar que el controlador sí esté enviando el password
     if (!password) throw { statusCode: 400, msg: "La contraseña es requerida para validar." };
 
     const usuarioDB = await this.model.findOne({
       where: { userNameUsuario: username },
-      // 2. Forzar la carga de la clave en caso de que esté oculta globalmente en el modelo
       attributes: { include: ['claveUsuario'] }
     });
 
     if (!usuarioDB) throw { statusCode: 404, msg: "Usuario no encontrado." };
 
-    // 3. Validar que el usuario en la BD realmente tenga un hash registrado
     if (!usuarioDB.claveUsuario) {
       console.error(`El usuario ${username} no tiene un hash de contraseña en la BD.`);
       throw { statusCode: 500, msg: "Error de integridad: El usuario no tiene clave registrada." };
     }
 
-    // 4. Ejecutar bcrypt sabiendo que ambos parámetros son strings válidos
     const isMatch = await bcrypt.compare(password, usuarioDB.claveUsuario);
 
     if (!isMatch) throw { statusCode: 401, msg: "Contraseña incorrecta." };
@@ -98,7 +107,6 @@ class AuthService {
       usuarioDB.correoUsuario
     );
 
-    // Retorno de usuario sin clave sensible
     return {
       usuario: {
         codigoUsuario: usuarioDB.codigoUsuario,
@@ -111,27 +119,24 @@ class AuthService {
     };
   }
 
-  async cerrarSesion(req, res) {
-    try {
-      // Asumiendo que el middleware de autenticación te deja el codigoUsuario (o viene en el body/params)
-      const codigoUsuario = req.body.codigoUsuario || req.usuario?.codigoUsuario;
+  // 🟢 4. REFACTORIZADO: Un servicio no debe recibir req, res. Solo recibe los datos.
+  async cerrarSesion(codigoUsuario) {
+    if (codigoUsuario) {
+      // Usamos this.model en lugar de PTLUsuarios
+      await this.model.update(
+        { isOnline: false },
+        { where: { codigoUsuario } }
+      );
 
-      if (codigoUsuario) {
-        // 1. Pasamos isOnline a false en la base de datos
-        await PTLUsuarios.update(
-          { isOnline: false },
-          { where: { codigoUsuario } }
-        );
-
-        // 2. Emitimos el evento global para que todos los dashboards actualicen el contador
-        // (Si tienes acceso a 'io' en este controlador)
-        global.io.emit("usuariosActualizados");
+      // Usamos el helper getIO de forma segura
+      try {
+        const io = getIO();
+        io.emit("usuariosActualizados");
+      } catch (error) {
+        console.warn("⚠️ No se pudo emitir usuariosActualizados por socket:", error.message);
       }
-
-      return res.status(200).json({ success: true, message: "Sesión cerrada correctamente" });
-    } catch (error) {
-      return res.status(500).json({ success: false, message: error.message });
     }
+    return { success: true, message: "Sesión cerrada correctamente" };
   }
 
   /**
@@ -141,7 +146,6 @@ class AuthService {
     if (!roles || !Array.isArray(roles)) return false;
     return roles.some((rol) => rol.nombre === roleToCheck);
   }
-
 }
 
 module.exports = AuthService;

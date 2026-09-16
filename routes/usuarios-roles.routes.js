@@ -3,9 +3,8 @@
     Ruta: /api/usuarios-roles
 */
 const { Router } = require("express");
-const { check } = require("express-validator");
-const { validarCampos } = require("../middlewares/validar-campos");
 const { validarJWT } = require("../middlewares/validar-jwt");
+const { validarSesion } = require("../middlewares/validar-sesion");
 
 const {
   getUsuariosRoles,
@@ -19,14 +18,21 @@ const {
 
 const router = Router();
 
+// router.use(validarSesion);
 // router.use(validarJWT);
 
 router.get("/", getUsuariosRoles);
+
 router.get("/:id", getUsuarioRoleById);
-router.post('/sincronizar', sincronizarRoles);
-router.post('/sincronizar-usuarios', sincronizarUsuariosRole);
-router.post("/", createUsuarioRole);
-router.put("/:id", updateUsuarioRole);
-router.delete("/:id", deleteUsuarioRole);
+
+router.post('/sincronizar', [validarJWT, validarSesion], sincronizarRoles);
+
+router.post('/sincronizar-usuarios', [validarJWT, validarSesion], sincronizarUsuariosRole);
+
+router.post("/", [validarJWT, validarSesion], createUsuarioRole);
+
+router.put("/:id", [validarJWT, validarSesion], updateUsuarioRole);
+
+router.delete("/:id", [validarJWT, validarSesion], deleteUsuarioRole);
 
 module.exports = router;

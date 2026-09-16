@@ -4,9 +4,8 @@
     Ruta: /api/usuarios-sc
 */
 const { Router } = require("express");
-const { check } = require("express-validator");
-const { validarCampos } = require("../middlewares/validar-campos");
 const { validarJWT } = require("../middlewares/validar-jwt");
+const { validarSesion } = require("../middlewares/validar-sesion");
 
 const {
     getUsuariosSC,
@@ -20,20 +19,21 @@ const {
 
 const router = Router();
 
+//router.use(validarSesion);
 // router.use(validarJWT);
 
 router.get("/", getUsuariosSC);
 
 router.get("/:id", getUsuarioSCById);
 
-router.get("/suscriptor/:codigoSuscriptor", validarJWT, getUsuariosSCBySuscriptorCode);
+router.get("/suscriptor/:codigoSuscriptor", getUsuariosSCBySuscriptorCode);
 
-router.post('/cargue-masivo', uploadMasivoUsuariosSC);
+router.post('/cargue-masivo', [validarJWT, validarSesion], uploadMasivoUsuariosSC);
 
-router.post("/", createUsuarioSC);
+router.post("/", [validarJWT, validarSesion], createUsuarioSC);
 
-router.put("/:id", updateUsuarioSC);
+router.put("/:id", [validarJWT, validarSesion], updateUsuarioSC);
 
-router.delete("/:id", deleteUsuarioSC);
+router.delete("/:id", [validarJWT, validarSesion], deleteUsuarioSC);
 
 module.exports = router;

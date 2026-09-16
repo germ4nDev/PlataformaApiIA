@@ -3,9 +3,9 @@
     Ruta: /api/suscriptores
 */
 const { Router } = require("express");
-const { check } = require("express-validator");
-const { validarCampos } = require("../middlewares/validar-campos");
 const { validarJWT } = require("../middlewares/validar-jwt");
+const { validarSesion } = require("../middlewares/validar-sesion");
+
 const {
     getSuscriptores,
     getSuscriptorById,
@@ -16,24 +16,17 @@ const {
 
 const router = Router();
 
+// router.use(validarSesion);
 // router.use(validarJWT);
 
 router.get("/", getSuscriptores);
 
-router.get("/:id", validarJWT, getSuscriptorById);
+router.get("/:id", [validarJWT, validarSesion], getSuscriptorById);
 
-router.post("/", [
-    // check('nombreSuscriptor', 'El nombre es obligatorio').not().isEmpty(),
-    // check('identificacionSuscriptor', 'La identificación es obligatoria').not().isEmpty(),
-    // validarJWT,
-    // validarCampos
-], createSuscriptor);
+router.post("/", [validarJWT, validarSesion], createSuscriptor);
 
-router.put("/:id", [
-    // validarJWT,
-    // validarCampos
-], updateSuscriptor);
+router.put("/:id", [validarJWT, validarSesion], updateSuscriptor);
 
-router.delete("/:id", validarJWT, deleteSuscriptor);
+router.delete("/:id", [validarJWT, validarSesion], deleteSuscriptor);
 
 module.exports = router;

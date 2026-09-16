@@ -3,9 +3,9 @@
     Ruta: /api/idiomas
 */
 const { Router } = require("express");
-const { check } = require("express-validator");
-const { validarCampos } = require("../middlewares/validar-campos");
 const { validarJWT } = require("../middlewares/validar-jwt");
+const { validarSesion } = require("../middlewares/validar-sesion");
+
 const {
   getItems,
   getItemById,
@@ -16,21 +16,17 @@ const {
 
 const router = Router();
 
-router.use(validarJWT);
+// router.use(validarSesion);
+// router.use(validarJWT);
 
 router.get("/", getItems);
+
 router.get("/:id", getItemById);
 
-router.post("/", [
-  check('nombreItem', 'El nombre es obligatorio').not().isEmpty(),
-  check('valorUnitario', 'El valor unitario es obligatorio').isNumeric(),
-  validarCampos
-], createItem);
+router.post("/", [validarJWT, validarSesion], createItem);
 
-router.put("/:id", [
-  validarCampos
-], updateItem);
+router.put("/:id", [validarJWT, validarSesion], updateItem);
 
-router.delete("/:id", deleteItem);
+router.delete("/:id", [validarJWT, validarSesion], deleteItem);
 
 module.exports = router;

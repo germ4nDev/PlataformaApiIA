@@ -4,6 +4,7 @@
 */
 const { Router } = require("express");
 const { validarJWT } = require("../middlewares/validar-jwt");
+const { validarSesion } = require("../middlewares/validar-sesion");
 
 const {
   getTiposPago,
@@ -15,14 +16,19 @@ const {
 
 const router = Router();
 
+//router.use(validarSesion);
 // Middleware central para asegurar todas las peticiones
 // router.use(validarJWT);
 
 // Rutas CRUD
 router.get("/", getTiposPago);
+
 router.get("/:id", getTipoPagoById);
-router.post("/", createTipoPago);
-router.put("/:id", updateTipoPago);
-router.delete("/:id", deleteTipoPago);
+
+router.post("/", [validarJWT, validarSesion], createTipoPago);
+
+router.put("/:id", [validarJWT, validarSesion], updateTipoPago);
+
+router.delete("/:id", [validarJWT, validarSesion], deleteTipoPago);
 
 module.exports = router;

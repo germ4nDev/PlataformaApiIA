@@ -3,9 +3,9 @@
     Ruta: /api/roles
 */
 const { Router } = require("express");
-const { check } = require("express-validator");
-const { validarCampos } = require("../middlewares/validar-campos");
 const { validarJWT } = require("../middlewares/validar-jwt");
+const { validarSesion } = require("../middlewares/validar-sesion");
+
 const {
     getRoles,
     getRoleById,
@@ -17,16 +17,19 @@ const {
 
 const router = Router();
 
+// router.use(validarSesion);
 // router.use(validarJWT);
 
 router.get("/", getRoles);
+
 router.get("/:id", getRoleById);
+
 router.get("/app/:appCode", getRolesByApp);
 
-router.post("/", createRole);
+router.post("/", [validarJWT, validarSesion], createRole);
 
-router.put("/:id", updateRole);
+router.put("/:id", [validarJWT, validarSesion], updateRole);
 
-router.delete("/:id", deleteRole);
+router.delete("/:id", [validarJWT, validarSesion], deleteRole);
 
 module.exports = router;

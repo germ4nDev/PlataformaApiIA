@@ -4,9 +4,9 @@
     Ruta: /api/requerimientos
 */
 const { Router } = require("express");
-const { check } = require("express-validator");
-const { validarCampos } = require("../middlewares/validar-campos");
 const { validarJWT } = require("../middlewares/validar-jwt");
+const { validarSesion } = require("../middlewares/validar-sesion");
+
 const {
     getRequerimientos,
     getRequerimientoById,
@@ -17,20 +17,17 @@ const {
 
 const router = Router();
 
-router.use(validarJWT);
+// router.use(validarSesion);
+// router.use(validarJWT);
 
 router.get("/", getRequerimientos);
+
 router.get("/:id", getRequerimientoById);
 
-router.post("/", [
-    check('nombreRequerimiento', 'El nombre es obligatorio').not().isEmpty(),
-    validarCampos
-], createRequerimiento);
+router.post("/", [validarJWT, validarSesion], createRequerimiento);
 
-router.put("/:id", [
-    validarCampos
-], updateRequerimiento);
+router.put("/:id", [validarJWT, validarSesion], updateRequerimiento);
 
-router.delete("/:id", deleteRequerimiento);
+router.delete("/:id", [validarJWT, validarSesion], deleteRequerimiento);
 
 module.exports = router;

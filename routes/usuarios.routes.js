@@ -7,6 +7,7 @@ const { Router } = require("express");
 const { validarJWT } = require("../middlewares/validar-jwt");
 const { validarPermiso } = require('../middlewares/validar-permiso');
 // const multer = require('multer');
+const { validarSesion } = require("../middlewares/validar-sesion");
 
 const {
   getUsuarios,
@@ -20,6 +21,7 @@ const {
 } = require("../controllers/usuarios.controller");
 
 const router = Router();
+// router.use(validarSesion);
 
 // const upload = multer({ storage: multer.memoryStorage() });
 
@@ -29,23 +31,23 @@ router.get("/", getUsuarios);
 
 router.get("/:id", getUsuarioById);
 
-router.post('/cargue-masivo', [
+router.post('/cargue-masivo', [validarJWT, validarSesion,
   validarPermiso('ACT_USR_CARGUE')
 ], uploadMasivoUsuarios);
 
-router.post("/validate-password", validatePassword);
+router.post("/validate-password", [validarJWT, validarSesion], validatePassword);
 
-router.post("/", [
+router.post("/", [validarJWT, validarSesion,
   validarPermiso('ACT_USR_CREAR')
 ], createUsuario);
 
-router.put("/:id", [
+router.put("/:id", [validarJWT, validarSesion,
   validarPermiso('ACT_USR_ACTUALIZAR')
 ], updateUsuario);
 
-router.put("/password/:id", updateUsuarioPassword);
+router.put("/password/:id", [validarJWT, validarSesion], updateUsuarioPassword);
 
-router.delete("/:id", [
+router.delete("/:id", [validarJWT, validarSesion,
   validarPermiso('ACT_USR_ELIMINAR')
 ], deleteUsuario);
 
