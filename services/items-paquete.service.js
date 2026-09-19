@@ -4,7 +4,7 @@
 */
 const { sequelize } = require('../database/connection');
 const { ItemPaqueteModel, ItemPaqueteDTO } = require('../models/item-paquete');
-const { io } = require('../index');
+const { getIO } = require('../helpers/socket.helper');
 
 class ItemPaqueteService {
   constructor() {
@@ -47,7 +47,7 @@ class ItemPaqueteService {
 
       const nuevo = await this.model.create(dataDTO, { transaction: t });
 
-      io.emit('items-paquete-actualizados', {
+      getIO().emit('items-paquete-actualizados', {
         action: 'create',
         msg: `Item Paquete creado: ${nuevo.codigoItem}`
       });
@@ -81,7 +81,7 @@ class ItemPaqueteService {
         transaction: t
       });
 
-      io.emit('items-paquete-actualizados', {
+      getIO().emit('items-paquete-actualizados', {
         action: 'update',
         msg: `Item actualizado: ${actualizado.nombreItem}`
       });
@@ -106,7 +106,7 @@ class ItemPaqueteService {
         transaction: t
       });
 
-      io.emit('items-paquete-actualizados', {
+      getIO().emit('items-paquete-actualizados', {
         action: 'delete',
         msg: `Item eliminado: ${nombreItem}`
       });

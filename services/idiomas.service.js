@@ -4,7 +4,7 @@
 */
 const { sequelize } = require("../database/connection");
 const { IdiomaModel, IdiomaDTO } = require("../models/idioma");
-const { io } = require("../index");
+const { getIO } = require('../helpers/socket.helper');
 
 class IdiomaService {
   constructor() {
@@ -49,7 +49,7 @@ class IdiomaService {
     return await sequelize.transaction(async (t) => {
       const idiomaDB = await this.model.create(dataDTO, { transaction: t });
 
-      io.emit("idiomas-actualizados", {
+      getIO().emit("idiomas-actualizados", {
         action: "create",
         msg: `Idioma creado: ${idiomaDB.nombreIdioma}`,
       });
@@ -83,7 +83,7 @@ class IdiomaService {
         transaction: t
       });
 
-      io.emit("idiomas-actualizados", {
+      getIO().emit("idiomas-actualizados", {
         action: "update",
         msg: `Idioma actualizado: ${actualizado.nombreIdioma}`,
       });
@@ -108,7 +108,7 @@ class IdiomaService {
         transaction: t
       });
 
-      io.emit("idiomas-actualizados", {
+      getIO().emit("idiomas-actualizados", {
         action: "delete",
         msg: `Idioma "${nombreIdioma}" eliminado correctamente.`,
       });

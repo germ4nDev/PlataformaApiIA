@@ -9,7 +9,7 @@ const { WidgetRoleModel, WidgetRoleDTO } = require("../models/widget-role");
 // (Por favor ajusta la ruta "../models/widget" y el nombre "WidgetMaestroModel" según como lo tengas en tu proyecto)
 const { WidgetMaestroModel } = require("../models/widget");
 
-const { io } = require("../index");
+const { getIO } = require('../helpers/socket.helper');
 
 class WidgetesRolesService {
   constructor() {
@@ -84,14 +84,11 @@ class WidgetesRolesService {
 
         const nuevaRelacion = await this.model.create(dataDTO, { transaction: t });
 
-        if (typeof io !== 'undefined') {
-          io.emit('widgetes-roles-actualizadas', {
-            action: 'create',
-            msg: `Relación creada`
-          });
-        } else {
-          console.warn('Objeto IO no definido. No se emitió el socket, pero se guardó en BD.');
-        }
+        getIO().emit('widgetes-roles-actualizadas', {
+          action: 'create',
+          msg: `Relación creada`
+        });
+
         return nuevaRelacion;
       });
     } catch (error) {
@@ -117,7 +114,7 @@ class WidgetesRolesService {
           transaction: t
         });
 
-        io.emit('widgetes-roles-actualizadas', {
+        getIO().emit('widgetes-roles-actualizadas', {
           action: 'update',
           msg: `Relación creada`
         });
@@ -143,7 +140,7 @@ class WidgetesRolesService {
 
       if (eliminado === 0) throw { statusCode: 404, msg: "No se encontró el registro para eliminar." };
 
-      io.emit("widgetes-roles-actualizadas", { action: "delete", msg: "Relación eliminada" });
+      getIO().emit("widgetes-roles-actualizadas", { action: "delete", msg: "Relación eliminada" });
 
       return true;
     });
@@ -169,7 +166,7 @@ class WidgetesRolesService {
         }
 
         if (typeof io !== 'undefined') {
-          io.emit('widgetes-roles-actualizadas', { action: 'sync', msg: 'Sincronizado' });
+          getIO().emit('widgetes-roles-actualizadas', { action: 'sync', msg: 'Sincronizado' });
         }
 
         return nuevosRegistros;

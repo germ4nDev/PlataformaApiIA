@@ -4,7 +4,7 @@
 */
 const { sequelize } = require('../database/connection');
 const { PaqueteSCModel, PaqueteSCDTO } = require('../models/paquete-sc');
-const { io } = require('../index');
+const { getIO } = require('../helpers/socket.helper');
 
 class PaqueteSCService {
   constructor() {
@@ -51,7 +51,7 @@ class PaqueteSCService {
 
       crearBaseDatosSuscriptor();
 
-      io.emit('paquetes-sc-actualizados', {
+      getIO().emit('paquetes-sc-actualizados', {
         action: 'create',
         msg: `Paquete SC creado: ${nuevoPaquete.suscriptorPaqueteId}`
       });
@@ -113,7 +113,7 @@ class PaqueteSCService {
       });
 
       // 4. 🟢 CORRECCIÓN: Usamos la propiedad correcta para el mensaje del socket
-      io.emit('paquetes-sc-actualizados', {
+      getIO().emit('paquetes-sc-actualizados', {
         action: 'update',
         msg: `Paquete SC actualizado: ${actualizado.codigoSuscriptorPaquete}`
       });
@@ -138,7 +138,7 @@ class PaqueteSCService {
         transaction: t
       });
 
-      io.emit('paquetes-sc-actualizados', {
+      getIO().emit('paquetes-sc-actualizados', {
         action: 'delete',
         msg: `Paquete SC eliminado: ${idEliminado}`
       });

@@ -4,7 +4,7 @@
 */
 const { sequelize } = require("../database/connection");
 const { TipoGaleriaModel, TipoGaleriaDTO } = require("../models/tipo-galeria");
-const { io } = require("../index");
+const { getIO } = require('../helpers/socket.helper');
 
 class TipoGaleriaService {
   constructor() {
@@ -30,7 +30,7 @@ class TipoGaleriaService {
     return await sequelize.transaction(async (t) => {
       const nuevo = await this.model.create(dataDTO, { transaction: t });
 
-      io.emit("tiposGaleria-actualizadas", {
+      getIO().emit("tiposGaleria-actualizadas", {
         action: "create",
         msg: `Tipo de Galería creado: ${nuevo.nombreTipo || nuevo.nombreTipoGaleria}`,
       });
@@ -64,7 +64,7 @@ class TipoGaleriaService {
         transaction: t
       });
 
-      io.emit("tiposGaleria-actualizadas", {
+      getIO().emit("tiposGaleria-actualizadas", {
         action: "update",
         msg: `Tipo de Galería actualizado: ${actualizado.nombreTipo || actualizado.nombreTipoGaleria}`,
       });
@@ -89,7 +89,7 @@ class TipoGaleriaService {
         transaction: t
       });
 
-      io.emit("tiposGaleria-actualizadas", {
+      getIO().emit("tiposGaleria-actualizadas", {
         action: "delete",
         msg: `Tipo de Galería eliminado: ${nombreGaleria}`,
       });

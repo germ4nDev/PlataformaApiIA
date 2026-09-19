@@ -7,7 +7,7 @@ const { UsuarioRoleModel, UsuarioRoleDTO } = require("../models/usuario-role");
 const { RoleAPModel } = require("../models/role");
 const { UsuarioModel } = require("../models/usuario");
 const { Op } = require('sequelize');
-const { io } = require("../index");
+const { getIO } = require('../helpers/socket.helper');
 
 class UsuariosRolesService {
   constructor() {
@@ -180,12 +180,10 @@ class UsuariosRolesService {
       });
 
       // 4. Emitir el evento de Socket (Asegúrate de tener 'io' disponible en este scope)
-      if (typeof io !== 'undefined') {
-        io.emit('usuarios-roles-actualizados', {
-          action: 'update',
-          msg: `Usuario Roles actualizado: ${usuarioSCActualizado.codigoUsuarioRole}`
-        });
-      }
+      getIO().emit('usuarios-roles-actualizados', {
+        action: 'update',
+        msg: `Usuario Roles actualizado: ${usuarioSCActualizado.codigoUsuarioRole}`
+      });
 
       return usuarioSCActualizado;
     });
@@ -203,7 +201,7 @@ class UsuariosRolesService {
   }
 
   emitSocket(action, msg) {
-    io.emit("usuarios-roles-actualizados", { action, msg });
+    getIO().emit("usuarios-roles-actualizados", { action, msg });
   }
 }
 

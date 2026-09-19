@@ -4,7 +4,7 @@
 */
 const { sequelize } = require('../database/connection');
 const { SuiteAPModel, SuiteAPDTO } = require('../models/suites-ap');
-const { io } = require('../index');
+const { getIO } = require('../helpers/socket.helper');
 
 class SuitesAPService {
   constructor() {
@@ -38,12 +38,10 @@ class SuitesAPService {
         const nuevaSuite = await this.model.create(dataDTO, { transaction: t });
 
         console.log('Suite creada en BD:', nuevaSuite.toJSON());
-        if (typeof io !== 'undefined') {
-          io.emit('suites-actualizadas', {
-            action: 'create',
-            msg: `Suite creada: ${nuevaSuite.nombreSuite}`
-          });
-        }
+        getIO().emit('suites-actualizadas', {
+          action: 'create',
+          msg: `Suite creada: ${nuevaSuite.nombreSuite}`
+        });
 
         return nuevaSuite;
       });
@@ -75,7 +73,7 @@ class SuitesAPService {
           transaction: t
         });
 
-        io.emit('suites-actualizados', {
+        getIO().emit('suites-actualizados', {
           action: 'update',
           msg: `Suite actualizada: ${actualizada.nombreSuite}`
         });
@@ -104,7 +102,7 @@ class SuitesAPService {
         transaction: t
       });
 
-      io.emit('suites-actualizados', {
+      getIO().emit('suites-actualizados', {
         action: 'delete',
         msg: `Suite eliminada: ${nombreSuite}`
       });

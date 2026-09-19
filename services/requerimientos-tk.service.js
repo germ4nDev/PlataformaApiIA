@@ -4,7 +4,7 @@
 */
 const { sequelize } = require('../database/connection');
 const { RequerimientoModel, RequerimientoDTO } = require('../models/requerimiento');
-const { io } = require('../index');
+const { getIO } = require('../helpers/socket.helper');
 
 class RequerimientosService {
   constructor() {
@@ -30,7 +30,7 @@ class RequerimientosService {
     return await sequelize.transaction(async (t) => {
       const nuevo = await this.model.create(dataDTO, { transaction: t });
 
-      io.emit('requerimientos-actualizados', {
+      getIO().emit('requerimientos-actualizados', {
         action: 'create',
         msg: `Requerimiento creado: ${nuevo.nombreRequerimiento}`
       });
@@ -64,7 +64,7 @@ class RequerimientosService {
         transaction: t
       });
 
-      io.emit('requerimientos-actualizados', {
+      getIO().emit('requerimientos-actualizados', {
         action: 'update',
         msg: `Requerimiento actualizado: ${actualizado.nombreRequerimiento}`
       });
@@ -89,7 +89,7 @@ class RequerimientosService {
         transaction: t
       });
 
-      io.emit('requerimientos-actualizados', {
+      getIO().emit('requerimientos-actualizados', {
         action: 'delete',
         msg: `Requerimiento eliminado: ${nombreReq}`
       });

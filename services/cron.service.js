@@ -6,7 +6,7 @@ const cron = require('node-cron');
 const { Op } = require('sequelize');
 const { sequelize } = require('../database/connection');
 const { PaqueteSCModel } = require('../models/paquete-sc');
-const { io } = require('../index');
+const { getIO } = require('../helpers/socket.helper');
 
 class SuscripcionCronService {
   constructor() {
@@ -58,7 +58,7 @@ class SuscripcionCronService {
 
         console.log(`✅ [CRON] Éxito: Se desactivaron ${paquetesVencidos.length} paquetes vencidos.`);
 
-        io.emit('paquetes-sc-actualizados', {
+        getIO().emit('paquetes-sc-actualizados', {
           action: 'cron_update',
           msg: `Se han desactivado ${paquetesVencidos.length} paquete(s) por vencimiento de pago.`,
           paquetesDesactivados: paquetesVencidos

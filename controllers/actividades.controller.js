@@ -81,13 +81,18 @@ const createActividad = async (req, res = response) => {
   try {
     // QPLUS: Inyección de contexto de auditoría antes del servicio
     const dataDTO = { ...req.body };
+    console.log('data actividad crear', dataDTO);
 
     const actividadDB = await service.createActividad(dataDTO);
     return res.status(201).json({ ok: true, actividadDB });
   } catch (error) {
-    return res.status(error.statusCode || 400).json({
+    // 🟢 AGREGA ESTA LÍNEA PARA VER EL VERDADERO ERROR:
+    console.error('💥 ERROR REAL EN EL BACKEND:', error);
+
+    res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al crear la actividad."
+      msg: error.msg || 'Error al crear la actividad.',
+      error: error.details || error.message
     });
   }
 };
@@ -98,15 +103,18 @@ const updateActividad = async (req, res = response) => {
 
     // QPLUS: Hidratación del payload
     const dataDTO = { ...data };
-    console.log('codigo actividad controller', codigoActividad);
-    console.log('actividad modificar controller', dataDTO);
+    // console.log('codigo actividad controller', codigoActividad);
+    // console.log('actividad modificar controller', dataDTO);
 
     const actividadActualizada = await service.updateActividad(codigoActividad, dataDTO);
     return res.status(200).json({ ok: true, actividadActualizada });
   } catch (error) {
+    console.log('🚨 ERROR REAL DE SEQUELIZE:', error);
+
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al actualizar la actividad."
+      msg: "Error al consultar la actividad por rol.",
+      detalles: error.message || error
     });
   }
 };

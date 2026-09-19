@@ -4,7 +4,7 @@
 */
 const { sequelize } = require('../database/connection');
 const { UsuarioSCModel, UsuarioSCDTO } = require('../models/usuario-sc');
-const { io } = require('../index');
+const { getIO } = require('../helpers/socket.helper');
 
 class UsuarioSCService {
   constructor() {
@@ -60,7 +60,7 @@ class UsuarioSCService {
 
       const usuarioDB = await this.model.create(dataDTO, { transaction: t });
 
-      io.emit("usuarios-sc-actualizados", {
+      getIO().emit("usuarios-sc-actualizados", {
         action: "create",
         msg: `Usuario creado: ${usuarioDB.codigoUsuarioSC}`
       });
@@ -151,7 +151,7 @@ class UsuarioSCService {
           codigoUsuarioFinal = usuarioDB.codigoUsuario;
         } else {
           const nuevoUsuario = await UsuarioModel.create(item.usuarioDTO, { transaction: t });
-          codigoUsuarioFinal = nuevoUsuario.codigoUsuario;
+          codigoUsuarioFinal = nuevoUsuargetIO().codigoUsuario;
         }
 
         let relacionSC = await UsuariosSCModel.findOne({
@@ -189,7 +189,7 @@ class UsuarioSCService {
 
     const io = global.io || (sequelize.options && sequelize.options.app ? sequelize.options.app.get('socketio') : null);
     if (io) {
-      io.emit('usuarios-sc-actualizados', {
+      getIO().emit('usuarios-sc-actualizados', {
         action: "bulk_upsert",
         msg: 'Cargue masivo de usuarios completado para el suscriptor.'
       });
@@ -225,7 +225,7 @@ class UsuarioSCService {
         transaction: t
       });
 
-      io.emit('usuarios-sc-actualizados', {
+      getIO().emit('usuarios-sc-actualizados', {
         action: 'update',
         msg: `Usuario Suscriptor actualizado: ${usuarioSCActualizado.codigoUsuarioSC}`
       });
@@ -252,7 +252,7 @@ class UsuarioSCService {
         transaction: t
       });
 
-      io.emit('usuarios-sc-actualizados', {
+      getIO().emit('usuarios-sc-actualizados', {
         action: 'delete',
         msg: `Usuario Suscriptor eliminado: ${codigoEliminado}`
       });

@@ -4,7 +4,7 @@
 */
 const { sequelize } = require('../database/connection');
 const { ContenidoModel, ContenidoDTO } = require('../models/contenido-el');
-const { io } = require('../index');
+const { getIO } = require('../helpers/socket.helper');
 
 class ContenidosELService {
   constructor() {
@@ -30,7 +30,7 @@ class ContenidosELService {
     return await sequelize.transaction(async (t) => {
       const nuevoContenido = await this.model.create(dataDTO, { transaction: t });
 
-      io.emit('contenidos-el-actualizados', {
+      getIO().emit('contenidos-el-actualizados', {
         action: 'create',
         msg: `Contenido EL creado: ${nuevoContenido.nombreContenido}`
       });
@@ -63,7 +63,7 @@ class ContenidosELService {
         transaction: t
       });
 
-      io.emit('contenidos-el-actualizados', {
+      getIO().emit('contenidos-el-actualizados', {
         action: 'update',
         msg: `Contenido EL actualizado: ${actualizado.nombreContenido}`
       });
@@ -86,7 +86,7 @@ class ContenidosELService {
         transaction: t
       });
 
-      io.emit('contenidos-el-actualizados', {
+      getIO().emit('contenidos-el-actualizados', {
         action: 'delete',
         msg: `Contenido EL eliminado correctamente.`
       });

@@ -4,7 +4,7 @@
 */
 const { sequelize } = require('../database/connection');
 const { ConexionesBDModel, ConexionesBDDTO } = require('../models/conexion-bd');
-const { io } = require('../index');
+const { getIO } = require('../helpers/socket.helper');
 
 class ConexionesBDService {
   constructor() {
@@ -31,7 +31,7 @@ class ConexionesBDService {
     return await sequelize.transaction(async (t) => {
       const nuevaConexion = await this.model.create(dataDTO, { transaction: t });
 
-      io.emit('conexiones-db-actualizadas', {
+      getIO().emit('conexiones-db-actualizadas', {
         action: 'create',
         msg: `Conexión BD creada: ${nuevaConexion.nombreConexion}`
       });
@@ -65,7 +65,7 @@ class ConexionesBDService {
         transaction: t
       });
 
-      io.emit('conexiones-db-actualizadas', {
+      getIO().emit('conexiones-db-actualizadas', {
         action: 'update',
         msg: `Conexión BD actualizada: ${actualizada.nombreConexion}`
       });
@@ -88,7 +88,7 @@ class ConexionesBDService {
         transaction: t
       });
 
-      io.emit('conexiones-db-actualizadas', {
+      getIO().emit('conexiones-db-actualizadas', {
         action: 'delete',
         msg: `Conexión BD eliminada correctamente.`
       });

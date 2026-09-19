@@ -4,7 +4,7 @@
 */
 const { sequelize } = require('../database/connection');
 const { SitioAPModel, SitioAPDTO } = require('../models/sitio-ap');
-const { io } = require('../index');
+const { getIO } = require('../helpers/socket.helper');
 
 class SitioAPService {
   constructor() {
@@ -39,7 +39,7 @@ class SitioAPService {
 
       const nuevo = await this.model.create(dataDTO, { transaction: t });
 
-      io.emit('sitios-ap-actualizados', {
+      getIO().emit('sitios-ap-actualizados', {
         action: 'create',
         msg: `Sitio creado: ${nuevo.nombreSitio}`
       });
@@ -73,7 +73,7 @@ class SitioAPService {
         transaction: t
       });
 
-      io.emit('sitios-ap-actualizados', {
+      getIO().emit('sitios-ap-actualizados', {
         action: 'update',
         msg: `Sitio actualizado: ${actualizado.nombreSitio}`
       });
@@ -98,7 +98,7 @@ class SitioAPService {
         transaction: t
       });
 
-      io.emit('sitios-ap-actualizados', {
+      getIO().emit('sitios-ap-actualizados', {
         action: 'delete',
         msg: `Sitio eliminado: ${nombreSitio}`
       });

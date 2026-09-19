@@ -4,7 +4,7 @@
 */
 const { sequelize } = require('../database/connection');
 const { WidgetMaestroModel, WidgetMaestroDTO } = require('../models/widget');
-const { io } = require('../index');
+const { getIO } = require('../helpers/socket.helper');
 const { Op } = require('sequelize');
 const { PTLLayouts } = require('../models/layout');
 
@@ -58,7 +58,7 @@ class WidgetsService {
 
       const widgetDB = await this.model.create(dataDTO, { transaction: t });
 
-      io.emit("widgets-actualizados", {
+      getIO().emit("widgets-actualizados", {
         action: "create",
         msg: `Nuevo widget disponible: ${widgetDB.nombreWidget}`
       });
@@ -69,7 +69,10 @@ class WidgetsService {
 
   async updateWidget(codigoWidget, rawData) {
     rawData.codigoWidget = codigoWidget;
+    console.log('actualizar antes servicio', rawData);
+
     const dataDTO = WidgetMaestroDTO(rawData);
+    console.log('actualizar despues', dataDTO);
 
     return await sequelize.transaction(async (t) => {
       const widgetDB = await this.model.findOne({
@@ -81,7 +84,6 @@ class WidgetsService {
         throw { statusCode: 404, msg: "No existe el widget con ese código para actualizar." };
       }
 
-      // 🟢 FIX 1: Retiramos la llave primaria del payload para que SQL Server no bloquee el UPDATE
       const payloadDB = { ...dataDTO };
       delete payloadDB.codigoWidget;
 
@@ -90,8 +92,6 @@ class WidgetsService {
         transaction: t
       });
 
-      // 🟢 FIX 2: Aislamos la limpieza de layouts en un try/catch para que, si falla, 
-      // NO cancele la actualización principal del widget.
       if (dataDTO.estadoWidget === false && widgetDB.estadoWidget === true) {
         console.log('inactivado el widget');
         try {
@@ -106,12 +106,8 @@ class WidgetsService {
         transaction: t
       });
 
-      // 🟢 FIX 3: Aislamos la emisión del socket. Si 'io' no está definido en este archivo, 
-      // Node arrojará un error, pero el catch evitará el rollback de la BD.
       try {
-        // Asegúrate de que estás llamando a tu instancia de socket correctamente
-        // Ej: req.io.emit(...) o global.io.emit(...) dependiendo de tu arquitectura
-        io.emit("widgets-actualizados", {
+        getIO().emit("widgets-actualizados", {
           action: dataDTO.estadoWidget ? "update" : "inactivado",
           codigoWidget: codigoWidget,
           msg: `Widget ${dataDTO.estadoWidget ? 'actualizado' : 'inactivado'}: ${widgetActualizado.nombreWidget}`
@@ -147,7 +143,7 @@ class WidgetsService {
       await this.limpiarWidgetDeLayouts(codigoWidget, t);
 
       // Emitimos el evento de inactividad para que Angular lo quite de la pantalla en vivo
-      io.emit("widgets-actualizados", {
+      getIO().emit("widgets-actualizados", {
         action: "inactivado",
         codigoWidget: codigoWidget,
         msg: `Widget retirado del catálogo: ${nombreWidget}`
@@ -247,7 +243,7 @@ class WidgetsService {
 
             // 🟢 2. EMITIMOS DIRECTAMENTE A LA SALA DEL USUARIO AFECTADO
             // (Asegúrate de que cada usuario al conectarse al socket haga un: socket.join(codigoUsuario))
-            io.to(layout.codigoUsuario).emit("layout-actualizado", {
+            getIO().to(layout.codigoUsuario).emit("layout-actualizado", {
               action: "layout-limpiado",
               codigoWidgetInactivado: codigoWidget,
               nuevoLayout: parsedLayout,

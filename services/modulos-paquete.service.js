@@ -4,7 +4,7 @@
 */
 const { sequelize } = require('../database/connection');
 const { ModuloPQModel, ModuloPQDTO } = require('../models/modulo-paquete');
-const { io } = require('../index');
+const { getIO } = require('../helpers/socket.helper');
 
 class ModuloPaqueteService {
   constructor() {
@@ -77,7 +77,7 @@ class ModuloPaqueteService {
         transaction: t
       });
 
-      io.emit('modulos-paquete-actualizados', {
+      getIO().emit('modulos-paquete-actualizados', {
         action: 'create',
         msg: `Paquete de módulos procesado correctamente.`
       });
@@ -107,7 +107,7 @@ class ModuloPaqueteService {
         transaction: t
       });
 
-      io.emit('modulos-paquete-actualizados', {
+      getIO().emit('modulos-paquete-actualizados', {
         action: 'update',
         msg: `Módulo actualizado: ${actualizado.nombreModulo || codigoModulo}`
       });
@@ -130,7 +130,7 @@ class ModuloPaqueteService {
         transaction: t
       });
 
-      io.emit('modulos-paquete-actualizados', {
+      getIO().emit('modulos-paquete-actualizados', {
         action: 'delete',
         msg: `Módulo de paquete eliminado.`
       });

@@ -4,7 +4,7 @@
 */
 const { sequelize } = require('../database/connection');
 const { EstadoModel, EstadoDTO } = require('../models/estado');
-const { io } = require('../index');
+const { getIO } = require('../helpers/socket.helper');
 
 class EstadoService {
   constructor() {
@@ -38,7 +38,7 @@ class EstadoService {
 
       const estadoDB = await this.model.create(dataDTO, { transaction: t });
 
-      io.emit('estados-actualizadas', {
+      getIO().emit('estados-actualizadas', {
         action: 'create',
         msg: `Estado creado: ${estadoDB.nombreEstado}`
       });
@@ -72,7 +72,7 @@ class EstadoService {
         transaction: t
       });
 
-      io.emit('estados-actualizadas', {
+      getIO().emit('estados-actualizadas', {
         action: 'update',
         msg: `Estado actualizado: ${actualizado.nombreEstado}`
       });
@@ -97,7 +97,7 @@ class EstadoService {
         transaction: t
       });
 
-      io.emit('estados-actualizadas', {
+      getIO().emit('estados-actualizadas', {
         action: 'delete',
         msg: `Estado eliminado: ${nombreEstado}`
       });

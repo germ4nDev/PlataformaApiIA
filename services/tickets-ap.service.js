@@ -4,7 +4,7 @@
 */
 const { sequelize } = require('../database/connection');
 const { TicketAPModel, TicketAPDTO } = require('../models/ticket-ap');
-const { io } = require('../index');
+const { getIO } = require('../helpers/socket.helper');
 
 class TicketAPService {
   constructor() {
@@ -49,7 +49,7 @@ class TicketAPService {
     return await sequelize.transaction(async (t) => {
       const nuevo = await this.model.create(dataDTO, { transaction: t });
 
-      io.emit('tickets-ap-actualizados', {
+      getIO().emit('tickets-ap-actualizados', {
         action: 'create',
         msg: `Ticket creado: ${nuevo.nombreTicket}`
       });
@@ -83,7 +83,7 @@ class TicketAPService {
         transaction: t
       });
 
-      io.emit('tickets-ap-actualizados', {
+      getIO().emit('tickets-ap-actualizados', {
         action: 'update',
         msg: `Ticket actualizado: ${actualizado.nombreTicket}`
       });
@@ -108,7 +108,7 @@ class TicketAPService {
         transaction: t
       });
 
-      io.emit('tickets-ap-actualizados', {
+      getIO().emit('tickets-ap-actualizados', {
         action: 'delete',
         msg: `Ticket eliminado: ${nombreTicket}`
       });

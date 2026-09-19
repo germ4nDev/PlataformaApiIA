@@ -4,7 +4,7 @@
 */
 const { sequelize } = require('../database/connection');
 const { ClaseTicketModel, ClaseTicketDTO } = require('../models/clase-ticket');
-const { io } = require('../index');
+const { getIO } = require('../helpers/socket.helper');
 
 class ClasesTicketService {
   constructor() {
@@ -28,7 +28,7 @@ class ClasesTicketService {
     return await sequelize.transaction(async (t) => {
       const nuevaClase = await this.model.create(dataDTO, { transaction: t });
 
-      io.emit('clases-tickets-actualizadas', {
+      getIO().emit('clases-tickets-actualizadas', {
         action: 'create',
         msg: `Clase Ticket creada: ${nuevaClase.claseTicket}`
       });
@@ -59,7 +59,7 @@ class ClasesTicketService {
         transaction: t
       });
 
-      io.emit('clases-tickets-actualizadas', {
+      getIO().emit('clases-tickets-actualizadas', {
         action: 'update',
         msg: `Clase Ticket actualizada: ${actualizado.claseTicket}`
       });
@@ -82,7 +82,7 @@ class ClasesTicketService {
         transaction: t
       });
 
-      io.emit('clases-tickets-actualizadas', {
+      getIO().emit('clases-tickets-actualizadas', {
         action: 'delete',
         msg: `Clase Ticket eliminada correctamente.`
       });

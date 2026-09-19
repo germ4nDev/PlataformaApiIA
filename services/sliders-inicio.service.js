@@ -4,7 +4,7 @@
 */
 const { sequelize } = require('../database/connection');
 const { SliderInicioModel, SliderInicioDTO } = require('../models/slider');
-const { io } = require('../index');
+const { getIO } = require('../helpers/socket.helper');
 
 class SliderService {
   constructor() {
@@ -30,7 +30,7 @@ class SliderService {
     return await sequelize.transaction(async (t) => {
       const nuevo = await this.model.create(dataDTO, { transaction: t });
 
-      io.emit('sliders-actualizados', {
+      getIO().emit('sliders-actualizados', {
         action: 'create',
         msg: `Slider creado: ${nuevo.nombreSlider}`
       });
@@ -65,7 +65,7 @@ class SliderService {
         transaction: t
       });
 
-      io.emit('sliders-actualizados', {
+      getIO().emit('sliders-actualizados', {
         action: 'update',
         msg: `Slider actualizado: ${actualizado.nombreSlider}`
       });
@@ -91,7 +91,7 @@ class SliderService {
         transaction: t
       });
 
-      io.emit('sliders-actualizados', {
+      getIO().emit('sliders-actualizados', {
         action: 'delete',
         msg: `Slider eliminado: ${nombreSlider}`
       });

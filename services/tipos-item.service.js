@@ -4,7 +4,7 @@
 */
 const { sequelize } = require('../database/connection');
 const { TipoItemModel, TipoItemDTO } = require('../models/tipo-item');
-const { io } = require('../index');
+const { getIO } = require('../helpers/socket.helper');
 
 class TiposItemService {
   constructor() {
@@ -30,7 +30,7 @@ class TiposItemService {
     return await sequelize.transaction(async (t) => {
       const nuevo = await this.model.create(dataDTO, { transaction: t });
 
-      io.emit('tipos-itemes-actualizados', {
+      getIO().emit('tipos-itemes-actualizados', {
         action: 'create',
         msg: `Tipo de Item creado: ${nuevo.nombreTipo}`
       });
@@ -64,7 +64,7 @@ class TiposItemService {
         transaction: t
       });
 
-      io.emit('tipos-itemes-actualizados', {
+      getIO().emit('tipos-itemes-actualizados', {
         action: 'update',
         msg: `Tipo de Item actualizado: ${actualizado.nombreTipo}`
       });
@@ -89,7 +89,7 @@ class TiposItemService {
         transaction: t
       });
 
-      io.emit('tipos-itemes-actualizados', {
+      getIO().emit('tipos-itemes-actualizados', {
         action: 'delete',
         msg: `Tipo de Item eliminado: ${nombreTipo}`
       });

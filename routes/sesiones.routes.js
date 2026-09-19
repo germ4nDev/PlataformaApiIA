@@ -25,6 +25,8 @@ const router = Router();
 
 router.get("/", getSesionesActivas);
 
+router.get("/activaas", getSesionesActivas);
+
 router.get("/:id", getSesionById);
 
 router.post("/", registrarSesion);

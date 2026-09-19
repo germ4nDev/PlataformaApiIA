@@ -4,7 +4,7 @@
 */
 const { sequelize } = require('../database/connection');
 const { RoleAPModel, RoleAPDTO } = require('../models/role');
-const { io } = require('../index');
+const { getIO } = require('../helpers/socket.helper');
 
 class RolesService {
   constructor() {
@@ -36,7 +36,7 @@ class RolesService {
     return await sequelize.transaction(async (t) => {
       const nuevo = await this.model.create(dataDTO, { transaction: t });
 
-      io.emit('roles-actualizados', {
+      getIO().emit('roles-actualizados', {
         action: 'create',
         msg: `Rol creado: ${nuevo.nombreRole}`
       });
@@ -70,7 +70,7 @@ class RolesService {
         transaction: t
       });
 
-      io.emit('roles-actualizados', {
+      getIO().emit('roles-actualizados', {
         action: 'update',
         msg: `Rol actualizado: ${actualizado.nombreRole}`
       });
@@ -95,7 +95,7 @@ class RolesService {
         transaction: t
       });
 
-      io.emit('roles-actualizados', {
+      getIO().emit('roles-actualizados', {
         action: 'delete',
         msg: `Rol eliminado: ${nombreRole}`
       });

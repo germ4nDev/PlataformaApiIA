@@ -14,6 +14,17 @@ class SesionesService {
     this.model = SesionModel(sequelize);
   }
 
+  async getSesiones() {
+    try {
+      return await this.model.findAll({
+        order: [['fechaLogin', 'DESC']]
+      });
+    } catch (error) {
+      console.error("Error en SesionesService (getSesionesActivas):", error);
+      throw error;
+    }
+  }
+
   async getSesionesActivas() {
     try {
       return await this.model.findAll({
@@ -71,7 +82,7 @@ class SesionesService {
       try {
         const io = getIO();
 
-        io.emit("sesiones-actualizadas", {
+        getIO().emit("sesiones-actualizadas", {
           action: "create",
           total: listaActivas.length,
           sesiones: listaActivas,
@@ -79,7 +90,7 @@ class SesionesService {
         });
 
         // 🚨 EL GOLPE DE GRACIA: Disparamos la expulsión en navegadores viejos
-        io.emit("sesion-reemplazada", {
+        getIO().emit("sesion-reemplazada", {
           codigoUsuario: dataDTO.codigoUsuario,
           nuevaSesionId: dataDTO.codigoSesion
         });
@@ -130,7 +141,7 @@ class SesionesService {
       // 4. Emitimos el socket general para el monitor de sesiones (Opcional pero recomendado en QPLUS)
       try {
         const io = getIO();
-        io.emit("sesiones-actualizadas", {
+        getIO().emit("sesiones-actualizadas", {
           action: "update",
           total: listaActivas.length,
           sesiones: listaActivas,
@@ -170,7 +181,7 @@ class SesionesService {
 
       try {
         const io = getIO();
-        io.emit("sesiones-actualizadas", {
+        getIO().emit("sesiones-actualizadas", {
           action: "delete",
           total: listaActivas.length,
           sesiones: listaActivas,

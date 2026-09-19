@@ -14,7 +14,7 @@ const MercadoPagoService = require('../services/mercadopago.service');
 const ProvisionService = require('../services/provision.service');
 const FacturacionService = require('./facturacion.service');
 
-const { io } = require('../index');
+const { getIO } = require('../helpers/socket.helper');
 
 class HistorialFacturacionService {
   constructor() {
@@ -75,7 +75,7 @@ class HistorialFacturacionService {
 
       const nuevo = await this.model.create(dataDTO, { transaction: t });
 
-      io.emit('facturacion-actualizada', {
+      getIO().emit('facturacion-actualizada', {
         action: 'create',
         msg: `Factura pendiente creada: ${nuevo.numFactura}`
       });
@@ -112,7 +112,7 @@ class HistorialFacturacionService {
 
         const nuevo = await this.model.create(dataDTO, { transaction: t });
 
-        io.emit('facturacion-actualizada', { action: 'create_and_paid', msg: `¡Pago exitoso!` });
+        getIO().emit('facturacion-actualizada', { action: 'create_and_paid', msg: `¡Pago exitoso!` });
         return { estado: 'APROBADO', historial: nuevo, detalleMP: resultadoMP };
 
       } else if (resultadoMP.status === 'in_process') {
@@ -134,7 +134,7 @@ class HistorialFacturacionService {
     dataDTO.estadoPago = true;
 
     if (!dataDTO.codigoSuscriptor) {
-      throw { statusCode: 400, msg: "El campo 'codigoSuscriptor' es obligatorio." };
+      throw { statusCode: 400, msg: "El campo 'codigoSuscriptor' es obligatorgetIO()." };
     }
 
     return await sequelize.transaction(async (t) => {
@@ -147,7 +147,7 @@ class HistorialFacturacionService {
 
       const nuevo = await this.model.create(dataDTO, { transaction: t });
 
-      io.emit('facturacion-actualizada', {
+      getIO().emit('facturacion-actualizada', {
         action: 'create_manual',
         msg: `Factura manual registrada y aprobada: ${nuevo.numFactura}`
       });
@@ -181,7 +181,7 @@ class HistorialFacturacionService {
         }
       }
 
-      io.emit('facturacion-actualizada', { action: 'update', msg: `Historial actualizado.` });
+      getIO().emit('facturacion-actualizada', { action: 'update', msg: `Historial actualizado.` });
       return actualizado;
     });
   }

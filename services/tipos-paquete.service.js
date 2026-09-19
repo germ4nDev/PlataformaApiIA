@@ -4,7 +4,7 @@
 */
 const { sequelize } = require('../database/connection');
 const { TipoPaqueteModel, TipoPaqueteDTO } = require('../models/TipoPaquete');
-const { io } = require('../index');
+const { getIO } = require('../helpers/socket.helper');
 
 class TiposPaqueteService {
   constructor() {
@@ -54,7 +54,7 @@ class TiposPaqueteService {
 
       const nuevo = await this.model.create(dataDTO, { transaction: t });
 
-      io.emit('tipos-paquete-actualizados', {
+      getIO().emit('tipos-paquete-actualizados', {
         action: 'create',
         msg: `Tipo de paquete creado: ${nuevo.nombreTipoPaquete}`
       });
@@ -84,7 +84,7 @@ class TiposPaqueteService {
         transaction: t
       });
 
-      io.emit('tipos-paquete-actualizados', {
+      getIO().emit('tipos-paquete-actualizados', {
         action: 'update',
         msg: `Tipo de paquete actualizado: ${actualizado.nombreTipoPaquete}`
       });
@@ -109,7 +109,7 @@ class TiposPaqueteService {
         transaction: t
       });
 
-      io.emit('tipos-paquete-actualizados', {
+      getIO().emit('tipos-paquete-actualizados', {
         action: 'delete',
         msg: `Tipo de paquete eliminado: ${nombreTipoPaquete}`
       });

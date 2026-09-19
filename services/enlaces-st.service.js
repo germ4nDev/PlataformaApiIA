@@ -4,7 +4,7 @@
 */
 const { sequelize } = require('../database/connection');
 const { EnlaceSTModel, EnlaceSTDTO } = require('../models/enlace-st');
-const { io } = require('../index');
+const { getIO } = require('../helpers/socket.helper');
 
 class EnlaceSTService {
   constructor() {
@@ -39,7 +39,7 @@ class EnlaceSTService {
 
       const enlaceDB = await this.model.create(dataDTO, { transaction: t });
 
-      io.emit('enlaces-st-actualizadas', {
+      getIO().emit('enlaces-st-actualizadas', {
         action: 'create',
         msg: `Enlace ST creado: ${enlaceDB.nombreEnlace}`
       });
@@ -73,7 +73,7 @@ class EnlaceSTService {
         transaction: t
       });
 
-      io.emit('enlaces-st-actualizadas', {
+      getIO().emit('enlaces-st-actualizadas', {
         action: 'update',
         msg: `Enlace ST actualizado: ${actualizado.nombreEnlace}`
       });
@@ -98,7 +98,7 @@ class EnlaceSTService {
         transaction: t
       });
 
-      io.emit('enlaces-st-actualizadas', {
+      getIO().emit('enlaces-st-actualizadas', {
         action: 'delete',
         msg: `Enlace ST eliminado: ${nombreEnlace}`
       });

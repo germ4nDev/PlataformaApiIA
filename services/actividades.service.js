@@ -4,7 +4,7 @@
 */
 const { sequelize } = require("../database/connection");
 const { ActividadModel, ActividadDTO } = require("../models/actividad");
-const { io } = require("../index");
+const { getIO } = require('../helpers/socket.helper');
 
 class ActividadesService {
   constructor() {
@@ -53,24 +53,22 @@ class ActividadesService {
 
   async createActividad(rawData) {
     const dataDTO = ActividadDTO(rawData);
-    console.log('crear actividad', dataDTO);
 
     return await sequelize.transaction(async (t) => {
-      const [existente, existeNombre, existeLlavePermiso] = await Promise.all([
+      const [existente, existeLlavePermiso] = await Promise.all([
         this.model.findOne({ where: { codigoActividad: dataDTO.codigoActividad }, transaction: t }),
-        this.model.findOne({ where: { actividad: dataDTO.actividad }, transaction: t }),
         this.model.findOne({ where: { llavePermiso: dataDTO.llavePermiso }, transaction: t })
       ]);
 
       if (existente) throw { statusCode: 400, msg: "Ya existe una actividad con ese código." };
-      if (existeNombre) throw { statusCode: 400, msg: "Ya existe una actividad con ese nombre." };
       if (existeLlavePermiso) throw { statusCode: 400, msg: "Ya existe una actividad con llavePermiso." };
 
+      console.log('crear actividad', dataDTO);
       const actividadDB = await this.model.create(dataDTO, { transaction: t });
 
-      io.emit("actividades-actualizadas", {
+      getIO().emit("actividades-actualizadas", {
         action: "create",
-        msg: `Actividad creada: ${actividadDB.actividad}`,
+        msg: `Actividad creada: ${actividadDB}`,
       });
 
       return actividadDB;
@@ -97,7 +95,7 @@ class ActividadesService {
 
       const actualizada = await this.model.findOne({ where: { codigoActividad }, transaction: t });
 
-      io.emit("actividades-actualizadas", {
+      getIO().emit("actividades-actualizadas", {
         action: "update",
         msg: `Actividad actualizada: ${actualizada.actividad}`,
       });
@@ -114,7 +112,7 @@ class ActividadesService {
       const nombreActividad = actividadDB.actividad;
       await this.model.destroy({ where: { codigoActividad }, transaction: t });
 
-      io.emit("actividades-actualizadas", {
+      getIO().emit("actividades-actualizadas", {
         action: "delete",
         msg: `Actividad eliminada: ${nombreActividad}`,
       });

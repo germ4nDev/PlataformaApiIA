@@ -4,7 +4,7 @@
 */
 const { sequelize } = require('../database/connection');
 const { AplicacionModel, AplicacionDTO } = require('../models/aplicacion');
-const { io } = require('../index');
+const { getIO } = require('../helpers/socket.helper');
 
 class AplicacionesService {
   constructor() {
@@ -47,12 +47,10 @@ class AplicacionesService {
       return await sequelize.transaction(async (t) => {
         const nuevaAplicacion = await this.model.create(dataDTO, { transaction: t });
         console.log('Aplicación creada en BD:', nuevaAplicacion.toJSON());
-        if (typeof io !== 'undefined') {
-          io.emit('aplicaciones-actualizadas', {
-            action: 'create',
-            msg: `Aplicación creada: ${nuevaAplicacion.nombreAplicacion}`
-          });
-        }
+        getIO().emit('aplicaciones-actualizadas', {
+          action: 'create',
+          msg: `Aplicación creada: ${nuevaAplicacion.nombreAplicacion}`
+        });
 
         return nuevaAplicacion;
       });
@@ -88,12 +86,10 @@ class AplicacionesService {
           transaction: t
         });
 
-        if (typeof io !== 'undefined') {
-          io.emit('aplicaciones-actualizadas', {
-            action: 'update',
-            msg: `Aplicación actualizada: ${actualizada.nombreAplicacion}`
-          });
-        }
+        getIO().emit('aplicaciones-actualizadas', {
+          action: 'update',
+          msg: `Aplicación actualizada: ${actualizada.nombreAplicacion}`
+        });
 
         return actualizada;
       });
@@ -121,14 +117,11 @@ class AplicacionesService {
           transaction: t
         });
 
-        if (typeof io !== 'undefined') {
-          io.emit('aplicaciones-actualizadas', {
-            action: 'delete',
-            msg: `Aplicación eliminada: ${dbApp.nombreAplicacion}`
-          });
-        } else {
-          console.warn('Objeto IO no definido. Se eliminó en BD pero no se notificó por socket.');
-        }
+        getIO().emit('aplicaciones-actualizadas', {
+          action: 'delete',
+          msg: `Aplicación eliminada: ${dbApp.nombreAplicacion}`
+        });
+
 
         return dbApp;
       });

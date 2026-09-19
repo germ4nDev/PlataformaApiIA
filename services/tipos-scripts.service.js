@@ -4,7 +4,7 @@
 */
 const { sequelize } = require("../database/connection");
 const { TipoScriptModel, TipoScriptDTO } = require("../models/tipo-script");
-const { io } = require("../index");
+const { getIO } = require('../helpers/socket.helper');
 
 class TipoScriptService {
   constructor() {
@@ -30,7 +30,7 @@ class TipoScriptService {
     return await sequelize.transaction(async (t) => {
       const nuevo = await this.model.create(dataDTO, { transaction: t });
 
-      io.emit("tiposScripts-actualizados", {
+      getIO().emit("tiposScripts-actualizados", {
         action: "create",
         msg: `Tipo de script creado: ${nuevo.nombreTipo}`
       });
@@ -64,7 +64,7 @@ class TipoScriptService {
         transaction: t
       });
 
-      io.emit("tiposScripts-actualizados", {
+      getIO().emit("tiposScripts-actualizados", {
         action: "update",
         msg: `Tipo de script actualizado: ${actualizado.nombreTipo}`
       });
@@ -89,7 +89,7 @@ class TipoScriptService {
         transaction: t
       });
 
-      io.emit("tiposScripts-actualizados", {
+      getIO().emit("tiposScripts-actualizados", {
         action: "delete",
         msg: `Tipo de script eliminado: ${nombreTipoScript}`
       });

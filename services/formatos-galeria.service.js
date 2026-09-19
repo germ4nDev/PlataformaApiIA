@@ -4,7 +4,7 @@
 */
 const { sequelize } = require("../database/connection");
 const { FormatoGaleriaModel, FormatoGaleriaDTO } = require("../models/formato-galeria");
-const { io } = require("../index");
+const { getIO } = require('../helpers/socket.helper');
 
 class FormatoGaleriaService {
   constructor() {
@@ -37,7 +37,7 @@ class FormatoGaleriaService {
 
       const formatoDB = await this.model.create(dataDTO, { transaction: t });
 
-      io.emit("formatos-galeria-actualizadas", {
+      getIO().emit("formatos-galeria-actualizadas", {
         action: "create",
         msg: `Formato de Galería creado: ${formatoDB.nombreFormato}`,
       });
@@ -71,7 +71,7 @@ class FormatoGaleriaService {
         transaction: t
       });
 
-      io.emit("formatos-galeria-actualizadas", {
+      getIO().emit("formatos-galeria-actualizadas", {
         action: "update",
         msg: `Formato de Galería actualizado: ${actualizado.nombreFormato}`,
       });
@@ -96,7 +96,7 @@ class FormatoGaleriaService {
         transaction: t
       });
 
-      io.emit("formatos-galeria-actualizadas", {
+      getIO().emit("formatos-galeria-actualizadas", {
         action: "delete",
         msg: `Formato de Galería eliminado: ${nombreFormato}`,
       });

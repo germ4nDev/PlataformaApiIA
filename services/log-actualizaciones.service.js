@@ -4,7 +4,7 @@
 */
 const { sequelize } = require('../database/connection');
 const { LogActualizacionModel, LogActualizacionDTO } = require('../models/log-actualizacion');
-const { io } = require('../index');
+const { getIO } = require('../helpers/socket.helper');
 
 class LogsActualizacionService {
   constructor() {
@@ -35,7 +35,7 @@ class LogsActualizacionService {
     return await sequelize.transaction(async (t) => {
       const nuevoLog = await this.model.create(dataDTO, { transaction: t });
 
-      io.emit('log-actualizaciones-actualizados', {
+      getIO().emit('log-actualizaciones-actualizados', {
         action: 'create',
         msg: `Log de actualización registrado: ${nuevoLog.logId}`
       });

@@ -4,7 +4,7 @@
 */
 const { sequelize } = require('../database/connection');
 const { SuscriptorModel, SuscriptorDTO } = require('../models/suscriptor');
-const { io } = require("../index");
+const { getIO } = require('../helpers/socket.helper');
 
 class SuscriptoresService {
   constructor() {
@@ -37,7 +37,7 @@ class SuscriptoresService {
 
       const nuevo = await this.model.create(rawData, { transaction: t });
 
-      io.emit("suscriptores-actualizados", {
+      getIO().emit("suscriptores-actualizados", {
         action: "create",
         msg: `Suscriptor creado: ${nuevo.nombreSuscriptor}`
       });
@@ -68,7 +68,7 @@ class SuscriptoresService {
         transaction: t
       });
 
-      io.emit('suscriptores-actualizados', {
+      getIO().emit('suscriptores-actualizados', {
         action: 'update',
         msg: `Suscriptor actualizado: ${actualizado.nombreSuscriptor}`
       });
@@ -93,7 +93,7 @@ class SuscriptoresService {
         transaction: t
       });
 
-      io.emit('suscriptores-actualizados', {
+      getIO().emit('suscriptores-actualizados', {
         action: 'delete',
         msg: `Suscriptor eliminado: ${nombreSuscriptor}`
       });

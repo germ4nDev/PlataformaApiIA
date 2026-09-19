@@ -4,7 +4,7 @@
 */
 const { sequelize } = require('../database/connection');
 const { SeguimientoModel, SeguimientoDTO } = require('../models/seguimiento');
-const { io } = require('../index');
+const { getIO } = require('../helpers/socket.helper');
 
 class SeguimientosService {
   constructor() {
@@ -37,7 +37,7 @@ class SeguimientosService {
     return await sequelize.transaction(async (t) => {
       const nuevo = await this.model.create(dataDTO, { transaction: t });
 
-      io.emit('seguimientos-tk-actualizados', {
+      getIO().emit('seguimientos-tk-actualizados', {
         action: 'create',
         msg: `Seguimiento creado: ${nuevo.codigoSeguimiento}`
       });
@@ -71,7 +71,7 @@ class SeguimientosService {
         transaction: t
       });
 
-      io.emit('seguimientos-tk-actualizados', {
+      getIO().emit('seguimientos-tk-actualizados', {
         action: 'update',
         msg: `Seguimiento actualizado: ${actualizado.codigoSeguimiento}`
       });
@@ -96,7 +96,7 @@ class SeguimientosService {
         transaction: t
       });
 
-      io.emit('seguimientos-tk-actualizados', {
+      getIO().emit('seguimientos-tk-actualizados', {
         action: 'delete',
         msg: `Seguimiento eliminado: ${idEliminado}`
       });

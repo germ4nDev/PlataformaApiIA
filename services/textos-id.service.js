@@ -4,7 +4,7 @@
 */
 const { sequelize } = require('../database/connection');
 const { TextoIDModel, TextoIDDTO } = require('../models/texto-id');
-const { io } = require('../index');
+const { getIO } = require('../helpers/socket.helper');
 
 class TextoIDService {
   constructor() {
@@ -30,7 +30,7 @@ class TextoIDService {
     return await sequelize.transaction(async (t) => {
       const nuevoTexto = await this.model.create(dataDTO, { transaction: t });
 
-      io.emit('textos-actualizados', {
+      getIO().emit('textos-actualizados', {
         action: 'create',
         msg: `Texto creado: ${nuevoTexto.anclaTexto}`
       });
@@ -64,7 +64,7 @@ class TextoIDService {
         transaction: t
       });
 
-      io.emit('textos-actualizados', {
+      getIO().emit('textos-actualizados', {
         action: 'update',
         msg: `Texto actualizado: ${actualizado.anclaTexto}`
       });
@@ -89,7 +89,7 @@ class TextoIDService {
         transaction: t
       });
 
-      io.emit('textos-actualizados', {
+      getIO().emit('textos-actualizados', {
         action: 'delete',
         msg: `Texto eliminado correctamente: ${anclaTexto}`
       });

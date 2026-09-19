@@ -4,7 +4,7 @@
 */
 const { sequelize } = require("../database/connection");
 const { UsuarioEmpresaModel, UsuarioEmpresaDTO } = require("../models/usuario-empresa-sc");
-const { io } = require("../index");
+const { getIO } = require('../helpers/socket.helper');
 
 class UsuariosEmpresasSCService {
   constructor() {
@@ -30,7 +30,7 @@ class UsuariosEmpresasSCService {
     return await sequelize.transaction(async (t) => {
       const nuevo = await this.model.create(dataDTO, { transaction: t });
 
-      io.emit('usuarios-empresas-actualizados', {
+      getIO().emit('usuarios-empresas-actualizados', {
         action: 'create',
         msg: `Relación Usuario-Empresa creada correctamente.`
       });
@@ -64,7 +64,7 @@ class UsuariosEmpresasSCService {
         transaction: t
       });
 
-      io.emit('usuarios-empresas-actualizados', {
+      getIO().emit('usuarios-empresas-actualizados', {
         action: 'update',
         msg: `Relación Usuario-Empresa actualizada.`
       });
@@ -87,7 +87,7 @@ class UsuariosEmpresasSCService {
         transaction: t
       });
 
-      io.emit('usuarios-empresas-actualizados', {
+      getIO().emit('usuarios-empresas-actualizados', {
         action: 'delete',
         msg: `Relación Usuario-Empresa eliminada.`
       });

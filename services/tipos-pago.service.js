@@ -4,7 +4,7 @@
 */
 const { sequelize } = require('../database/connection');
 const { TipoPagoModel, TipoPagoDTO } = require('../models/Tipo-pago');
-const { io } = require('../index');
+const { getIO } = require('../helpers/socket.helper');
 
 class TiposPagoService {
   constructor() {
@@ -55,7 +55,7 @@ class TiposPagoService {
 
       const nuevo = await this.model.create(dataDTO, { transaction: t });
 
-      io.emit('tipos-pago-actualizados', {
+      getIO().emit('tipos-pago-actualizados', {
         action: 'create',
         msg: `Tipo de pago creado: ${nuevo.nombreTipoPago}`
       });
@@ -85,7 +85,7 @@ class TiposPagoService {
         transaction: t
       });
 
-      io.emit('tipos-pago-actualizados', {
+      getIO().emit('tipos-pago-actualizados', {
         action: 'update',
         msg: `Tipo de pago actualizado: ${actualizado.nombreTipoPago}`
       });
@@ -110,7 +110,7 @@ class TiposPagoService {
         transaction: t
       });
 
-      io.emit('tipos-pago-actualizados', {
+      getIO().emit('tipos-pago-actualizados', {
         action: 'delete',
         msg: `Tipo de pago eliminado: ${nombreTipoPago}`
       });

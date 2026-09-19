@@ -9,7 +9,7 @@ const { ActividadRoleModel, ActividadRoleDTO } = require("../models/actividad-ro
 // (Por favor ajusta la ruta "../models/actividad" y el nombre "ActividadModel" según como lo tengas en tu proyecto)
 const { ActividadModel } = require("../models/actividad");
 
-const { io } = require("../index");
+const { getIO } = require('../helpers/socket.helper');
 
 class ActividadesRolesService {
   constructor() {
@@ -57,7 +57,7 @@ class ActividadesRolesService {
         ]
       });
 
-      console.log(`✅ Permisos encontrados para el rol ${codigoRole}:`, data.length);
+      // console.log(`✅ Permisos encontrados para el rol ${codigoRole}:`, data.length);
 
       return { ok: true, data: data };
 
@@ -84,14 +84,11 @@ class ActividadesRolesService {
 
         const nuevaRelacion = await this.model.create(dataDTO, { transaction: t });
 
-        if (typeof io !== 'undefined') {
-          io.emit('actividades-roles-actualizadas', {
-            action: 'create',
-            msg: `Relación creada`
-          });
-        } else {
-          console.warn('Objeto IO no definido. No se emitió el socket, pero se guardó en BD.');
-        }
+        getIO().emit('actividades-roles-actualizadas', {
+          action: 'create',
+          msg: `Relación creada`
+        });
+
         return nuevaRelacion;
       });
     } catch (error) {
@@ -117,7 +114,7 @@ class ActividadesRolesService {
           transaction: t
         });
 
-        io.emit('actividades-roles-actualizadas', {
+        getIO().emit('actividades-roles-actualizadas', {
           action: 'update',
           msg: `Relación creada`
         });
@@ -143,7 +140,7 @@ class ActividadesRolesService {
 
       if (eliminado === 0) throw { statusCode: 404, msg: "No se encontró el registro para eliminar." };
 
-      io.emit("actividades-roles-actualizadas", { action: "delete", msg: "Relación eliminada" });
+      getIO().emit("actividades-roles-actualizadas", { action: "delete", msg: "Relación eliminada" });
 
       return true;
     });
@@ -171,9 +168,7 @@ class ActividadesRolesService {
           nuevosRegistros = await this.model.bulkCreate(dataDTOArray, { transaction: t });
         }
 
-        if (typeof io !== 'undefined') {
-          io.emit('actividades-roles-actualizadas', { action: 'sync', msg: 'Sincronizado' });
-        }
+        getIO().emit('actividades-roles-actualizadas', { action: 'sync', msg: 'Sincronizado' });
 
         return nuevosRegistros;
       });

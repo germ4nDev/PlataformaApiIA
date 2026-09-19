@@ -1,5 +1,6 @@
 const { sequelize } = require('../database/connection');
 const { TipoRoleModel, TipoRoleDTO } = require('../models/tipo-role.model');
+const { getIO } = require('../helpers/socket.helper');
 
 class TiposRoleService {
   constructor() {
@@ -49,7 +50,7 @@ class TiposRoleService {
 
       const nuevo = await this.model.create(dataDTO, { transaction: t });
 
-      io.emit('tipos-roles-actualizados', {
+      getIO().emit('tipos-roles-actualizados', {
         action: 'create',
         msg: `Tipo de roles creado: ${nuevo.nombreTipoRole}`
       });
@@ -79,7 +80,7 @@ class TiposRoleService {
         transaction: t
       });
 
-      io.emit('tipos-roles-actualizados', {
+      getIO().emit('tipos-roles-actualizados', {
         action: 'update',
         msg: `Tipo de roles actualizado: ${actualizado.nombreTipoRole}`
       });
@@ -104,7 +105,7 @@ class TiposRoleService {
         transaction: t
       });
 
-      io.emit('tipos-roles-actualizados', {
+      getIO().emit('tipos-roles-actualizados', {
         action: 'delete',
         msg: `Tipo de role eliminado: ${nombreTipoRole}`
       });

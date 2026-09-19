@@ -7,6 +7,18 @@ const SesionesService = require("../services/sesiones.service");
 
 const service = new SesionesService();
 
+const getSesiones = async (req, res = response) => {
+  try {
+    const sesiones = await service.getSesiones();
+    return res.status(200).json({ ok: true, sesiones });
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({
+      ok: false,
+      msg: error.msg || "Error interno al obtener las sesiones activas."
+    });
+  }
+};
+
 const getSesionesActivas = async (req, res = response) => {
   try {
     const sesiones = await service.getSesionesActivas();
@@ -77,6 +89,7 @@ const cerrarSesion = async (req, res = response) => {
 };
 
 module.exports = {
+  getSesiones,
   getSesionesActivas,
   getSesionById,
   registrarSesion,

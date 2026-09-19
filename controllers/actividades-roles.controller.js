@@ -35,7 +35,7 @@ const emitirActualizacionPermisos = (req, codigoRole) => {
 const getActividadesRoles = async (req, res = response) => {
   try {
     const actividadesRoles = await service.getActividadesRoles();
-    console.log('retornar actividadesRoles', actividadesRoles);
+    //console.log('retornar actividadesRoles', actividadesRoles);
     return res.status(200).json({ ok: true, actividadesRoles });
   } catch (error) {
     return res.status(error.statusCode || 500).json({
@@ -61,7 +61,7 @@ const getActividadByCodeActividad = async (req, res = response) => {
 const getActividadByCodeRole = async (req, res = response) => {
   try {
     const { ro } = req.params;
-    console.log('consultar el role', ro);
+    //console.log('consultar el role', ro);
 
     const data = await service.getActividadByCodeRole(ro);
     return res.status(200).json({ ok: true, data });

@@ -4,7 +4,7 @@
 */
 const { sequelize } = require('../database/connection');
 const { TipoEstadoModel, TipoEstadoDTO } = require('../models/tipo-estado');
-const { io } = require('../index');
+const { getIO } = require('../helpers/socket.helper');
 
 class TipoEstadoService {
   constructor() {
@@ -30,7 +30,7 @@ class TipoEstadoService {
     return await sequelize.transaction(async (t) => {
       const nuevo = await this.model.create(dataDTO, { transaction: t });
 
-      io.emit('tipos-estados-actualizados', {
+      getIO().emit('tipos-estados-actualizados', {
         action: 'create',
         msg: `Tipo de Estado creado: ${nuevo.nombreTipo}`
       });
@@ -64,7 +64,7 @@ class TipoEstadoService {
         transaction: t
       });
 
-      io.emit('tipos-estados-actualizados', {
+      getIO().emit('tipos-estados-actualizados', {
         action: 'update',
         msg: `Tipo de Estado actualizado: ${actualizado.nombreTipo}`
       });
@@ -89,7 +89,7 @@ class TipoEstadoService {
         transaction: t
       });
 
-      io.emit('tipos-estados-actualizados', {
+      getIO().emit('tipos-estados-actualizados', {
         action: 'delete',
         msg: `Tipo de Estado eliminado: ${nombreTipo}`
       });

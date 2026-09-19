@@ -4,7 +4,7 @@
 */
 const { sequelize } = require('../database/connection');
 const { TipoLogModel, TipoLogDTO } = require('../models/tipo-log');
-const { io } = require('../index');
+const { getIO } = require('../helpers/socket.helper');
 
 class TipoLogService {
   constructor() {
@@ -30,7 +30,7 @@ class TipoLogService {
     return await sequelize.transaction(async (t) => {
       const nuevo = await this.model.create(dataDTO, { transaction: t });
 
-      io.emit('tipos-logs-actualizados', {
+      getIO().emit('tipos-logs-actualizados', {
         action: 'create',
         msg: `Tipo de Log creado: ${nuevo.nombreTipo || nuevo.nombreTipoLog}`
       });
@@ -64,7 +64,7 @@ class TipoLogService {
         transaction: t
       });
 
-      io.emit('tipos-logs-actualizados', {
+      getIO().emit('tipos-logs-actualizados', {
         action: 'update',
         msg: `Tipo de Log actualizado: ${actualizado.nombreTipo || actualizado.nombreTipoLog}`
       });
@@ -89,7 +89,7 @@ class TipoLogService {
         transaction: t
       });
 
-      io.emit('tipos-logs-actualizados', {
+      getIO().emit('tipos-logs-actualizados', {
         action: 'delete',
         msg: `Tipo de Log eliminado: ${nombreTipo}`
       });

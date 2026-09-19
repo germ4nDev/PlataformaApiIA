@@ -4,7 +4,7 @@
 */
 const { sequelize } = require('../database/connection');
 const { ColorSettingsModel, ColorSettingsDTO } = require('../models/color-setting');
-const { io } = require('../index');
+const { getIO } = require('../helpers/socket.helper');
 
 class ColoresSettingsService {
   constructor() {
@@ -30,7 +30,7 @@ class ColoresSettingsService {
     return await sequelize.transaction(async (t) => {
       const nuevoColor = await this.model.create(dataDTO, { transaction: t });
 
-      io.emit('colores-settings-actualizadas', {
+      getIO().emit('colores-settings-actualizadas', {
         action: 'create',
         msg: `Color Settings creado: ${nuevoColor.colorNavId}`
       });
@@ -64,7 +64,7 @@ class ColoresSettingsService {
         transaction: t
       });
 
-      io.emit('colores-settings-actualizadas', {
+      getIO().emit('colores-settings-actualizadas', {
         action: 'update',
         msg: `Color Settings actualizado: ${actualizado.colorNavId}`
       });
@@ -87,7 +87,7 @@ class ColoresSettingsService {
         transaction: t
       });
 
-      io.emit('colores-settings-actualizadas', {
+      getIO().emit('colores-settings-actualizadas', {
         action: 'delete',
         msg: `Color Settings eliminado correctamente.`
       });

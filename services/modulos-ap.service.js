@@ -4,7 +4,7 @@
 */
 const { sequelize } = require("../database/connection");
 const { ModuloAPModel, ModuloAPDTO } = require("../models/modulo-ap");
-const { io } = require("../index");
+const { getIO } = require('../helpers/socket.helper');
 
 class ModulosAPService {
   constructor() {
@@ -39,7 +39,7 @@ class ModulosAPService {
 
         const nuevo = await this.model.create(dataDTO, { transaction: t });
 
-        io.emit('modulos-actualizados', {
+        getIO().emit('modulos-actualizados', {
           action: 'create',
           msg: `Modulo creado: ${nuevo.nombreModulo}`
         });
@@ -77,7 +77,7 @@ class ModulosAPService {
         transaction: t
       });
 
-      io.emit('modulos-actualizados', {
+      getIO().emit('modulos-actualizados', {
         action: 'update',
         msg: `Modulo actualizado: ${actualizado.nombreModulo}`
       });
@@ -102,7 +102,7 @@ class ModulosAPService {
         transaction: t
       });
 
-      io.emit('modulos-actualizados', {
+      getIO().emit('modulos-actualizados', {
         action: 'delete',
         msg: `Modulo eliminado: ${nombreModulo}`
       });

@@ -6,7 +6,7 @@ const fs = require("fs").promises;
 const path = require("path");
 const { sequelize } = require("../database/connection");
 const { BibliotecaModel, BibliotecaDTO } = require("../models/biblioteca");
-const { io } = require("../index");
+const { getIO } = require('../helpers/socket.helper');
 
 class BibliotecasService {
   constructor() {
@@ -58,7 +58,7 @@ class BibliotecasService {
     return await sequelize.transaction(async (t) => {
       const nuevaBiblioteca = await this.model.create(dataDTO, { transaction: t });
 
-      io.emit("biblioteca-actualizadas", {
+      getIO().emit("biblioteca-actualizadas", {
         action: "create",
         msg: `Biblioteca creada: ${nuevaBiblioteca.nombreBiblioteca}`,
       });
@@ -95,7 +95,7 @@ class BibliotecasService {
         transaction: t
       });
 
-      io.emit("biblioteca-actualizadas", {
+      getIO().emit("biblioteca-actualizadas", {
         action: "update",
         msg: `Biblioteca actualizada: ${actualizada.nombreBiblioteca}`,
       });
@@ -123,7 +123,7 @@ class BibliotecasService {
       // Limpieza del archivo asociado
       await this.#deleteArchivoFisico(imagenABorrar);
 
-      io.emit("biblioteca-actualizadas", {
+      getIO().emit("biblioteca-actualizadas", {
         action: "delete",
         msg: `Biblioteca eliminada correctamente.`,
       });

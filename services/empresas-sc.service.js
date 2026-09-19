@@ -4,7 +4,7 @@
 */
 const { sequelize } = require('../database/connection');
 const { EmpresaSCModel, EmpresaSCDTO } = require('../models/empresa-sc');
-const { io } = require('../index');
+const { getIO } = require('../helpers/socket.helper');
 const { log } = require('handlebars');
 
 class EmpresaSCService {
@@ -31,7 +31,7 @@ class EmpresaSCService {
     return await sequelize.transaction(async (t) => {
       const nuevaEmpresa = await this.model.create(dataDTO, { transaction: t });
 
-      io.emit('empresas-sc-actualizadas', {
+      getIO().emit('empresas-sc-actualizadas', {
         action: 'create',
         msg: `Empresa creada: ${nuevaEmpresa.nombreEmpresa}`
       });
@@ -66,7 +66,7 @@ class EmpresaSCService {
         transaction: t
       });
 
-      io.emit('empresas-sc-actualizadas', {
+      getIO().emit('empresas-sc-actualizadas', {
         action: 'update',
         msg: `Empresa actualizada: ${actualizada.nombreEmpresa}`
       });
@@ -91,7 +91,7 @@ class EmpresaSCService {
         transaction: t
       });
 
-      io.emit('empresas-sc-actualizadas', {
+      getIO().emit('empresas-sc-actualizadas', {
         action: 'delete',
         msg: `Empresa eliminada correctamente: ${nombreEmpresa}`
       });

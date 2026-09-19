@@ -4,7 +4,7 @@
 */
 const { sequelize } = require("../database/connection");
 const { GaleriaModel, GaleriaDTO } = require("../models/galeria");
-const { io } = require("../index");
+const { getIO } = require('../helpers/socket.helper');
 
 class GaleriasService {
   constructor() {
@@ -48,7 +48,7 @@ class GaleriasService {
     return await sequelize.transaction(async (t) => {
       const galeriaDB = await this.model.create(dataDTO, { transaction: t });
 
-      io.emit("galerias-actualizadas", {
+      getIO().emit("galerias-actualizadas", {
         action: "create",
         msg: `Galería creada: ${galeriaDB.nombreGaleria}`,
       });
@@ -82,7 +82,7 @@ class GaleriasService {
         transaction: t
       });
 
-      io.emit("galerias-actualizadas", {
+      getIO().emit("galerias-actualizadas", {
         action: "update",
         msg: `Galería actualizada: ${actualizado.nombreGaleria}`,
       });
@@ -107,7 +107,7 @@ class GaleriasService {
         transaction: t
       });
 
-      io.emit("galerias-actualizadas", {
+      getIO().emit("galerias-actualizadas", {
         action: "delete",
         msg: `Galería "${nombreGaleria}" eliminada correctamente.`,
       });

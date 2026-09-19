@@ -19,7 +19,6 @@ const ActividadSchema = Joi.object({
     llavePermiso: Joi.string().max(100).required()
         .messages({ 'any.required': 'La llavePermiso es obligatoria.' }),
 
-    // 🟢 CORRECCIÓN: Alineado a 500 (Igual que en SQL Server)
     actividad: Joi.string().max(500).required()
         .messages({ 'any.required': 'El nombre de la actividad es obligatorio.' }),
     descripcion: Joi.string().max(4000).allow('', null).optional(),
@@ -76,12 +75,10 @@ const ActividadModel = (sequelize) => {
             type: DataTypes.STRING(100),
             allowNull: false
         },
-        // 🟢 CORRECCIÓN: STRING(500) (Igual que nvarchar(500) en SQL Server)
         actividad: { type: DataTypes.STRING(500), allowNull: false },
         descripcion: { type: DataTypes.STRING(4000), allowNull: true },
         estadoActividad: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
 
-        // 🟢 CORRECCIONES: allowNull en true para coincidir con el check azul de SQL Server
         codigoUsuarioCreacion: {
             type: DataTypes.STRING(200),
             allowNull: true
