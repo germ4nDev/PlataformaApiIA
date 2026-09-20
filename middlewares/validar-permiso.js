@@ -4,6 +4,8 @@ const validarPermiso = (permisoRequerido) => {
   return async (req, res, next) => {
     try {
       const codigoUsuario = req.usuario.codigoUsuario;
+      console.log('*****************codigoUsuario validacion permisos', codigoUsuario);
+
 
       const codigoEmpresa = req.headers['x-empresa-id'];
 

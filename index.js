@@ -100,6 +100,7 @@ app.use('/api/layout', require('./routes/layout.routes'));
 app.use('/api/usuarios-widgets', require('./routes/usuarios-widgets.routes'));
 app.use('/api/sesiones', require('./routes/sesiones.routes'));
 app.use('/api/lista-precios', require('./routes/lista-precios.routes'));
+app.use('/api/parametros', require('./routes/parametros-sistema.routes'));
 
 // APLICACIONES
 app.use("/api/aplicaciones", require("./routes/aplicaciones"));

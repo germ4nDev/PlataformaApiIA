@@ -21,11 +21,6 @@ const {
 } = require("../controllers/usuarios.controller");
 
 const router = Router();
-// router.use(validarSesion);
-
-// const upload = multer({ storage: multer.memoryStorage() });
-
-// router.use(validarJWT);
 
 router.get("/", getUsuarios);
 

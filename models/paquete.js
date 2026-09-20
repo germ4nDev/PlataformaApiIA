@@ -16,15 +16,15 @@ const PaqueteSchema = Joi.object({
 
   descripcionPaquete: Joi.string().max(4000).allow('', null).optional(),
   acuerdoLicencia: Joi.string().max(4000).allow('', null).optional(),
-  costoPaquete: Joi.number().precision(2).min(0).optional().default(0.00),
-  precioPaquete: Joi.number().precision(2).min(0).optional().default(0.00),
-  precioPromocion: Joi.number().precision(2).min(0).optional().default(0.00),
-  valorAnual: Joi.number().precision(2).min(0).optional().default(0.00),
-  valorMensual: Joi.number().precision(2).min(0).optional().default(0.00),
+  // costoPaquete: Joi.number().precision(2).min(0).optional().default(0.00),
+  // precioPaquete: Joi.number().precision(2).min(0).optional().default(0.00),
+  // precioPromocion: Joi.number().precision(2).min(0).optional().default(0.00),
+  // valorAnual: Joi.number().precision(2).min(0).optional().default(0.00),
+  // valorMensual: Joi.number().precision(2).min(0).optional().default(0.00),
   imagenPaquete: Joi.string().max(100).allow('', null).optional().default('no-imagen.png'),
   iconoPaquete: Joi.string().max(100).allow('', null).optional().default('default-icon'),
   colorPaquete: Joi.string().max(100).allow('', null).optional().default('#FFFFFF'),
-  promocion: Joi.boolean().optional().default(false),
+  // promocion: Joi.boolean().optional().default(false),
   estadoPaquete: Joi.boolean().optional().default(true),
 
   codigoUsuarioCreacion: Joi.string().max(200).required(),
@@ -51,15 +51,15 @@ const PaqueteDTO = (rawData) => {
     nombrePaquete: value.nombrePaquete.trim(),
     descripcionPaquete: value.descripcionPaquete.trim(),
     acuerdoLicencia: value.acuerdoLicencia.trim(),
-    costoPaquete: value.costoPaquete,
-    precioPaquete: value.precioPaquete,
-    precioPromocion: value.precioPromocion,
-    valorAnual: value.valorAnual,
-    valorMensual: value.valorMensual,
+    // costoPaquete: value.costoPaquete,
+    // precioPaquete: value.precioPaquete,
+    // precioPromocion: value.precioPromocion,
+    // valorAnual: value.valorAnual,
+    // valorMensual: value.valorMensual,
     imagenPaquete: value.imagenPaquete.trim(),
     iconoPaquete: value.iconoPaquete.trim(),
     colorPaquete: value.colorPaquete.trim(),
-    promocion: value.promocion,
+    // promocion: value.promocion,
     estadoPaquete: value.estadoPaquete,
 
     codigoUsuarioCreacion: value.codigoUsuarioCreacion,
@@ -98,31 +98,31 @@ const PaqueteModel = (sequelize) => {
       type: DataTypes.STRING(4000),
       allowNull: true
     },
-    costoPaquete: {
-      type: DataTypes.DECIMAL(18, 2),
-      allowNull: false,
-      defaultValue: 0.00
-    },
-    precioPaquete: {
-      type: DataTypes.DECIMAL(18, 2),
-      allowNull: false,
-      defaultValue: 0.00
-    },
-    precioPromocion: {
-      type: DataTypes.DECIMAL(18, 2),
-      allowNull: false,
-      defaultValue: 0.00
-    },
-    valorAnual: {
-      type: DataTypes.DECIMAL(18, 2),
-      allowNull: false,
-      defaultValue: 0.00
-    },
-    valorMensual: {
-      type: DataTypes.DECIMAL(18, 2),
-      allowNull: false,
-      defaultValue: 0.00
-    },
+    // costoPaquete: {
+    //   type: DataTypes.DECIMAL(18, 2),
+    //   allowNull: false,
+    //   defaultValue: 0.00
+    // },
+    // precioPaquete: {
+    //   type: DataTypes.DECIMAL(18, 2),
+    //   allowNull: false,
+    //   defaultValue: 0.00
+    // },
+    // precioPromocion: {
+    //   type: DataTypes.DECIMAL(18, 2),
+    //   allowNull: false,
+    //   defaultValue: 0.00
+    // },
+    // valorAnual: {
+    //   type: DataTypes.DECIMAL(18, 2),
+    //   allowNull: false,
+    //   defaultValue: 0.00
+    // },
+    // valorMensual: {
+    //   type: DataTypes.DECIMAL(18, 2),
+    //   allowNull: false,
+    //   defaultValue: 0.00
+    // },
     imagenPaquete: {
       type: DataTypes.STRING(100),
       allowNull: true
@@ -135,11 +135,11 @@ const PaqueteModel = (sequelize) => {
       type: DataTypes.STRING(100),
       allowNull: true
     },
-    promocion: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-      defaultValue: false
-    },
+    // promocion: {
+    //   type: DataTypes.BOOLEAN,
+    //   allowNull: false,
+    //   defaultValue: false
+    // },
     estadoPaquete: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
