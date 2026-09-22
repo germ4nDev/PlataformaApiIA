@@ -12,7 +12,7 @@ const {
   createTipoItem,
   updateTipoItem,
   deleteTipoItem
-} = require("../controllers/tipos-item");
+} = require("../controllers/tipos-item.controller");
 
 const router = Router();
 

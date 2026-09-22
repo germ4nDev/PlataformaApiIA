@@ -34,16 +34,17 @@ const getItemById = async (req, res = response) => {
 
 const createItem = async (req, res = response) => {
   try {
-    // QPLUS: Inyección de auditoría
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-    const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
-
+    const dataDTO = { ...req.body };
     const item = await service.createItem(dataDTO);
     return res.status(201).json({ ok: true, item });
   } catch (error) {
-    return res.status(error.statusCode || 400).json({
+    // 🟢 AGREGA ESTA LÍNEA PARA VER EL VERDADERO ERROR:
+    console.error('💥 ERROR REAL EN EL BACKEND:', error);
+
+    res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al crear el ítem."
+      msg: error.msg || 'Error al crear el item.',
+      error: error.details || error.message
     });
   }
 };
@@ -52,16 +53,18 @@ const updateItem = async (req, res = response) => {
   try {
     const { id } = req.params;
 
-    // QPLUS: Hidratación del payload de auditoría
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-    const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
-
+    const dataDTO = { ...req.body };
+    console.log('item comtroller', dataDTO);
     const item = await service.updateItem(id, dataDTO);
     return res.status(200).json({ ok: true, item });
   } catch (error) {
-    return res.status(error.statusCode || 400).json({
+    // 🟢 AGREGA ESTA LÍNEA PARA VER EL VERDADERO ERROR:
+    console.error('💥 ERROR REAL EN EL BACKEND:', error);
+
+    res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al actualizar el ítem."
+      msg: error.msg || 'Error al crear el item.',
+      error: error.details || error.message
     });
   }
 };

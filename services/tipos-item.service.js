@@ -11,21 +11,40 @@ class TiposItemService {
     this.model = TipoItemModel(sequelize);
   }
 
-  async getTiposItem() {
-    return await this.model.findAll();
+  async getTiposItem(filtros = {}, esParaIA = false) {
+    try {
+      const queryOptions = {
+        where: filtros,
+      };
+
+      if (esParaIA) {
+        queryOptions.attributes = [
+          'codigoTipoItem',
+          'nombreTipo',
+          'descripcionTipo',
+          'estadoTipo'
+        ];
+      }
+
+      return await this.model.findAll(queryOptions);
+
+    } catch (error) {
+      console.error("Error en TiposItemService:", error);
+      throw error;
+    }
   }
 
-  async getTipoItemById(tipoItemId) {
-    const registro = await this.model.findOne({ where: { tipoItemId } });
+  async getTipoItemById(codigoTipoItem) {
+    const registro = await this.model.findOne({ where: { codigoTipoItem } });
     if (!registro) throw { statusCode: 404, msg: "No existe el tipo de item solicitado." };
     return registro;
   }
 
-  /**
-   * Crea un nuevo tipo de ítem
-   */
   async createTipoItem(rawData) {
+    console.log('servicio antes', rawData);
+
     const dataDTO = TipoItemDTO(rawData);
+    console.log('servicio dto', dataDTO);
 
     return await sequelize.transaction(async (t) => {
       const nuevo = await this.model.create(dataDTO, { transaction: t });
@@ -39,28 +58,27 @@ class TiposItemService {
     });
   }
 
-  /**
-   * Actualiza un tipo de ítem existente
-   */
-  async updateTipoItem(tipoItemId, rawData) {
-    // El controlador inyecta el codigoUsuario en rawData antes de invocar este método
+  async updateTipoItem(codigoTipoItem, rawData) {
+    console.log('rawDta antes dto', rawData);
+
     const dataDTO = TipoItemDTO(rawData);
+    console.log('rawDta despues dto', dataDTO);
 
     return await sequelize.transaction(async (t) => {
       const registroDB = await this.model.findOne({
-        where: { tipoItemId },
+        where: { codigoTipoItem },
         transaction: t
       });
 
       if (!registroDB) throw { statusCode: 404, msg: 'No existe el tipo de item para actualizar.' };
 
       await this.model.update(dataDTO, {
-        where: { tipoItemId },
+        where: { codigoTipoItem },
         transaction: t
       });
 
       const actualizado = await this.model.findOne({
-        where: { tipoItemId },
+        where: { codigoTipoItem },
         transaction: t
       });
 
@@ -73,10 +91,10 @@ class TiposItemService {
     });
   }
 
-  async deleteTipoItem(tipoItemId) {
+  async deleteTipoItem(codigoTipoItem) {
     return await sequelize.transaction(async (t) => {
       const registroDB = await this.model.findOne({
-        where: { tipoItemId },
+        where: { codigoTipoItem },
         transaction: t
       });
 
@@ -85,7 +103,7 @@ class TiposItemService {
       const nombreTipo = registroDB.nombreTipo;
 
       await this.model.destroy({
-        where: { tipoItemId },
+        where: { codigoTipoItem },
         transaction: t
       });
 

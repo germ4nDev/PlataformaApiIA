@@ -12,13 +12,14 @@ const TipoItemSchema = Joi.object({
   nombreTipo: Joi.string().max(100).required()
     .messages({ 'any.required': 'El nombre del tipo de ítem es obligatorio.' }),
 
-  descripcionTipo: Joi.string().max(4000).allow('').required()
-    .messages({ 'any.required': 'La descripción del tipo de ítem es obligatoria.' }),
+  descripcionTipo: Joi.string().max(4000).allow('', null).optional(),
+
+  iconoTipo: Joi.string().max(100).allow('', null).optional(),
 
   estadoTipo: Joi.boolean().optional().default(true),
 
-  codigoUsuarioCreacion: Joi.string().max(200).required(),
-  fechaCreacion: Joi.string().max(100).required(),
+  codigoUsuarioCreacion: Joi.string().max(200).allow('', null).optional(),
+  fechaCreacion: Joi.string().max(100).allow('', null).optional(),
   codigoUsuarioModificacion: Joi.string().max(200).allow('', null).optional(),
   fechaModificacion: Joi.string().max(100).allow('', null).optional()
 });
@@ -38,12 +39,13 @@ const TipoItemDTO = (rawData) => {
   return {
     codigoTipoItem: value.codigoTipoItem.trim(),
     nombreTipo: value.nombreTipo.trim(),
-    descripcionTipo: value.descripcionTipo.trim(),
+    descripcionTipo: value.descripcionTipo ? value.descripcionTipo.trim() : null,
+    iconoTipo: value.iconoTipo ? value.iconoTipo.trim() : null,
     estadoTipo: value.estadoTipo,
 
-    codigoUsuarioCreacion: value.codigoUsuarioCreacion,
+    codigoUsuarioCreacion: value.codigoUsuarioCreacion || null,
     fechaCreacion: value.fechaCreacion || fechaActual,
-    codigoUsuarioModificacion: value.codigoUsuarioModificacion || value.codigoUsuarioCreacion,
+    codigoUsuarioModificacion: value.codigoUsuarioModificacion || null,
     fechaModificacion: value.fechaModificacion || fechaActual
   };
 };
@@ -65,8 +67,12 @@ const TipoItemModel = (sequelize) => {
       allowNull: false
     },
     descripcionTipo: {
-      type: DataTypes.STRING(255),
-      allowNull: false
+      type: DataTypes.STRING(4000),
+      allowNull: true
+    },
+    iconoTipo: {
+      type: DataTypes.STRING(100),
+      allowNull: true
     },
     estadoTipo: {
       type: DataTypes.BOOLEAN,
@@ -75,19 +81,19 @@ const TipoItemModel = (sequelize) => {
     },
     codigoUsuarioCreacion: {
       type: DataTypes.STRING(200),
-      allowNull: false
+      allowNull: true
     },
     fechaCreacion: {
       type: DataTypes.STRING(100),
-      allowNull: false
+      allowNull: true
     },
     codigoUsuarioModificacion: {
       type: DataTypes.STRING(200),
-      allowNull: false
+      allowNull: true
     },
     fechaModificacion: {
       type: DataTypes.STRING(100),
-      allowNull: false
+      allowNull: true
     }
   }, {
     tableName: 'PTLTiposItem',

@@ -21,9 +21,6 @@ class ModulosAPService {
     return registro;
   }
 
-  /**
-   * Crea un nuevo módulo validando unicidad de código y nombre
-   */
   async createModulo(rawData) {
     try {
       const dataDTO = ModuloAPDTO(rawData);
@@ -52,11 +49,7 @@ class ModulosAPService {
     }
   }
 
-  /**
-   * Actualiza un módulo existente
-   */
   async updateModulo(codigoModulo, rawData) {
-    // El controlador inyecta el codigoUsuario en rawData antes de invocar este método
     const dataDTO = ModuloAPDTO(rawData);
 
     return await sequelize.transaction(async (t) => {

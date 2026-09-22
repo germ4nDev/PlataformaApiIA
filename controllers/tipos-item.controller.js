@@ -10,6 +10,8 @@ const service = new TiposItemService();
 const getTiposItem = async (req, res = response) => {
   try {
     const tipos = await service.getTiposItem();
+    console.log('los tipos', tipos);
+
     return res.status(200).json({ ok: true, tipos });
   } catch (error) {
     return res.status(error.statusCode || 500).json({
@@ -22,12 +24,17 @@ const getTiposItem = async (req, res = response) => {
 const getTipoItemById = async (req, res = response) => {
   try {
     const { id } = req.params;
+    console.log('codigo controller', id);
     const tipo = await service.getTipoItemById(id);
     return res.status(200).json({ ok: true, tipo });
   } catch (error) {
-    return res.status(error.statusCode || 400).json({
+    // 🟢 AGREGA ESTA LÍNEA PARA VER EL VERDADERO ERROR:
+    console.error('💥 ERROR REAL EN EL BACKEND:', error);
+
+    res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al obtener el tipo de ítem solicitado."
+      msg: error.msg || 'Error al crear el item.',
+      error: error.details || error.message
     });
   }
 };
@@ -35,8 +42,8 @@ const getTipoItemById = async (req, res = response) => {
 const createTipoItem = async (req, res = response) => {
   try {
     // QPLUS: Inyección de auditoría
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-    const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+    const dataDTO = { ...req.body };
+    console.log('data contrller', dataDTO);
 
     const tipo = await service.createTipoItem(dataDTO);
     return res.status(201).json({ ok: true, tipo });
@@ -52,16 +59,19 @@ const updateTipoItem = async (req, res = response) => {
   try {
     const { id } = req.params;
 
-    // QPLUS: Hidratación del payload de auditoría
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-    const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+    const dataDTO = { ...req.body };
+    console.log('rawDta conbtroller', dataDTO);
 
     const tipo = await service.updateTipoItem(id, dataDTO);
     return res.status(200).json({ ok: true, tipo });
   } catch (error) {
-    return res.status(error.statusCode || 400).json({
+    // 🟢 AGREGA ESTA LÍNEA PARA VER EL VERDADERO ERROR:
+    console.error('💥 ERROR REAL EN EL BACKEND:', error);
+
+    res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al actualizar el tipo de ítem."
+      msg: error.msg || 'Error al crear el item.',
+      error: error.details || error.message
     });
   }
 };

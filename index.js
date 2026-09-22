@@ -76,8 +76,8 @@ app.use("/api/auth", require("./routes/auth.routes"));
 app.use("/api/upload", require("./routes/uploads.routes"));
 app.use("/api/sliders", require("./routes/sliders-inicio"));
 app.use("/api/colores", require("./routes/colores-settings"));
-app.use("/api/tipos-item", require("./routes/tipos-item"));
-app.use("/api/items", require("./routes/items"));
+app.use("/api/tipos-item", require("./routes/tipos-item.routes"));
+app.use("/api/items", require("./routes/items.routes"));
 app.use("/api/db-setup", require("./routes/db-setup"));
 app.use("/api/bibliotecas", require("./routes/bibliotecas"));
 app.use("/api/galerias", require("./routes/galerias.routes"));
@@ -93,6 +93,7 @@ app.use("/api/historial-facturacion", require("./routes/historial-facturacion.ro
 app.use('/api/tipos-pago', require('./routes/tipos-pago.routes'));
 app.use('/api/tipos-paquete', require('./routes/tipos-paquete.routes'));
 app.use('/api/tipos-roles', require('./routes/tipos-roles.routes'));
+app.use('/api/tipos-items', require('./routes/tipos-item.routes'));
 app.use('/api/email', require('./routes/email.routes'));
 app.use('/api/widgets', require('./routes/widgets.routes'));
 app.use('/api/widgets-roles', require('./routes/widget-roles.routes'));

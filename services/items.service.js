@@ -40,11 +40,12 @@ class ItemService {
     return registro;
   }
 
-  /**
-   * Crea un nuevo ítem
-   */
   async createItem(rawData) {
+    console.log('item antes dto', rawData);
+
     const dataDTO = ItemDTO(rawData);
+    console.log('item despues dto', dataDTO);
+
 
     return await sequelize.transaction(async (t) => {
       const nuevo = await this.model.create(dataDTO, { transaction: t });
@@ -58,11 +59,7 @@ class ItemService {
     });
   }
 
-  /**
-   * Actualiza un ítem existente
-   */
   async updateItem(codigoItem, rawData) {
-    // El controlador inyecta codigoUsuario antes de llamar a este servicio
     const dataDTO = ItemDTO(rawData);
 
     return await sequelize.transaction(async (t) => {

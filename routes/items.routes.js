@@ -12,7 +12,7 @@ const {
   createItem,
   updateItem,
   deleteItem
-} = require("../controllers/items");
+} = require("../controllers/items.controller");
 
 const router = Router();
 
