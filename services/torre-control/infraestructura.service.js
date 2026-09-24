@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS Architecture - Servicio de Infraestructura
+    Pattern: PORTTOS Architecture - Servicio de Infraestructura
     Update: Unificación de campos espaciales (Point y Polygon) y GeoJSON Enveloping
 */
 const { Sequelize } = require('sequelize');
@@ -128,7 +128,7 @@ class InfraestructuraService {
 
 
 
-  // 4. CRUD de Escritura (Usa el patrón DTO QPLUS)
+  // 4. CRUD de Escritura (Usa el patrón DTO PORTTOS)
   async crearInfraestructura(rawData, userContext = { codigoUsuario: 'SISTEMA_ADMIN' }) {
     try {
       const dataDTO = InfraestructuraDTO(rawData, userContext);

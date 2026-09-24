@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS Controller - Matriz
+    Pattern: PORTTOS Controller - Matriz
 */
 const TLCMatrizOperacionesService = require('../../services/torre-control/tlc-matriz-operaciones.service');
 

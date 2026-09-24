@@ -57,8 +57,6 @@ class WidgetesRolesService {
         ]
       });
 
-      console.log(`✅ Permisos encontrados para el rol ${codigoRole}:`, data.length);
-
       return { ok: true, data: data };
 
     } catch (error) {

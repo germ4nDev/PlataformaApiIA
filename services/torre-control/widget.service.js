@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Refactored for: QPLUS Standard (Clean Service Layer) - Catálogo de Widgets
+    Refactored for: PORTTOS Standard (Clean Service Layer) - Catálogo de Widgets
 */
 const { sequelize } = require('../../database/connection');
 const { CatalogoWidgetModel, CatalogoWidgetDTO } = require('../../models/torre-control/catalogo-widgets.model');
@@ -40,7 +40,7 @@ class WidgetService {
 
   async crearWidget(rawData, userContext = { codigoUsuario: 'SISTEMA_ADMIN' }) {
     try {
-      // 1. Saneamiento y Validación (Escudo QPLUS)
+      // 1. Saneamiento y Validación (Escudo PORTTOS)
       const dataDTO = CatalogoWidgetDTO(rawData, userContext);
 
       return await sequelize.transaction(async (t) => {

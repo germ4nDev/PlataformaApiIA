@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS Repository - Mapa General (Gemelo Digital)
+    Pattern: PORTTOS Repository - Mapa General (Gemelo Digital)
     Descripción: Consultas espaciales y extracción de datos georreferenciados.
 */
 

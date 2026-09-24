@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS DTO Pattern - Layout del Tablero por Usuario
+    Pattern: PORTTOS DTO Pattern - Layout del Tablero por Usuario
 */
 const Joi = require('joi');
 const { DataTypes } = require('sequelize');

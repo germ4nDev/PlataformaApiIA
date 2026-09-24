@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Refactored for: QPLUS Standard (Clean Service Layer) - Catálogo de Widgets
+    Refactored for: PORTTOS Standard (Clean Service Layer) - Catálogo de Widgets
 */
 const { Sequelize } = require('sequelize');
 const { sequelize } = require('../../database/connection');

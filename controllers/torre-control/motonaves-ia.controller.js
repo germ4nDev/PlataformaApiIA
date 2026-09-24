@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS Controller Pattern - Dashboard IA
+    Pattern: PORTTOS Controller Pattern - Dashboard IA
 */
 const MotonavesIAService = require('../../services/torre-control/motonaves-ia.service');
 

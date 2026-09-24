@@ -3,7 +3,7 @@
     Service: AgenteEstructuradorIA
     Descripción: Motor genérico para procesar telemetría, aplicar reglas de negocio 
                  mediante LLMs y retornar respuestas estrictamente tipeadas en JSON.
-    Pattern: QPLUS Agentic UI - Data to Data
+    Pattern: PORTTOS Agentic UI - Data to Data
 */
 const { Anthropic } = require('@anthropic-ai/sdk');
 
@@ -78,8 +78,8 @@ const generarEstructuraIA = async ({
     return resultadoEstructurado;
 
   } catch (error) {
-    // console.error(`[QPLUS Agente Genérico] Error de IA o Parseo:`, error.message);
-    // console.error(`[QPLUS Agente Genérico] Respuesta cruda que falló:`, textoRespuesta);
+    // console.error(`[PORTTOS Agente Genérico] Error de IA o Parseo:`, error.message);
+    // console.error(`[PORTTOS Agente Genérico] Respuesta cruda que falló:`, textoRespuesta);
 
     // Retorna el dato de seguridad para no romper la tabla en Angular
     return fallbackData;

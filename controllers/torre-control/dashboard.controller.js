@@ -1,7 +1,7 @@
 /*
     Author: German Valencia
     Controller: Dashboard Layout Management
-    Pattern: QPLUS (Model + DTO + Resolver Hydration)
+    Pattern: PORTTOS (Model + DTO + Resolver Hydration)
 */
 
 const { sequelize } = require('../../database/connection');

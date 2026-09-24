@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS Controller Pattern - Alertas Climatics
+    Pattern: PORTTOS Controller Pattern - Alertas Climatics
 */
 const { db, sequelize } = require('../../database/connection');
 const { AlertaClimaticaDTO, AlertaClimaticaModel } = require('./../../models/torre-control/alerta-climatica.model');
@@ -22,7 +22,7 @@ const AlertaClimaticaController = {
         data: nuevaAlerta
       });
     } catch (error) {
-      // Manejo de errores QPLUS
+      // Manejo de errores PORTTOS
       if (error.type === 'ValidationError') {
         res.status(400).json({ success: false, errores: error.details });
       } else {

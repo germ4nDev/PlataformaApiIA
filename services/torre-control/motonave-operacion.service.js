@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS Service Pattern - Operaciones Motonaves
+    Pattern: PORTTOS Service Pattern - Operaciones Motonaves
 */
 const { Op } = require('sequelize');
 

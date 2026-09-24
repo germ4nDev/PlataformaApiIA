@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS Standard - Controlador de Terminales
+    Pattern: PORTTOS Standard - Controlador de Terminales
 */
 const { response } = require('express');
 const TerminalsService = require('../../services/torre-control/terminales.service'); // Asegura que la ruta coincida

@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS Controller Pattern - Virtual Gate
+    Pattern: PORTTOS Controller Pattern - Virtual Gate
 */
 const RegistroCamionService = require('../../services/torre-control/registro-camion.service');
 const { RegistroCamionDTO } = require('../../models/torre-control/registro-camion.model');

@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS DTO Pattern - Maestro de Puertos
+    Pattern: PORTTOS DTO Pattern - Maestro de Puertos
 */
 const Joi = require('joi');
 const { DataTypes } = require('sequelize');

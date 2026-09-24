@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS Service - Motor de Datos Marítimos (PRODUCCIÓN)
+    Pattern: PORTTOS Service - Motor de Datos Marítimos (PRODUCCIÓN)
     Descripción: Orquestador integral de la Pestaña Marítima.
 */
 const MaritimoRepository = require('../../repositories/torre-control/maritimo.repository');

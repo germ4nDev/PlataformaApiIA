@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS Routes - Mapa General
+    Pattern: PORTTOS Routes - Mapa General
 */
 const express = require('express');
 const router = express.Router();

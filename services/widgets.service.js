@@ -38,9 +38,7 @@ class WidgetsService {
   }
 
   async createWidget(rawData) {
-    console.log('data widget antes dto', rawData);
     const dataDTO = WidgetMaestroDTO(rawData);
-    console.log('data widget despues dto', dataDTO);
 
     return await sequelize.transaction(async (t) => {
       const existeWidget = await this.model.findOne({
@@ -69,10 +67,8 @@ class WidgetsService {
 
   async updateWidget(codigoWidget, rawData) {
     rawData.codigoWidget = codigoWidget;
-    console.log('actualizar antes servicio', rawData);
 
     const dataDTO = WidgetMaestroDTO(rawData);
-    console.log('actualizar despues', dataDTO);
 
     return await sequelize.transaction(async (t) => {
       const widgetDB = await this.model.findOne({
@@ -93,7 +89,6 @@ class WidgetsService {
       });
 
       if (dataDTO.estadoWidget === false && widgetDB.estadoWidget === true) {
-        console.log('inactivado el widget');
         try {
           await this.limpiarWidgetDeLayouts(codigoWidget, t);
         } catch (errorLayout) {
@@ -133,16 +128,13 @@ class WidgetsService {
 
       const nombreWidget = widgetDB.nombreWidget;
 
-      // 🟢 Borrado Lógico
       await this.model.update({ estadoWidget: false }, {
         where: { codigoWidget },
         transaction: t
       });
 
-      // 🟢 NUEVO: Limpiamos los layouts inmediatamente
       await this.limpiarWidgetDeLayouts(codigoWidget, t);
 
-      // Emitimos el evento de inactividad para que Angular lo quite de la pantalla en vivo
       getIO().emit("widgets-actualizados", {
         action: "inactivado",
         codigoWidget: codigoWidget,
@@ -211,8 +203,6 @@ class WidgetsService {
         return;
       }
 
-      console.log(`🔍 Buscando layouts afectados por el widget: ${codigoWidget}`);
-
       const layoutsAfectados = await LayoutModel.findAll({
         where: {
           layoutData: {
@@ -222,36 +212,25 @@ class WidgetsService {
         transaction: t
       });
 
-      console.log(`🔍 Se encontraron ${layoutsAfectados.length} usuarios con el widget ${codigoWidget} en su tablero.`);
-
       for (const layout of layoutsAfectados) {
         if (layout.layoutData) {
           try {
             let parsedLayout = JSON.parse(layout.layoutData);
 
-            // Declaramos la cantidad antes de filtrar
             const cantidadAntes = parsedLayout.length;
 
-            // Filtramos el array para quitar el widget desactivado
             parsedLayout = parsedLayout.filter(item => item.codigoWidget !== codigoWidget && item.type !== codigoWidget);
-
-            console.log(`👤 Usuario: ${layout.codigoUsuario} | Widgets antes: ${cantidadAntes} | Widgets después: ${parsedLayout.length}`);
 
             await layout.update({
               layoutData: JSON.stringify(parsedLayout)
             }, { transaction: t });
 
-            // 🟢 2. EMITIMOS DIRECTAMENTE A LA SALA DEL USUARIO AFECTADO
-            // (Asegúrate de que cada usuario al conectarse al socket haga un: socket.join(codigoUsuario))
             getIO().to(layout.codigoUsuario).emit("layout-actualizado", {
               action: "layout-limpiado",
               codigoWidgetInactivado: codigoWidget,
               nuevoLayout: parsedLayout,
               msg: "Tu tablero se ha actualizado porque un widget fue modificado por administración."
             });
-
-            console.log(`📤 Evento emitido al usuario room: ${layout.codigoUsuario}`);
-
           } catch (error) {
             console.error(`Error parseando/limpiando layout del usuario ${layout.codigoUsuario}:`, error);
           }

@@ -102,6 +102,8 @@ app.use('/api/usuarios-widgets', require('./routes/usuarios-widgets.routes'));
 app.use('/api/sesiones', require('./routes/sesiones.routes'));
 app.use('/api/lista-precios', require('./routes/lista-precios.routes'));
 app.use('/api/parametros', require('./routes/parametros-sistema.routes'));
+app.use('/api/pestanas', require('./routes/pestanas.routes'));
+app.use('/api/tipos-widget', require('./routes/tipos-widget.routes'));
 
 // APLICACIONES
 app.use("/api/aplicaciones", require("./routes/aplicaciones"));
@@ -145,6 +147,27 @@ app.use("/api/tios-logs", require("./routes/tipos-logs"));
 app.use("/api/logs-actividades", require("./routes/logs-actividades"));
 app.use("/api/logs-actualizaciones", require("./routes/logs-actualizaciones"));
 app.use("/api/logs-transacciones", require("./routes/logs-transacciones"));
+
+// TCLP
+app.use("/api/tclp-dashboard", require("./routes/torre-control/dashboard.routes"));
+app.use("/api/tclp-ingesta", require("./routes/torre-control/ingesta.routes"));
+app.use("/api/torre-control", require("./routes/torre-control/torre-control.routes"));
+app.use("/api/maritimo", require("./routes/torre-control/maritimo.routes"));
+app.use('/api/widgets', require('./routes/torre-control/widget.routes'));
+app.use('/api/layout', require('./routes/torre-control/layout.routes'));
+app.use('/api/mapa-general', require('./routes/torre-control/mapa-general.routes'));
+app.use('/api/alertas', require('./routes/torre-control/alertaClimatica.routes'));
+app.use('/api/puertos', require('./routes/torre-control/puertos.routes'));
+app.use('/api/terminales', require('./routes/torre-control/terminales.routes'));
+app.use('/api/muelles', require('./routes/torre-control/muelles.routes'));
+app.use('/api/infraestructura', require('./routes/torre-control/infraestructura.routes'));
+app.use('/api/tipos-infraestructura', require('./routes/torre-control/tipos-infraestructura.routes'));
+app.use('/api/eventos-viales', require('./routes/torre-control/evento-vial.routes'));
+app.use('/api/flota-terrestre', require('./routes/torre-control/flota-terrestre.routes'));
+app.use('/api/motonaves', require('./routes/torre-control/motonves.routes'));
+app.use('/api/faros', require('./routes/torre-control/faros.routes'));
+app.use('/api/radar', require('./routes/torre-control/radar.routes'));
+app.use('/api/contenedores', require('./routes/torre-control/contenedores.routes'));
 
 // =======================================================
 // === EVENTOS SOCKET.IO ===
@@ -225,17 +248,21 @@ sequelize
       const cronService = new SuscripcionCronService();
       cronService.iniciarTareasProgramadas();
 
+      require('./jobs/cron.manager');
+      //initCronJobs(sequelize);
+
       try {
         console.log('📡 [Boot] Encendiendo Motor de Ingesta Satelital (AIS)...');
-        // await AISStreamService.iniciarConexion(io);
+        // Este es el ÚNICO servicio que debe conectarse a AisStream
+        await AISStreamService.iniciarConexion(io);
       } catch (aisError) {
         console.error('❌ [Boot] Error encendiendo el radar AIS:', aisError.message);
       }
 
       setTimeout(async () => {
         try {
-          // await SitmarEtlService.sincronizarTodasLasNaves();
-          // aisRadar.iniciarRadarGlobal(io);
+          await SitmarEtlService.sincronizarTodasLasNaves();
+          aisRadar.iniciarRadarGlobal(io);
           console.log('✅ [COLD START] Secuencia inicial completada.');
         } catch (syncError) {
           console.error('❌ [COLD START ERROR] Fallo inicial de Sitmar:', syncError.message);

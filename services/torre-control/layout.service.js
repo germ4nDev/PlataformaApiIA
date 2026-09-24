@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS Service - Gestión del Layout del Tablero (Wipe & Replace)
+    Pattern: PORTTOS Service - Gestión del Layout del Tablero (Wipe & Replace)
 */
 const { db, sequelize } = require('../../database/connection');
 const { LayoutUsuarioDTO, LayoutUsuarioModel } = require('../../models/torre-control/layout-usuario.model');

@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS Controller Pattern - Operaciones Motonaves
+    Pattern: PORTTOS Controller Pattern - Operaciones Motonaves
 */
 const MotonaveOperacionService = require('../../services/torre-control/motonave-operacion.service');
 const { MotonaveOperacionDTO } = require('../../models/torre-control/motonave-operacion');

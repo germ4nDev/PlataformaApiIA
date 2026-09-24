@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS DTO Pattern - Eventos Viales (Crisis y Bloqueos)
+    Pattern: PORTTOS DTO Pattern - Eventos Viales (Crisis y Bloqueos)
 */
 const Joi = require('joi');
 const { DataTypes } = require('sequelize');
@@ -52,7 +52,7 @@ const EventoVialDTO = (rawData, userContext) => {
     fechaInicio: value.fechaInicio,
     fechaFin: value.fechaFin || null,
 
-    // Auditoría QPLUS (Corte preventivo)
+    // Auditoría PORTTOS (Corte preventivo)
     codigoUsuarioCreacion: userContext.codigoUsuario.substring(0, 200),
     fechaCreacion: new Date(),
     codigoUsuarioModificacion: userContext.codigoUsuario.substring(0, 200),

@@ -48,7 +48,7 @@ const ClimateIngestionService = {
             fechaInicio: new Date().toISOString()
           };
 
-          // El Escudo: Validación y transformación del patrón QPLUS
+          // El Escudo: Validación y transformación del patrón PORTTOS
           const dataValidada = AlertaClimaticaDTO(rawAlerta, SYSTEM_CONTEXT);
 
           // Persistencia asíncrona controlada en el modelo relacional

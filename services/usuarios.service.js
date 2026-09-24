@@ -68,9 +68,7 @@ class UsuariosService {
   }
 
   async createUsuario(rawData) {
-    console.log('data usuario antes dto', rawData);
     const dataDTO = UsuarioDTO(rawData);
-    console.log('data usuario despues dto', dataDTO);
 
     return await sequelize.transaction(async (t) => {
       const existeIdentificacion = await this.model.findOne({
@@ -166,9 +164,7 @@ class UsuariosService {
     if (rawData.fotoUsuario == "") (
       rawData.fotoUsuario = 'mantenerFoto'
     )
-    console.log('data usuario antes dto', rawData);
     const dataDTO = UsuarioDTO(rawData);
-    console.log('data usuario despues dto', dataDTO);
 
     return await sequelize.transaction(async (t) => {
       const usuarioDB = await this.model.findOne({
@@ -179,7 +175,6 @@ class UsuariosService {
       if (!usuarioDB) {
         throw { statusCode: 404, msg: "No existe el usuario con ese ID para actualizar." };
       }
-      console.log('data usuario encontrado', usuarioDB.dataValues);
       const usuActualizar = usuarioDB.dataValues;
 
       if (rawData.claveUsuario != usuActualizar.claveUsuario) {
@@ -192,7 +187,6 @@ class UsuariosService {
       if (rawData.fotoUsuario != 'mantenerFoto') {
         usuActualizar.fotoUsuario = rawData.fotoUsuario
       }
-      console.log('data usuario despues dto', usuActualizar);
 
       await this.model.update(usuActualizar, {
         where: { codigoUsuario: dataDTO.codigoUsuario },

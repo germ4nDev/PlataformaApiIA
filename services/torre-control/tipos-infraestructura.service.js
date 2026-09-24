@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Refactored for: QPLUS Standard (Clean Service Layer) - Catálogo de Widgets
+    Refactored for: PORTTOS Standard (Clean Service Layer) - Catálogo de Widgets
 */
 const { sequelize } = require('../../database/connection');
 const { TipoInfraestructuraModel, TipoInfraestructuraDTO } = require('../../models/torre-control/tipo-infraestructura.model');
@@ -41,7 +41,7 @@ class TipoInfraestructurasService {
 
   async crearTipoInfraestructura(rawData, userContext = { codigoUsuario: 'SISTEMA_ADMIN' }) {
     try {
-      // 1. Saneamiento y Validación (Escudo QPLUS)
+      // 1. Saneamiento y Validación (Escudo PORTTOS)
       const dataDTO = TipoInfraestructuraDTO(rawData, userContext);
 
       return await sequelize.transaction(async (t) => {
@@ -157,7 +157,7 @@ class TipoInfraestructurasService {
 
     } catch (error) {
       console.error(`🔴 Error en updateTipoInfraestructura:`, error.msg || error.message);
-      // Mantener el formato QPLUS de errores
+      // Mantener el formato PORTTOS de errores
       throw {
         statusCode: error.type === 'ValidationError' ? 400 : (error.statusCode || 500),
         msg: error.type === 'ValidationError' ? 'Error de validación de datos' : (error.msg || 'Error interno al actualizar'),

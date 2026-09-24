@@ -123,7 +123,7 @@
 //     }
 //   }
 
-//   // 4. CRUD de Escritura (Usa el patrón DTO QPLUS)
+//   // 4. CRUD de Escritura (Usa el patrón DTO PORTTOS)
 //   async crearPuerto(rawData, userContext = { codigoUsuario: 'SISTEMA_ADMIN' }) {
 //     try {
 //       const dataDTO = PuertoDTO(rawData, userContext);
@@ -312,7 +312,7 @@ class PuertosService {
     }
   }
 
-  // 4. CRUD de Escritura (Usa el patrón DTO QPLUS)
+  // 4. CRUD de Escritura (Usa el patrón DTO PORTTOS)
   async crearPuerto(rawData, userContext = { codigoUsuario: 'SISTEMA_ADMIN' }) {
     try {
       const dataDTO = PuertoDTO(rawData, userContext);

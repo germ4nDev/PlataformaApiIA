@@ -1,7 +1,7 @@
 /*
     Author: German Valencia
     Resolvers: Mock Data Hydration for Torre de Control 4.0
-    Pattern: QPLUS Placeholder Engine
+    Pattern: PORTTOS Placeholder Engine
 */
 
 const WIDGET_RESOLVERS = {

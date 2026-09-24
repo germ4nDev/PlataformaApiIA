@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS DTO Pattern - Homologación MMSI (Puente AIS-DIMAR)
+    Pattern: PORTTOS DTO Pattern - Homologación MMSI (Puente AIS-DIMAR)
 */
 const Joi = require('joi');
 const { DataTypes } = require('sequelize');
@@ -52,7 +52,7 @@ const HomologacionMmsiModel = (sequelize) => {
       allowNull: true
     },
     fecha_vinculacion: {
-      type: DataTypes.STRING(100), // Mantenemos tu estándar de fechas String de QPLUS
+      type: DataTypes.STRING(100), // Mantenemos tu estándar de fechas String de PORTTOS
       allowNull: true
     }
   }, {

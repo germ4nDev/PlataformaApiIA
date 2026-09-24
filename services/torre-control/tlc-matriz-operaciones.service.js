@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS Service - Matriz
+    Pattern: PORTTOS Service - Matriz
 */
 const { sequelize } = require('../../database/connection');
 const { MatrizOperacionModel } = require('../../models/torre-control/tlc-matriz-operaciones.model');

@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS Job Scheduler - Disparador RNDC
+    Pattern: PORTTOS Job Scheduler - Disparador RNDC
 */
 const cron = require('node-cron');
 const RndcBatchService = require('../services/torre-control/rndc-batch.service');

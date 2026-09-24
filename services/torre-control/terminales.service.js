@@ -1,6 +1,6 @@
 // /*
 //     Author: German Valencia
-//     Refactored for: QPLUS Standard (Clean Service Layer) - Catálogo de Widgets
+//     Refactored for: PORTTOS Standard (Clean Service Layer) - Catálogo de Widgets
 // */
 // const { Sequelize } = require('sequelize');
 // const { sequelize } = require('../../database/connection');
@@ -172,7 +172,7 @@
 // module.exports = TerminalsService;
 /*
     Author: German Valencia
-    Refactored for: QPLUS Standard (Clean Service Layer) - Catálogo de Widgets (Terminales)
+    Refactored for: PORTTOS Standard (Clean Service Layer) - Catálogo de Widgets (Terminales)
 */
 const { Sequelize } = require('sequelize');
 const { sequelize } = require('../../database/connection');
@@ -290,7 +290,7 @@ class TerminalsService {
     }
   }
 
-  // 4. CRUD de Escritura (Usa el patrón DTO QPLUS)
+  // 4. CRUD de Escritura (Usa el patrón DTO PORTTOS)
   async crearTerminal(rawData, userContext = { codigoUsuario: 'SISTEMA_ADMIN' }) {
     try {
       const dataDTO = TerminalDTO(rawData, userContext);

@@ -1,6 +1,6 @@
 // /*
 //     Author: German Valencia
-//     Patrón: QPLUS Service Pattern - Orquestación con Tendencias Dinámicas Calculadas
+//     Patrón: PORTTOS Service Pattern - Orquestación con Tendencias Dinámicas Calculadas
 // */
 // const { QueryTypes } = require('sequelize');
 // const { db } = require('../../database/connection');
@@ -461,7 +461,7 @@
 
 /*
     Author: German Valencia
-    Patrón: QPLUS Service Pattern - Orquestación con Tendencias Dinámicas Calculadas
+    Patrón: PORTTOS Service Pattern - Orquestación con Tendencias Dinámicas Calculadas
 */
 const MaritimoRepository = require('../../repositories/torre-control/maritimo.repository');
 const { MAPA_PORTUARIO } = require('../../config/puertos.config');

@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS DTO Pattern - Alertas Meteorológicas (IDEAM / Clima)
+    Pattern: PORTTOS DTO Pattern - Alertas Meteorológicas (IDEAM / Clima)
 */
 const Joi = require('joi');
 const { DataTypes } = require('sequelize');
@@ -77,7 +77,7 @@ const AlertaClimaticaDTO = (rawData, userContext) => {
     fechaInicio: value.fechaInicio,
     fechaFin: value.fechaFin || null,
 
-    // Auditoría QPLUS
+    // Auditoría PORTTOS
     codigoUsuarioCreacion: userContext.codigoUsuario,
     fechaCreacion: new Date(),
     codigoUsuarioModificacion: userContext.codigoUsuario,
@@ -143,7 +143,7 @@ const AlertaClimaticaModel = (sequelize) => {
       allowNull: true
     },
 
-    // Auditoría QPLUS
+    // Auditoría PORTTOS
     codigoUsuarioCreacion: { type: DataTypes.STRING(200), allowNull: false },
     fechaCreacion: { type: DataTypes.STRING(100), allowNull: false },
     codigoUsuarioModificacion: { type: DataTypes.STRING(200), allowNull: true },

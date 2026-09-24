@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS DTO Pattern - Naves Fondeadas (SITMAR)
+    Pattern: PORTTOS DTO Pattern - Naves Fondeadas (SITMAR)
 */
 const Joi = require('joi');
 const { DataTypes } = require('sequelize');

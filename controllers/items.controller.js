@@ -58,9 +58,7 @@ const updateItem = async (req, res = response) => {
     const item = await service.updateItem(id, dataDTO);
     return res.status(200).json({ ok: true, item });
   } catch (error) {
-    // 🟢 AGREGA ESTA LÍNEA PARA VER EL VERDADERO ERROR:
     console.error('💥 ERROR REAL EN EL BACKEND:', error);
-
     res.status(error.statusCode || 400).json({
       ok: false,
       msg: error.msg || 'Error al crear el item.',

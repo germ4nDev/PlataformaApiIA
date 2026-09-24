@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS Model - TLCRNDCOperacionTerrestre
+    Pattern: PORTTOS Model - TLCRNDCOperacionTerrestre
     Descripción: Mapeo completo de la estructura de operación terrestre RNDC
 */
 module.exports = (sequelize, DataTypes) => {

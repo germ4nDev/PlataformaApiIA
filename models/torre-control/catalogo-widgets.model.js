@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS DTO Pattern - Catálogo de Widgets (Lobby)
+    Pattern: PORTTOS DTO Pattern - Catálogo de Widgets (Lobby)
 */
 const Joi = require('joi');
 const { DataTypes } = require('sequelize');

@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS DTO Pattern - Clima Pronóstico y Observado
+    Pattern: PORTTOS DTO Pattern - Clima Pronóstico y Observado
 */
 const Joi = require('joi');
 const { DataTypes } = require('sequelize');

@@ -1,6 +1,6 @@
 /*
     Author: German Dario Valencia Salazar
-    Pattern: QPLUS Controller Pattern - Flota Terrestre
+    Pattern: PORTTOS Controller Pattern - Flota Terrestre
 */
 const FlotaTerrestreService = require('../../services/torre-control/flota-terrestre.service');
 const { FlotaTerrestreDTOModel, FlotaTerrestreDTO } = require('../../models/torre-control/flota-terrestre.model');

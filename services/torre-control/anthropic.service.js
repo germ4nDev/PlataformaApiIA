@@ -68,7 +68,7 @@ const analizarDatosWidget = async (widgetId, rawData) => {
         break;
 
       default:
-        systemPrompt = `Eres un asistente logístico de la Torre de Control QPLUS. Contexto actual: ${contextExterno}`;
+        systemPrompt = `Eres un asistente logístico de la Torre de Control PORTTOS. Contexto actual: ${contextExterno}`;
         userPrompt = `Resume este paquete de datos operativos en una oración clara y profesional: ${dataString}`;
     }
 
@@ -90,7 +90,7 @@ const analizarDatosWidget = async (widgetId, rawData) => {
     return response.content[0].text;
 
   } catch (error) {
-    console.error(`[QPLUS AI] Error procesando widget ${widgetId}:`, error.message);
+    console.error(`[PORTTOS AI] Error procesando widget ${widgetId}:`, error.message);
     // Fallback elegante para que el front-end no se rompa si la API falla
     return "El agente de análisis está analizando la telemetría. Intente nuevamente en unos minutos.";
   }

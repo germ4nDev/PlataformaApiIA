@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS DTO Pattern - Maestro Tipos de Infraestructura
+    Pattern: PORTTOS DTO Pattern - Maestro Tipos de Infraestructura
 */
 const Joi = require('joi');
 const { DataTypes, Sequelize } = require('sequelize');
@@ -14,7 +14,7 @@ const TipoInfraestructuraSchema = Joi.object({
   estado: Joi.bool().default(true),
 });
 
-// 2. EL ENSAMBLADOR: DTO con auditoría QPLUS
+// 2. EL ENSAMBLADOR: DTO con auditoría PORTTOS
 const TipoInfraestructuraDTO = (rawData, userContext = { codigoUsuario: 'SISTEMA_ADMIN' }) => {
   // 🟢 CORRECCIÓN: Usamos el Schema correcto
   const { error, value } = TipoInfraestructuraSchema.validate(rawData, { abortEarly: false, stripUnknown: true });
@@ -33,7 +33,7 @@ const TipoInfraestructuraDTO = (rawData, userContext = { codigoUsuario: 'SISTEMA
     color_ui: value.color_ui ? value.color_ui.trim() : null,
     estado: value.estado,
 
-    // Auditoría QPLUS (Estos sí existen en tu tabla según la imagen)
+    // Auditoría PORTTOS (Estos sí existen en tu tabla según la imagen)
     usuario_cargue: userContext.codigoUsuario,
     fecha_cargue: new Date().toISOString()
   };

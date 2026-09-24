@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS Service - Mapa General (Gemelo Digital)
+    Pattern: PORTTOS Service - Mapa General (Gemelo Digital)
     Descripción: Orquestador limpio de capas espaciales (Vías, Infraestructura, Terrestre, Clima, Incidentes).
 */
 const fs = require('fs');

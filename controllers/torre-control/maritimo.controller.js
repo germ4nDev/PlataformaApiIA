@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS Controller Pattern - Marítimo Maestro
+    Pattern: PORTTOS Controller Pattern - Marítimo Maestro
 */
 const fs = require('fs');
 const path = require('path');

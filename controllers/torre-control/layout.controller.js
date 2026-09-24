@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS Controller - Endpoint de Layout
+    Pattern: PORTTOS Controller - Endpoint de Layout
 */
 const LayoutService = require('../../services/torre-control/layout.service');
 

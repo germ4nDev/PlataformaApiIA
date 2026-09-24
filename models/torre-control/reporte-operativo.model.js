@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS DTO Pattern - Reportes Operativos
+    Pattern: PORTTOS DTO Pattern - Reportes Operativos
 */
 const Joi = require('joi');
 const { DataTypes } = require('sequelize');
@@ -30,7 +30,7 @@ const ReporteOperativoDTO = (rawData, userContext) => {
     descripcion: value.descripcion || null,
     tipo_color: value.tipo_color || 'primary',
     fecha_registro: value.fecha_registro,
-    // Auditoría QPLUS
+    // Auditoría PORTTOS
     usuario_registro: userContext.codigoUsuario
   };
 };

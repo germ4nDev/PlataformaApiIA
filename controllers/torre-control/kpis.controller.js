@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS Controller Pattern
+    Pattern: PORTTOS Controller Pattern
 */
 const KpisService = require('../../services/torre-control/kpis.service');
 

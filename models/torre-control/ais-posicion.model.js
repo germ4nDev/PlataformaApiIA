@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS DTO Pattern - AIS Última Posición Conocida
+    Pattern: PORTTOS DTO Pattern - AIS Última Posición Conocida
 */
 const Joi = require('joi');
 const { DataTypes } = require('sequelize');

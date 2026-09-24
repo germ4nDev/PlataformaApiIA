@@ -1,6 +1,6 @@
 // /*
 //     Author: German Valencia
-//     Pattern: QPLUS Service - Motor Central de Georreferenciación (PRODUCCIÓN)
+//     Pattern: PORTTOS Service - Motor Central de Georreferenciación (PRODUCCIÓN)
 //     Descripción: Unifica datos espaciales (Marítimos, Terrestres, Infraestructura),
 //                  los transforma al estándar GeoJSON y administra las salas (Rooms) 
 //                  de Socket.IO para distribución optimizada de capas.
@@ -235,7 +235,7 @@
 // module.exports = new GeoreferenciacionService();
 /*
     Author: German Valencia
-    Pattern: QPLUS Service - Motor Central de Georreferenciación (PRODUCCIÓN)
+    Pattern: PORTTOS Service - Motor Central de Georreferenciación (PRODUCCIÓN)
     Descripción: Unifica datos espaciales (Marítimos, Terrestres, Infraestructura),
                  los transforma al estándar GeoJSON y administra las salas (Rooms) 
                  de Socket.IO para distribución optimizada de capas.

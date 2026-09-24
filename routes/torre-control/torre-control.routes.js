@@ -10,10 +10,12 @@ const {
   obtenerBitacora,
   ejecutarSincronizacionManual
 } = require('../../controllers/torre-control/torre-control.controller');
+const { getCitasVirtualGate } = require('../../controllers/torre-control/citas-gate.controller');
 
 // Ruta: GET /api/torre-control/kpis
 router.get('/kpis', KpisController.obtenerDashboard);
 router.get('/lineup', validarJWT, consultarLineUp);
 router.get('/estado-tuneles', obtenerBitacora);
 router.post('/forzar-sincronizacion', ejecutarSincronizacionManual);
+router.get('/virtual-gate', getCitasVirtualGate);
 module.exports = router;

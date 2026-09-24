@@ -41,7 +41,7 @@ class TLCLineUpMaritimoService {
           estadoRegistro: false,
           codigoUsuarioModificacion: usuarioModificacion,
 
-          // 🚨 LA SOLUCIÓN: Enviamos el string ISO estándar de QPLUS
+          // 🚨 LA SOLUCIÓN: Enviamos el string ISO estándar de PORTTOS
           fechaModificacion: new Date().toISOString()
         },
         {

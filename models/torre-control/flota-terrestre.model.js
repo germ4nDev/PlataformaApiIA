@@ -1,24 +1,28 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS DTO Pattern - Flota Terrestre Última Posición Conocida
+    Pattern: PORTTOS DTO Pattern - Flota Terrestre (Solo Espacial)
 */
 const Joi = require('joi');
 const { DataTypes } = require('sequelize');
 
-// 1. Esquema de Validación Ajustado a la Nueva Tabla
+// 1. Esquema de Validación: Eliminados lat/lon, integrado ubicacion_geo
 const FlotaTerrestreSchema = Joi.object({
-  _id: Joi.string().max(50).required(), // ID proveniente de MongoDB
+  _id: Joi.string().max(50).required(),
   placa: Joi.string().max(10).required(),
   modelo: Joi.number().integer().min(1900).max(2100).optional(),
   tipo_camion: Joi.string().max(50).optional(),
   estado_camion: Joi.string().valid('EN_RUTA', 'DETENIDO', 'MANTENIMIENTO', 'DESCARGANDO', 'DETENIDO_POR_TRAFICO').default('EN_RUTA'),
   conductor: Joi.string().max(100).allow('', null).optional(),
-  lat: Joi.number().min(-90).max(90).required(),
-  lon: Joi.number().min(-180).max(180).required(),
-  velocidad: Joi.number().min(0).default(0)
+  velocidad: Joi.number().min(0).default(0),
+
+  // Esquema espacial estricto (GeoJSON)
+  ubicacion_geo: Joi.object({
+    type: Joi.string().valid('Point').required(),
+    coordinates: Joi.array().items(Joi.number()).length(2).required() // [longitud, latitud]
+  }).required()
 });
 
-// 2. DTO: Formatea los datos y construye el objeto Espacial (Point) para SQL Server
+// 2. DTO: Simplificado para manejar solo el objeto espacial
 const FlotaTerrestreDTO = (rawData, userContext = { codigoUsuario: 'CRON_TERRESTRE_SYS' }) => {
   const { error, value } = FlotaTerrestreSchema.validate(rawData, { abortEarly: false, stripUnknown: true });
 
@@ -41,13 +45,13 @@ const FlotaTerrestreDTO = (rawData, userContext = { codigoUsuario: 'CRON_TERREST
     conductor: value.conductor ? value.conductor.trim().toUpperCase() : null,
     velocidad: value.velocidad,
 
-    // Sequelize formatea las inserciones espaciales usando el estándar GeoJSON
+    // Se asigna el objeto GeoJSON directamente. 
+    // Sequelize lo convertirá a formato binario de SQL Server automáticamente.
     ubicacion_geo: {
       type: 'Point',
-      coordinates: [value.lon, value.lat] // MapLibre y SQL Server usan siempre [Longitud, Latitud]
+      coordinates: value.ubicacion_geo.coordinates
     },
 
-    // Campos de Auditoría QPLUS
     codigoUsuarioCreacion: usuarioIngesta,
     fechaCreacion: fechaISO,
     codigoUsuarioModificacion: usuarioIngesta,
@@ -56,70 +60,28 @@ const FlotaTerrestreDTO = (rawData, userContext = { codigoUsuario: 'CRON_TERREST
   };
 };
 
-// 3. Modelo Sequelize conectado a la tabla importada de MongoDB
+// 3. Modelo Sequelize: Limpio, sin lat/lon
 const FlotaTerrestreDTOModel = (sequelize) => {
   return sequelize.define('TCL_CamionesOperaciones', {
-    _id: {
-      type: DataTypes.STRING(50), // Cambiado a STRING para soportar el ObjectId de Mongo
-      primaryKey: true,
-      allowNull: false
-    },
-    placa: {
-      type: DataTypes.STRING(10),
-      allowNull: true
-    },
-    modelo: {
-      type: DataTypes.INTEGER,
-      allowNull: true
-    },
-    tipo_camion: {
-      type: DataTypes.STRING(50),
-      allowNull: true
-    },
-    estado_camion: {
-      type: DataTypes.STRING(50),
-      allowNull: true,
-      defaultValue: 'EN_RUTA'
-    },
-    conductor: {
-      type: DataTypes.STRING(100),
-      allowNull: true
-    },
-    velocidad: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      defaultValue: 0
-    },
-    // Definición nativa de campos espaciales
+    _id: { type: DataTypes.STRING(50), primaryKey: true, allowNull: false },
+    placa: { type: DataTypes.STRING(10), allowNull: true },
+    modelo: { type: DataTypes.INTEGER, allowNull: true },
+    tipo_camion: { type: DataTypes.STRING(50), allowNull: true },
+    estado_camion: { type: DataTypes.STRING(50), allowNull: true, defaultValue: 'EN_RUTA' },
+    conductor: { type: DataTypes.STRING(100), allowNull: true },
+    velocidad: { type: DataTypes.INTEGER, allowNull: true, defaultValue: 0 },
+
+    // Homogeneidad espacial
     ubicacion_geo: {
       type: DataTypes.GEOMETRY('POINT', 4326),
       allowNull: true
     },
-    punto_destino: {
-      type: DataTypes.GEOMETRY('POINT', 4326),
-      allowNull: true
-    },
-    ultima_actualizacion: {
-      type: DataTypes.DATE, // O DataTypes.STRING si prefieres mantener tu formato actual
-      allowNull: true
-    },
-    // Auditoría
-    codigoUsuarioCreacion: {
-      type: DataTypes.STRING(200),
-      allowNull: true
-    },
-    fechaCreacion: {
-      type: DataTypes.STRING(100),
-      allowNull: true
-    },
-    codigoUsuarioModificacion: {
-      type: DataTypes.STRING(200),
-      allowNull: true
-    },
-    fechaModificacion: {
-      type: DataTypes.STRING(100),
-      allowNull: true
-    }
+
+    ultima_actualizacion: { type: DataTypes.DATE, allowNull: true },
+    codigoUsuarioCreacion: { type: DataTypes.STRING(200), allowNull: true },
+    fechaCreacion: { type: DataTypes.STRING(100), allowNull: true },
+    codigoUsuarioModificacion: { type: DataTypes.STRING(200), allowNull: true },
+    fechaModificacion: { type: DataTypes.STRING(100), allowNull: true }
   }, {
     tableName: 'TCL_CamionesOperaciones',
     schema: 'dbo',

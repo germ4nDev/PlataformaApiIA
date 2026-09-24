@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS DTO Pattern - Productividad Terminales
+    Pattern: PORTTOS DTO Pattern - Productividad Terminales
 */
 const Joi = require('joi');
 const { DataTypes } = require('sequelize');
@@ -35,7 +35,7 @@ const ProductividadTerminalesDTO = (rawData, userContext) => {
     horaEtiqueta: value.horaEtiqueta.trim().toLowerCase(),
     movimientosHora: value.movimientosHora,
 
-    // Auditoría QPLUS: Texto puro ISO largo directo a la BD
+    // Auditoría PORTTOS: Texto puro ISO largo directo a la BD
     codigoUsuarioCreacion: userContext ? userContext.codigoUsuario : 'CRON_SYS',
     fechaCreacion: new Date().toISOString(),
     codigoUsuarioModificacion: userContext ? userContext.codigoUsuario : 'CRON_SYS',

@@ -91,7 +91,7 @@ class SitmarOrquestadorService {
                 rawData.atd = mapearFechaSmar($(col[12]).text().trim(), $(col[13]).text().trim());
               }
 
-              // Saneamiento QPLUS DTO
+              // Saneamiento PORTTOS DTO
               const limpio = config.dto(rawData, { codigoUsuario: 'BOT_SITMAR_AUTO' });
               navesSaneadas.push(limpio);
 

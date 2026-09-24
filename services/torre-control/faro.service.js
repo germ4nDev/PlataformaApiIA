@@ -148,7 +148,7 @@
 
 /*
     Author: German Valencia
-    Refactored for: QPLUS Standard (Clean Service Layer) - Maestro de Faros
+    Refactored for: PORTTOS Standard (Clean Service Layer) - Maestro de Faros
     Description: Servicio para la gestión unificada de peajes, geocercas terrestres y zonas marítimas.
 */
 const { Sequelize } = require('sequelize');
@@ -240,7 +240,7 @@ class FarosService {
       const faros = await this.model.findAll({
         where: { estado: true },
         attributes: {
-          // Usamos el alias geocerca_text estándar de QPLUS
+          // Usamos el alias geocerca_text estándar de PORTTOS
           include: [[Sequelize.literal('geocerca_geo.STAsText()'), 'geocerca_text']]
         }
       });

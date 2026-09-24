@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Refactored for: QPLUS Standard - Controlador de Puertos
+    Refactored for: PORTTOS Standard - Controlador de Puertos
     Update: Manejo estricto de códigos HTTP y respuestas del Servicio
 */
 const { response } = require('express');
@@ -64,7 +64,7 @@ const crearPuerto = async (req, res = response) => {
       data: nuevoPuerto
     });
   } catch (error) {
-    // 🟢 MAGIA QPLUS: Atrapa el error de Joi (DTO) e informa a Angular exactamente qué falló
+    // 🟢 MAGIA PORTTOS: Atrapa el error de Joi (DTO) e informa a Angular exactamente qué falló
     const statusCode = error.type === 'ValidationError' ? 400 : (error.statusCode || 500);
     res.status(statusCode).json({
       ok: false,

@@ -1,6 +1,6 @@
 // /*
 //     Author: German Valencia
-//     Pattern: QPLUS DTO Pattern - Maestro de Faros
+//     Pattern: PORTTOS DTO Pattern - Maestro de Faros
 // */
 // const Joi = require('joi');
 // const { DataTypes } = require('sequelize');
@@ -119,7 +119,7 @@
 // module.exports = { FaroModel, FaroDTO, FaroSchema };
 /*
     Author: German Valencia
-    Pattern: QPLUS DTO Pattern - Maestro de Faros
+    Pattern: PORTTOS DTO Pattern - Maestro de Faros
 */
 const Joi = require('joi');
 const { DataTypes } = require('sequelize');

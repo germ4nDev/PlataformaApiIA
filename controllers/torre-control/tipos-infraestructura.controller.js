@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Refactored for: QPLUS Standard - Controlador de Infraestructura
+    Refactored for: PORTTOS Standard - Controlador de Infraestructura
 */
 const { response } = require('express');
 const TiposInfraestructura = require('../../services/torre-control/tipos-infraestructura.service');

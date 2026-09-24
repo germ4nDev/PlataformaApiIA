@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS DTO Pattern - Matriz de Operaciones
+    Pattern: PORTTOS DTO Pattern - Matriz de Operaciones
 */
 const Joi = require('joi');
 const { DataTypes } = require('sequelize');

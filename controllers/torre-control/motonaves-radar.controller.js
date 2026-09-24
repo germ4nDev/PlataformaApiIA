@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS Standard - Controlador de Muelles
+    Pattern: PORTTOS Standard - Controlador de Muelles
 */
 const { response } = require('express');
 const radarService = require('../../services/torre-control/radar.service');

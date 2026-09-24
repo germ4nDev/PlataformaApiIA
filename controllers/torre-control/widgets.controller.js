@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Refactored for: QPLUS Standard - Controlador de Widgets
+    Refactored for: PORTTOS Standard - Controlador de Widgets
 */
 const { response } = require('express');
 const WidgetService = require('../../services/torre-control/widget.service');

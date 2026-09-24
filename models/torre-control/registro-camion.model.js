@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS DTO Pattern - Virtual Gate (Camiones en Operación)
+    Pattern: PORTTOS DTO Pattern - Virtual Gate (Camiones en Operación)
 */
 const Joi = require('joi');
 const { DataTypes } = require('sequelize');
@@ -49,7 +49,7 @@ const RegistroCamionDTO = (rawData, userContext) => {
     estadoRegistro: value.estadoRegistro,
     fechaIngresoEtapa: value.fechaIngresoEtapa,
 
-    // Auditoría QPLUS
+    // Auditoría PORTTOS
     codigoUsuarioCreacion: userContext.codigoUsuario,
     fechaCreacion: new Date(),
     codigoUsuarioModificacion: userContext.codigoUsuario,
@@ -91,7 +91,7 @@ const RegistroCamionModel = (sequelize) => {
       allowNull: false
     },
 
-    // Auditoría QPLUS
+    // Auditoría PORTTOS
     codigoUsuarioCreacion: { type: DataTypes.STRING(200), allowNull: false },
     fechaCreacion: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
     codigoUsuarioModificacion: { type: DataTypes.STRING(200), allowNull: true },

@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS DTO Pattern - Dashboard Layout Persistence
+    Pattern: PORTTOS DTO Pattern - Dashboard Layout Persistence
 */
 const Joi = require('joi');
 const { DataTypes } = require('sequelize');
@@ -78,7 +78,7 @@ const DashboardLayoutModel = (sequelize) => {
             type: DataTypes.TEXT,
             allowNull: true
         },
-        // Campos de Auditoría QPLUS
+        // Campos de Auditoría PORTTOS
         codigoUsuarioCreacion: {
             type: DataTypes.STRING(200),
             allowNull: false

@@ -7,6 +7,10 @@ const { DataTypes } = require('sequelize');
 
 const WidgetMaestroSchema = Joi.object({
   codigoWidget: Joi.string().max(200).required(),
+  codigoTipo: Joi.string().max(200).required(),
+  codigoPestana: Joi.string().max(200).required(),
+  codigoAplicacion: Joi.string().max(200).required(),
+  codigoSuite: Joi.string().max(200).required(),
   nombreWidget: Joi.string().max(150).required(),
   descripcionWidget: Joi.string().max(4000).allow('', null).optional().default(''),
   imagenWidget_light: Joi.string().max(100).allow('', null).optional().default('no-widget.png'),
@@ -15,7 +19,6 @@ const WidgetMaestroSchema = Joi.object({
   defaultRows: Joi.number().integer().min(1).required().default(3),
   pos_x: Joi.number().integer().min(0).required().default(0),
   pos_y: Joi.number().integer().min(0).required().default(0), tipo: Joi.string().max(50).allow('', null).optional().default('indefinido'),
-  pestana: Joi.string().max(100).allow('', null).optional().default('TAB_PLAT_PRINCIPAL'),
   layoutVersion: Joi.number().integer().min(1).required(),
   inicial: Joi.boolean().required().default(false),
   estadoWidget: Joi.boolean().required().default(true),
@@ -40,6 +43,10 @@ const WidgetMaestroDTO = (rawData) => {
 
   return {
     codigoWidget: value.codigoWidget.trim().toUpperCase(),
+    codigoTipo: value.codigoTipo,
+    codigoPestana: value.codigoPestana,
+    codigoAplicacion: value.codigoAplicacion.trim(),
+    codigoSuite: value.codigoSuite.trim(),
     nombreWidget: value.nombreWidget.trim(),
     descripcionWidget: value.descripcionWidget ? value.descripcionWidget.trim() : '',
     imagenWidget_light: value.imagenWidget_light ? value.imagenWidget_light.trim() : 'no-widget.png',
@@ -49,8 +56,6 @@ const WidgetMaestroDTO = (rawData) => {
     defaultRows: value.defaultRows,
     pos_x: value.pos_x,
     pos_y: value.pos_y,
-    tipo: value.tipo,
-    pestana: value.pestana,
     layoutVersion: value.layoutVersion,
     inicial: value.inicial,
     estadoWidget: value.estadoWidget,
@@ -66,6 +71,10 @@ const WidgetMaestroModel = (sequelize) => {
   return sequelize.define('PTLWidgetsMaestro', {
     widgetId: { type: DataTypes.INTEGER, autoIncrement: true },
     codigoWidget: { type: DataTypes.STRING(200), primaryKey: true, allowNull: false },
+    codigoTipo: { type: DataTypes.STRING(200), allowNull: false },
+    codigoPestana: { type: DataTypes.STRING(200), allowNull: false },
+    codigoAplicacion: { type: DataTypes.STRING(200), allowNull: false },
+    codigoSuite: { type: DataTypes.STRING(200), allowNull: false },
     nombreWidget: { type: DataTypes.STRING(150), allowNull: false },
     descripcionWidget: { type: DataTypes.STRING(4000), allowNull: true, defaultValue: '' },
     imagenWidget_light: { type: DataTypes.STRING(100), allowNull: true, defaultValue: 'no-widget.png' },
@@ -75,8 +84,6 @@ const WidgetMaestroModel = (sequelize) => {
     defaultRows: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 3 },
     pos_x: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
     pos_y: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
-    tipo: { type: DataTypes.STRING(50), allowNull: true, defaultValue: 'indefinido' },
-    pestana: { type: DataTypes.STRING(100), allowNull: true, defaultValue: 'TAB_PLAT_PRINCIPAL' },
     layoutVersion: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
     inicial: { type: DataTypes.BOOLEAN, defaultValue: false },
     estadoWidget: { type: DataTypes.BOOLEAN, defaultValue: true },

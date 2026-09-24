@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS Controller - Mapa General
+    Pattern: PORTTOS Controller - Mapa General
     Update: Desacoplamiento de capas para evitar colisiones en el frontend.
 */
 const { sequelize } = require('../../database/connection');
@@ -119,7 +119,7 @@ const getMaritimo = async (req, res) => {
       data: result
     });
   } catch (error) {
-    // Regla QPLUS: Error con trazabilidad en consola
+    // Regla PORTTOS: Error con trazabilidad en consola
     console.error('Error crítico en MapaLogisticoController.getMaritimo:', error);
     res.status(500).json({
       success: false,

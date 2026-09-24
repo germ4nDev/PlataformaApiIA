@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS Repository Pattern - Maestro de Puertos
+    Pattern: PORTTOS Repository Pattern - Maestro de Puertos
 */
 const { QueryTypes } = require('sequelize');
 const { db } = require('../../database/connection');

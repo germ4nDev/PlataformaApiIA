@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS DTO Pattern - Line Up Marítimo 
+    Pattern: PORTTOS DTO Pattern - Line Up Marítimo 
 */
 const Joi = require('joi');
 const { DataTypes } = require('sequelize');
@@ -51,7 +51,7 @@ const LineUpMaritimoDTO = (rawData, userContext) => {
         posicion: value.posicion.trim().toUpperCase(),
         novedades: value.novedades || null,
 
-        // Trazabilidad y banderas de estado integradas con el contexto operativo de QPLUS
+        // Trazabilidad y banderas de estado integradas con el contexto operativo de PORTTOS
         estadoRegistro: true, // Por defecto activo al crearse
         codigoUsuarioCreacion: userContext.codigoUsuario,
         fechaCreacion: new Date(),
@@ -134,7 +134,7 @@ const LineUpMaritimoModel = (sequelize) => {
             field: 'novedades'
         },
 
-        // Atributos de Trazabilidad Manual QPLUS
+        // Atributos de Trazabilidad Manual PORTTOS
         estadoRegistro: {
             type: DataTypes.BOOLEAN,
             allowNull: false,

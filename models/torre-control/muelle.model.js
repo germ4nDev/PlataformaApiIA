@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS DTO Pattern - Maestro de Muelles
+    Pattern: PORTTOS DTO Pattern - Maestro de Muelles
     Update: Homologado con GeoJSON FeatureCollection (Puertos/Terminales)
 */
 const Joi = require('joi');
@@ -45,7 +45,7 @@ const MuelleDTO = (rawData, userContext = { codigoUsuario: 'SISTEMA_ADMIN' }) =>
     };
   }
 
-  // 🟢 LA VERDADERA MAGIA QPLUS AHORA: Extraer la geometría del FeatureCollection
+  // 🟢 LA VERDADERA MAGIA PORTTOS AHORA: Extraer la geometría del FeatureCollection
   const extractGeometryAsWKT = (geoJson) => {
     if (!geoJson || !geoJson.features || geoJson.features.length === 0) return null;
 

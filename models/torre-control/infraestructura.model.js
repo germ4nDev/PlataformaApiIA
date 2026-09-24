@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS DTO Pattern - Maestro de Infraestructura
+    Pattern: PORTTOS DTO Pattern - Maestro de Infraestructura
     Update: Homologado con GeoJSON FeatureCollection y Arquitectura Espacial
 */
 const Joi = require('joi');
@@ -34,7 +34,7 @@ const InfraestructuraSchema = Joi.object({
   estado: Joi.boolean().default(true)
 });
 
-// 2. EL ENSAMBLADOR: DTO con auditoría QPLUS
+// 2. EL ENSAMBLADOR: DTO con auditoría PORTTOS
 const InfraestructuraDTO = (rawData, userContext = { codigoUsuario: 'SISTEMA_ADMIN' }) => {
   const { error, value } = InfraestructuraSchema.validate(rawData, { abortEarly: false, stripUnknown: true });
   if (error) throw { type: 'ValidationError', details: error.details.map(d => ({ campo: d.context.key, mensaje: d.message })) };

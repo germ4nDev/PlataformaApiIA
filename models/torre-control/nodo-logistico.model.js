@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS DTO Pattern - Nodos Logísticos (Bodegas, Patios, Muelles y Buques)
+    Pattern: PORTTOS DTO Pattern - Nodos Logísticos (Bodegas, Patios, Muelles y Buques)
 */
 const Joi = require('joi');
 const { DataTypes } = require('sequelize');
@@ -60,7 +60,7 @@ const NodoLogisticoDTO = (rawData, userContext) => {
     longitud: value.longitud,
     estadoOperativo: value.estadoOperativo,
 
-    // Auditoría QPLUS
+    // Auditoría PORTTOS
     codigoUsuarioCreacion: userContext.codigoUsuario,
     fechaCreacion: new Date(),
     codigoUsuarioModificacion: userContext.codigoUsuario,

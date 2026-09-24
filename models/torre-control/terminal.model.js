@@ -1,6 +1,6 @@
 // /*
 //     Author: German Valencia
-//     Pattern: QPLUS DTO Pattern - Maestro de Terminales
+//     Pattern: PORTTOS DTO Pattern - Maestro de Terminales
 // */
 // const Joi = require('joi');
 // const { DataTypes } = require('sequelize');
@@ -111,7 +111,7 @@
 // module.exports = { TerminalModel, TerminalDTO, TerminalSchema };
 /*
     Author: German Valencia
-    Pattern: QPLUS DTO Pattern - Maestro de Terminales
+    Pattern: PORTTOS DTO Pattern - Maestro de Terminales
 */
 const Joi = require('joi');
 const { DataTypes } = require('sequelize');

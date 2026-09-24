@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS Standard - Controlador de Infraestructura
+    Pattern: PORTTOS Standard - Controlador de Infraestructura
 */
 const { response } = require('express');
 const InfraestructuraService = require('../../services/torre-control/infraestructura.service');

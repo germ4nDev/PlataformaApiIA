@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS AI Orchestrator - Integración IA Motonaves Multimodal (Marítimo + Terrestre)
+    Pattern: PORTTOS AI Orchestrator - Integración IA Motonaves Multimodal (Marítimo + Terrestre)
 */
 const Anthropic = require('@anthropic-ai/sdk');
 const { db } = require('../../database/connection');

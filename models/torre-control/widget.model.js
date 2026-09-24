@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS DTO Pattern - Maestro de Widgets
+    Pattern: PORTTOS DTO Pattern - Maestro de Widgets
 */
 const Joi = require('joi');
 const { DataTypes } = require('sequelize');
@@ -42,7 +42,7 @@ const WidgetlDTO = (rawData, userContext = { codigoUsuario: 'SISTEMA_ADMIN' }) =
     thumbnail_url: value.thumbnail_url.trim(),
     activo: value.activo,
 
-    // Auditoría QPLUS
+    // Auditoría PORTTOS
     usuario_cargue: userContext.codigoUsuario,
     fecha_cargue: new Date().toISOString()
   };

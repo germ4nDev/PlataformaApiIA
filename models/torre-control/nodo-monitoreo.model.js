@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS DTO Pattern - Nodos de Monitoreo (Master Data)
+    Pattern: PORTTOS DTO Pattern - Nodos de Monitoreo (Master Data)
 */
 const Joi = require('joi');
 const { DataTypes } = require('sequelize');
@@ -34,7 +34,7 @@ const NodoMonitoreoDTO = (rawData, userContext) => {
     longitud: value.longitud,
     estado: value.estado,
 
-    // Auditoría QPLUS
+    // Auditoría PORTTOS
     codigoUsuarioCreacion: userContext.codigoUsuario,
     fechaCreacion: new Date(),
     codigoUsuarioModificacion: userContext.codigoUsuario,

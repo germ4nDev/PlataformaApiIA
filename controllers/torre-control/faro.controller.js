@@ -1,6 +1,6 @@
 // /*
 //     Author: German Valencia
-//     Refactored for: QPLUS Standard - Controlador de Faros
+//     Refactored for: PORTTOS Standard - Controlador de Faros
 //     Update: Manejo estricto de códigos HTTP y respuestas del Servicio
 // */
 // const { response } = require('express');
@@ -64,7 +64,7 @@
 //       data: nuevoFaro
 //     });
 //   } catch (error) {
-//     // 🟢 MAGIA QPLUS: Atrapa el error de Joi (DTO) e informa a Angular exactamente qué falló
+//     // 🟢 MAGIA PORTTOS: Atrapa el error de Joi (DTO) e informa a Angular exactamente qué falló
 //     const statusCode = error.type === 'ValidationError' ? 400 : (error.statusCode || 500);
 //     res.status(statusCode).json({
 //       ok: false,
@@ -140,7 +140,7 @@
 
 /*
     Author: German Valencia
-    Refactored for: QPLUS Standard - Controlador de Faros
+    Refactored for: PORTTOS Standard - Controlador de Faros
     Update: Corrección de constructor, limpieza de código legado y variables
 */
 const { response } = require('express');

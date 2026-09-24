@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Refactored for: QPLUS Standard (Clean Service Layer) + Spatial Geometry
+    Refactored for: PORTTOS Standard (Clean Service Layer) + Spatial Geometry
 */
 const { sequelize } = require('../../database/connection');
 const { InfraestructuraModel, InfraestructuraDTO } = require('../../models/torre-control/infraestructura.model');

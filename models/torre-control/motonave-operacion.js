@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS DTO Pattern - Operaciones Motonaves 
+    Pattern: PORTTOS DTO Pattern - Operaciones Motonaves 
 */
 const Joi = require('joi');
 const { DataTypes } = require('sequelize');
@@ -41,7 +41,7 @@ const MotonaveOperacionDTO = (rawData, userContext) => {
     horasLluvia: value.horasLluvia,
     cantidadMovida: value.cantidadMovida,
 
-    // Auditoría automática aplicada con el contexto del middleware (Patrón QPLUS)
+    // Auditoría automática aplicada con el contexto del middleware (Patrón PORTTOS)
     codigoUsuarioCreacion: userContext.codigoUsuario,
     fechaCreacion: new Date(),
     codigoUsuarioModificacion: userContext.codigoUsuario,
@@ -88,7 +88,7 @@ const MotonaveOperacionModel = (sequelize) => {
       defaultValue: 0.00
     },
 
-    // Campos de Auditoría QPLUS
+    // Campos de Auditoría PORTTOS
     codigoUsuarioCreacion: {
       type: DataTypes.STRING(200),
       allowNull: false

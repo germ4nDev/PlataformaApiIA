@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Refactored for: QPLUS Standard - Router de Infraestructura
+    Refactored for: PORTTOS Standard - Router de Infraestructura
 */
 const express = require('express');
 const router = express.Router();

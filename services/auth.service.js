@@ -8,7 +8,6 @@ const { generarJWT } = require("../helpers/jwt");
 const { UsuarioModel } = require('../models/usuario');
 const { getIO } = require('../helpers/socket.helper');
 
-// 🟢 1. Importamos el servicio de sesiones
 const SesionesService = require('./sesiones.service');
 
 class AuthService {
@@ -45,7 +44,6 @@ class AuthService {
       ip: metadata.ip || '0.0.0.0'
     });
 
-    // Notificación por socket de autenticación
     try {
       const io = getIO();
       io.emit('autenticaciones-actualizadas', {
@@ -56,7 +54,6 @@ class AuthService {
       console.warn("⚠️ No se pudo emitir la notificación de login por socket:", errorSocket.message);
     }
 
-    // 🟢 3. RETORNAMOS EL CODIGO DE SESION AL FRONTEND
     return {
       usuario: {
         codigoUsuario: usuarioDB.codigoUsuario,

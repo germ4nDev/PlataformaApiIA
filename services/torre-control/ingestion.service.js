@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS Ingestion Service (Scraping Mode)
+    Pattern: PORTTOS Ingestion Service (Scraping Mode)
 */
 const cheerio = require('cheerio');
 const axios = require('axios');

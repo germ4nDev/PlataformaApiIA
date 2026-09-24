@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS Controller Pattern - Line Up Marítimo
+    Pattern: PORTTOS Controller Pattern - Line Up Marítimo
 */
 const TLCLineUpMaritimoService = require('../../services/torre-control/line-up-maritimo.service');
 const { LineUpMaritimoDTO } = require('../../models/torre-control/line-up-maritimo');
@@ -14,7 +14,7 @@ class TLCLineUpMaritimoController {
             // Llamamos al servicio para obtener los datos
             const lineUp = await TLCLineUpMaritimoService.obtenerLineUp(terminal);
 
-            // Respondemos con el formato estándar de la API QPLUS
+            // Respondemos con el formato estándar de la API PORTTOS
             return res.status(200).json({
                 success: true,
                 message: 'Line Up Marítimo recuperado exitosamente.',
@@ -48,7 +48,7 @@ class TLCLineUpMaritimoController {
                 codigoUsuario: req.user ? req.user.codigoUsuario : 'SISTEMA_TC_API'
             };
 
-            // 3. Purificación y Ensamblaje Masivo (QPLUS Pattern)
+            // 3. Purificación y Ensamblaje Masivo (PORTTOS Pattern)
             // Joi verificará internamente que cada registro traiga su propia "terminal"
             const dtoDataArray = registros.map(rawData => LineUpMaritimoDTO(rawData, userContext));
 

@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS Reports Service (Internal/External Aggregator)
+    Pattern: PORTTOS Reports Service (Internal/External Aggregator)
 */
 const axios = require('axios');
 const cheerio = require('cheerio');

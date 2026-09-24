@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS Service Pattern - Lógica RNDC
+    Pattern: PORTTOS Service Pattern - Lógica RNDC
 */
 const { db } = require('../../database/connection');
 const { QueryTypes } = require('sequelize');

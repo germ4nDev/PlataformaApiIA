@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Pattern: QPLUS Service Pattern - Virtual Gate (Flujo Terrestre)
+    Pattern: PORTTOS Service Pattern - Virtual Gate (Flujo Terrestre)
 */
 const { db } = require('../../database/connection');
 
