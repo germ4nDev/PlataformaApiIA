@@ -9,7 +9,7 @@ const getTiposWidget = async (req, res) => {
 
     return res.status(200).json({
       ok: true,
-      respuesta: { msg: resultado }
+      respuesta: resultado
     });
   } catch (error) {
     return res.status(error.statusCode || 500).json({
