@@ -7,44 +7,73 @@ const LayoutService = require("../services/layout.service");
 
 const service = new LayoutService();
 
-const getLayoutByUsuario = async (req, res = response) => {
+// --- CONTROLADORES WIDGETS ---
+const getLayouts = async (req, res = response) => {
   try {
-    const { codigoUsuario } = req.params;
-    const layout = await service.getLayoutByUsuario(codigoUsuario);
-
-    return res.status(200).json({
-      ok: true,
-      layout: layout ? layout.layoutData : null,
-      detalle: layout
-    });
+    const layouts = await service.getLayouts();
+    return res.status(200).json({ ok: true, layout: layouts });
   } catch (error) {
     return res.status(error.statusCode || 500).json({
-      ok: false,
-      msg: error.msg || "Error interno al obtener el layout del usuario."
+      ok: false, msg: error.msg || "Error interno al obtener los layouts."
+    });
+  }
+};
+
+const getLayoutByUsuario = async (req, res = response) => {
+  try {
+    const { codigoUsuario, codigoPestana } = req.params;
+    const layouts = await service.getLayoutByUsuario(codigoUsuario, codigoPestana);
+    return res.status(200).json({ ok: true, layout: layouts });
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({
+      ok: false, msg: error.msg || "Error interno al obtener el layout del usuario."
     });
   }
 };
 
 const saveOrUpdateLayout = async (req, res = response) => {
   try {
-    const dataDTO = { ...req.body };
-    const layoutGuardado = await service.saveOrUpdateLayout(dataDTO);
-
+    const layoutGuardado = await service.saveLayout(req.body);
     return res.status(200).json({
-      ok: true,
-      msg: "Layout guardado exitosamente.",
-      layout: layoutGuardado.layoutData
+      ok: true, msg: "Layout guardado exitosamente.", layout: layoutGuardado
     });
   } catch (error) {
     return res.status(error.statusCode || 400).json({
-      ok: false,
-      msg: error.msg || "Error al guardar el layout.",
-      detalles: error.details || null
+      ok: false, msg: error.msg || "Error al guardar el layout.", detalles: error.details || null
+    });
+  }
+};
+
+// --- CONTROLADORES PESTAÑAS ---
+const getPestanasUsuario = async (req, res = response) => {
+  try {
+    const { codigoUsuario } = req.params;
+    const pestanas = await service.getPestanasByUsuario(codigoUsuario);
+    return res.status(200).json({ ok: true, data: pestanas });
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({
+      ok: false, msg: error.msg || "Error interno al obtener pestañas del usuario."
+    });
+  }
+};
+
+const savePestanasUsuario = async (req, res = response) => {
+  try {
+    const pestanasGuardadas = await service.savePestanasUsuario(req.body);
+    return res.status(200).json({
+      ok: true, msg: "Preferencias de pestañas guardadas.", data: pestanasGuardadas
+    });
+  } catch (error) {
+    return res.status(error.statusCode || 400).json({
+      ok: false, msg: error.msg || "Error al guardar pestañas.", detalles: error.details || null
     });
   }
 };
 
 module.exports = {
+  getLayouts,
   getLayoutByUsuario,
-  saveOrUpdateLayout
+  saveOrUpdateLayout,
+  getPestanasUsuario,
+  savePestanasUsuario
 };

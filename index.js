@@ -154,7 +154,6 @@ app.use("/api/tclp-ingesta", require("./routes/torre-control/ingesta.routes"));
 app.use("/api/torre-control", require("./routes/torre-control/torre-control.routes"));
 app.use("/api/maritimo", require("./routes/torre-control/maritimo.routes"));
 app.use('/api/widgets', require('./routes/torre-control/widget.routes'));
-app.use('/api/layout', require('./routes/torre-control/layout.routes'));
 app.use('/api/mapa-general', require('./routes/torre-control/mapa-general.routes'));
 app.use('/api/alertas', require('./routes/torre-control/alertaClimatica.routes'));
 app.use('/api/puertos', require('./routes/torre-control/puertos.routes'));

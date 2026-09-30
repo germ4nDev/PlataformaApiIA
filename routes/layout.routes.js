@@ -1,7 +1,7 @@
 /*
     Author: German Valencia
     Refactored for: QPLUS Architecture & Strict Validations
-    Ruta: /api/layout
+    Ruta base recomendada: /api/layout
 */
 const { Router } = require("express");
 const { validarJWT } = require("../middlewares/validar-jwt");
@@ -9,18 +9,22 @@ const { validarPermiso } = require('../middlewares/validar-permiso');
 const { validarSesion } = require("../middlewares/validar-sesion");
 
 const {
+  getLayouts,
   getLayoutByUsuario,
-  saveOrUpdateLayout
+  saveOrUpdateLayout,
+  getPestanasUsuario,
+  savePestanasUsuario
 } = require("../controllers/layout.controller");
 
 const router = Router();
 
-// router.use(validarSesion);
-// Opcional: Proteger las rutas con JWT si ya lo tienes implementado
-// router.use(validarJWT);
+// Módulo Layouts (Widgets)
+router.get("/", getLayouts);
+router.get("/user/:codigoUsuario/:codigoPestana", getLayoutByUsuario);
+router.post("/", saveOrUpdateLayout); // Puedes habilitar validarJWT aquí si lo requieres
 
-router.get("/:codigoUsuario", getLayoutByUsuario);
-
-router.post("/", [validarJWT, validarSesion], saveOrUpdateLayout);
+// Módulo Pestañas (Tabs)
+router.get("/pestanas/user/:codigoUsuario", getPestanasUsuario);
+router.post("/pestanas", savePestanasUsuario);
 
 module.exports = router;

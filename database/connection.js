@@ -32,6 +32,7 @@ const sequelize = new Sequelize(
     //logging: console.log,
     dialectOptions: {
       options: {
+        requestTimeout: 30000,
         encrypt: false,
         trustServerCertificate: true
       }
