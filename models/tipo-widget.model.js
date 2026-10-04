@@ -46,7 +46,6 @@ const TipoWidgetModel = (sequelize) => {
     return sequelize.define('PTLTiposWidget', {
         idTipo: { type: DataTypes.INTEGER, autoIncrement: true },
         codigoTipo: { type: DataTypes.STRING(200), primaryKey: true, allowNull: false },
-        nombreTipo: { type: DataTypes.STRING(100), allowNull: false },
         descripcion: { type: DataTypes.STRING(4000), allowNull: true },
         estado: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
 

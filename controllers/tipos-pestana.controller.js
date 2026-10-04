@@ -1,12 +1,11 @@
-const TiposWidgetService = require('../services/tipos-widget.service');
-const { TipoWidgetSchema } = require('../models/tipo-widget.model');
+const { response } = require("express");
+const TiposPestanaService = require('../services/tipos-pestanas.service');
 
-const service = new TiposWidgetService();
+const service = new TiposPestanaService();
 
-const getTiposWidget = async (req, res) => {
+const getTiposPestana = async (req, res) => {
   try {
-    const resultado = await service.obtenerTiposWidget();
-    console.log('resultado', resutlado);
+    const resultado = await service.obtenerTiposPestana();
 
     return res.status(200).json({
       ok: true,
@@ -15,51 +14,51 @@ const getTiposWidget = async (req, res) => {
   } catch (error) {
     return res.status(error.statusCode || 500).json({
       ok: false,
-      msg: error.msg || "Error al obtener los tipos de widgets."
+      msg: error.msg || "Error al obtener los tipos de pestana."
     });
   }
 };
 
-const getTipoWidgetById = async (req, res) => {
+const getTipoPestanaById = async (req, res) => {
   try {
-    const tipoRole = await service.obtenerTipoWidgetPorId(req.params.id);
+    const tipoRole = await service.obtenerTipoPestanaPorId(req.params.id);
     return res.status(200).json({ ok: true, tipoRole });
   } catch (error) {
     return res.status(error.statusCode || 500).json({ ok: false, msg: error.msg || 'Error interno' });
   }
 };
 
-const crearTipoWidget = async (req, res) => {
+const crearTipoPestana = async (req, res) => {
   try {
-    const { error, value } = TipoWidgetSchema.validate(req.body);
+    const { error, value } = TipoPestanaSchema.validate(req.body);
     if (error) {
       return res.status(400).json({ ok: false, msg: error.details[0].message });
     }
 
-    const tipoRole = await service.crearTipoWidget(value);
+    const tipoRole = await service.crearTipoPestana(value);
     return res.status(201).json({ ok: true, tipoRole });
   } catch (error) {
     return res.status(error.statusCode || 500).json({ ok: false, msg: error.msg || 'Error interno' });
   }
 };
 
-const actualizarTipoWidget = async (req, res) => {
+const actualizarTipoPestana = async (req, res) => {
   try {
-    const { error, value } = TipoWidgetSchema.validate(req.body);
+    const { error, value } = TipoPestanaSchema.validate(req.body);
     if (error) {
       return res.status(400).json({ ok: false, msg: error.details[0].message });
     }
 
-    const tipoRole = await service.actualizarTipoWidget(req.params.id, value);
+    const tipoRole = await service.actualizarTipoPestana(req.params.id, value);
     return res.status(200).json({ ok: true, tipoRole });
   } catch (error) {
     return res.status(error.statusCode || 500).json({ ok: false, msg: error.msg || 'Error interno' });
   }
 };
 
-const eliminarTipoWidget = async (req, res) => {
+const eliminarTipoPestana = async (req, res) => {
   try {
-    const result = await service.eliminarTipoWidget(req.params.id);
+    const result = await service.eliminarTipoPestana(req.params.id);
     return res.status(200).json({ ok: true, msg: result.msg });
   } catch (error) {
     return res.status(error.statusCode || 500).json({ ok: false, msg: error.msg || 'Error interno' });
@@ -67,9 +66,9 @@ const eliminarTipoWidget = async (req, res) => {
 };
 
 module.exports = {
-  getTiposWidget,
-  getTipoWidgetById,
-  crearTipoWidget,
-  actualizarTipoWidget,
-  eliminarTipoWidget
+  getTiposPestana,
+  getTipoPestanaById,
+  crearTipoPestana,
+  actualizarTipoPestana,
+  eliminarTipoPestana
 };

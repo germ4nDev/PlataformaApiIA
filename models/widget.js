@@ -1,6 +1,7 @@
 /*
     Author: German Valencia
-    Refactored for: QPLUS DTO Pattern, Entity Standardization, Joi Validation & SQL Server precision
+    Refactored for: QPLUS DTO Pattern, Entity Standardization, Joi Validation
+    Updated for: Metadata-Driven Layouts (anclajeTipo y offsetY)
 */
 const Joi = require('joi');
 const { DataTypes } = require('sequelize');
@@ -18,11 +19,16 @@ const WidgetMaestroSchema = Joi.object({
   defaultCols: Joi.number().integer().min(1).max(12).required().default(4),
   defaultRows: Joi.number().integer().min(1).required().default(3),
   pos_x: Joi.number().integer().min(0).required().default(0),
-  pos_y: Joi.number().integer().min(0).required().default(0), tipo: Joi.string().max(50).allow('', null).optional().default('indefinido'),
+  pos_y: Joi.number().integer().min(0).required().default(0),
+  tipo: Joi.string().max(50).allow('', null).optional().default('indefinido'),
   layoutVersion: Joi.number().integer().min(1).required(),
   inicial: Joi.boolean().required().default(false),
-  estadoWidget: Joi.boolean().required().default(true),
 
+  // 🚨 ATRIBUTOS DEL MOTOR DE CASCADA
+  anclajeTipo: Joi.string().max(100).required(),
+  offsetY: Joi.number().integer().min(0).max(12).required().default(0), // CORREGIDO: min(0)
+
+  estadoWidget: Joi.boolean().required().default(true),
   codigoUsuarioCreacion: Joi.string().max(200).allow('', null).optional(),
   fechaCreacion: Joi.string().max(100).allow('', null).optional(),
   codigoUsuarioModificacion: Joi.string().max(200).allow('', null).optional(),
@@ -58,6 +64,8 @@ const WidgetMaestroDTO = (rawData) => {
     pos_y: value.pos_y,
     layoutVersion: value.layoutVersion,
     inicial: value.inicial,
+    anclajeTipo: value.anclajeTipo,
+    offsetY: value.offsetY,
     estadoWidget: value.estadoWidget,
 
     codigoUsuarioCreacion: value.codigoUsuarioCreacion,
@@ -86,6 +94,8 @@ const WidgetMaestroModel = (sequelize) => {
     pos_y: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
     layoutVersion: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
     inicial: { type: DataTypes.BOOLEAN, defaultValue: false },
+    anclajeTipo: { type: DataTypes.STRING(100), allowNull: false },
+    offsetY: { type: DataTypes.INTEGER, defaultValue: 0 },
     estadoWidget: { type: DataTypes.BOOLEAN, defaultValue: true },
 
     codigoUsuarioCreacion: { type: DataTypes.STRING(200), allowNull: true },

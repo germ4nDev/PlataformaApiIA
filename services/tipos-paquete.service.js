@@ -3,7 +3,7 @@
     Refactored for: QPLUS Architecture, Service Layer Sanitization & Transactional Integrity
 */
 const { sequelize } = require('../database/connection');
-const { TipoPaqueteModel, TipoPaqueteDTO } = require('../models/TipoPaquete');
+const { TipoPaqueteModel, TipoPaqueteDTO } = require('../models/tipo-paquete');
 const { getIO } = require('../helpers/socket.helper');
 
 class TiposPaqueteService {

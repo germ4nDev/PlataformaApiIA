@@ -28,7 +28,7 @@ const sequelize = new Sequelize(
     host: process.env.DB_SERVER,
     port: process.env.DB_PORT,
     dialect: 'mssql',
-    logging: false,
+    logging: true,
     //logging: console.log,
     dialectOptions: {
       options: {

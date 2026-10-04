@@ -104,6 +104,7 @@ app.use('/api/lista-precios', require('./routes/lista-precios.routes'));
 app.use('/api/parametros', require('./routes/parametros-sistema.routes'));
 app.use('/api/pestanas', require('./routes/pestanas.routes'));
 app.use('/api/tipos-widget', require('./routes/tipos-widget.routes'));
+app.use('/api/tipos-pestana', require('./routes/tipos-pestana.routes'));
 
 // APLICACIONES
 app.use("/api/aplicaciones", require("./routes/aplicaciones"));
@@ -167,6 +168,8 @@ app.use('/api/motonaves', require('./routes/torre-control/motonves.routes'));
 app.use('/api/faros', require('./routes/torre-control/faros.routes'));
 app.use('/api/radar', require('./routes/torre-control/radar.routes'));
 app.use('/api/contenedores', require('./routes/torre-control/contenedores.routes'));
+app.use('/api/inventario-contenedores', require('./routes/torre-control/inventario-contenedores.routes'));
+app.use('/api/gnl-telemetria', require('./routes/torre-control/gnl-telemetria.routes'));
 
 // =======================================================
 // === EVENTOS SOCKET.IO ===

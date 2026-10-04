@@ -1,6 +1,7 @@
 /*
     Author: German Valencia
     Refactored for: QPLUS DTO Pattern, Entity Standardization & Joi Validation
+    Updated for: Metadata-Driven Layout Engine (Vinculación con Tipos de Pestaña)
     Entity: PTLLayoutPestanas (Preferencias de orden y visibilidad de pestañas por usuario)
 */
 const Joi = require('joi');
@@ -11,6 +12,10 @@ const LayoutPestanaSchema = Joi.object({
   codigoUsuario: Joi.string().max(200).required(),
   codigoPestana: Joi.string().max(100).required(),
   posicion: Joi.number().integer().min(0).required(),
+
+  // 🚨 NUEVO: Vinculación con el catálogo de Estrategias (Cascada, Estático, etc.)
+  // Lo dejamos 'optional' para no romper endpoints que guardan preferencias de usuarios normales
+  codigoTipo: Joi.string().max(200).allow('', null).optional(),
 
   codigoUsuarioCreacion: Joi.string().max(200).allow('', null).optional(),
   fechaCreacion: Joi.string().max(100).allow('', null).optional(),
@@ -35,6 +40,7 @@ const LayoutPestanaDTO = (rawData) => {
     codigoUsuario: value.codigoUsuario.trim(),
     codigoPestana: value.codigoPestana.trim(),
     posicion: value.posicion,
+    codigoTipo: value.codigoTipo ? value.codigoTipo.trim() : null, // 🚨 NUEVO MAPEO
     codigoUsuarioCreacion: value.codigoUsuarioCreacion || value.codigoUsuario.trim(),
     fechaCreacion: value.fechaCreacion || fechaActual,
     codigoUsuarioModificacion: value.codigoUsuarioModificacion || value.codigoUsuario.trim(),
@@ -62,6 +68,11 @@ const LayoutPestanaModel = (sequelize) => {
     posicion: {
       type: DataTypes.INTEGER,
       allowNull: false
+    },
+    // 🚨 NUEVA COLUMNA (Foreign Key hacia PTLTiposPestana)
+    codigoTipo: {
+      type: DataTypes.STRING(200),
+      allowNull: true
     },
     codigoUsuarioCreacion: {
       type: DataTypes.STRING(200),

@@ -17,6 +17,10 @@ const MapaGeneralService = require('../services/torre-control/mapa-general.servi
 const SincronizacionService = require('./sincronizacion.service');
 const flotaTerrestreService = require('../services/torre-control/flota-terrestre.service');
 
+// 🟢 NUEVO: Importación e instanciación del servicio GNL
+const GnlTelemetriaService = require('../services/torre-control/gnl-telemetria.service');
+const gnlService = new GnlTelemetriaService();
+
 const mapaRepository = new MapaGeneralRepository(sequelize);
 const mapaGeneralService = new MapaGeneralService(mapaRepository);
 
@@ -146,6 +150,19 @@ const initCronJobs = (sequelizeInstance) => {
         simulacionEnCurso = false;
       }
     })();
+  });
+
+  // -------------------------------------------------------------------
+  // CRON GNL: CONSOLIDACIÓN DE TELEMETRÍA (Cold Path)
+  // Frecuencia: Cada 5 minutos (*/5 * * * *)
+  // -------------------------------------------------------------------
+  cron.schedule('*/5 * * * *', async () => {
+    console.log('⏰ [CRON 5m] Iniciando consolidación de telemetría GNL (Cold Path)...');
+    // Envuelto en el monitor ETL para que la auditoría de Porttos lo registre
+    ejecutarConMonitoreo('🔄 Consolidación Telemetría GNL', async () => {
+      await gnlService.consolidarTelemetria();
+      return { procesado: true };
+    });
   });
 
   // -------------------------------------------------------------------

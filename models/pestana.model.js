@@ -7,6 +7,7 @@ const { DataTypes } = require('sequelize');
 
 const PestanaSchema = Joi.object({
     codigoPestana: Joi.string().max(200).required(),
+    codigoTipoPestana: Joi.string().max(200).required(),
     codigoAplicacion: Joi.string().max(200).required(),
     codigoSuite: Joi.string().max(200).required(),
     nombrePestana: Joi.string().max(100).required(),
@@ -34,6 +35,7 @@ const PestanaDTO = (rawData) => {
 
     return {
         codigoPestana: value.codigoPestana.trim(),
+        codigoTipoPestana: value.codigoTipoPestana.trim(),
         codigoAplicacion: value.codigoAplicacion.trim(),
         codigoSuite: value.codigoSuite.trim(),
         nombrePestana: value.nombrePestana.trim(),
@@ -52,6 +54,7 @@ const PestanaModel = (sequelize) => {
     return sequelize.define('PTLPestanas', {
         idPestana: { type: DataTypes.INTEGER, autoIncrement: true },
         codigoPestana: { type: DataTypes.STRING(200), primaryKey: true, allowNull: false },
+        codigoTipoPestana: { type: DataTypes.STRING(200), allowNull: false },
         codigoAplicacion: { type: DataTypes.STRING(200), allowNull: false },
         codigoSuite: { type: DataTypes.STRING(200), allowNull: false },
         nombrePestana: { type: DataTypes.STRING(100), allowNull: false },
