@@ -62,7 +62,7 @@ const LineUpMaritimoDTO = (rawData, userContext) => {
 
 // 3. EL MAPEO: Definición estricta de Sequelize adaptada a T-SQL (SQL Server)
 const LineUpMaritimoModel = (sequelize) => {
-    return sequelize.define('TLCLineUpMaritimo', {
+    return sequelize.define('TCL_LineUpMaritimo', {
         idRegistroLineUp: {
             type: DataTypes.INTEGER,
             primaryKey: true,
@@ -162,7 +162,7 @@ const LineUpMaritimoModel = (sequelize) => {
             field: 'fechaModificacion'
         }
     }, {
-        tableName: 'TLCLineUpMaritimo',
+        tableName: 'TCL_LineUpMaritimo',
         schema: 'dbo',
         timestamps: false
     })

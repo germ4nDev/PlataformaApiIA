@@ -51,7 +51,7 @@ const MotonaveOperacionDTO = (rawData, userContext) => {
 
 // 3. EL MAPEO: Definición estricta de Sequelize (T-SQL)
 const MotonaveOperacionModel = (sequelize) => {
-  return sequelize.define('TCLMotonavesOperacion', {
+  return sequelize.define('TCL_MotonavesOperacion', {
     codigoOperacion: {
       type: DataTypes.STRING(36), // Exactamente 36 caracteres para UUIDv4
       primaryKey: true,
@@ -107,8 +107,8 @@ const MotonaveOperacionModel = (sequelize) => {
       allowNull: true
     }
   }, {
-    tableName: 'TCLMotonavesOperacion',
-    timestamps: false // Desactivado porque manejamos la auditoría manualmente en el DTO
+    tableName: 'TCL_MotonavesOperacion',
+    timestamps: false
   });
 };
 

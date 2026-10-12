@@ -4,7 +4,7 @@
 */
 const { response } = require("express");
 const LayoutService = require("../services/layout.service");
-const { PlantillaLayoutDTO } = require('../models/plantilla-layout.dto');
+const { PlantillaLayoutDTO } = require('../models/plantilla-layout');
 const Joi = require('joi');
 
 const service = new LayoutService();
@@ -143,22 +143,19 @@ const eliminarLayoutPorPestana = async (req, res) => {
 // ==========================================
 // --- MOTOR DE PLANTILLAS METADATA-DRIVEN ---
 // ==========================================
-
 const obtenerPlantillaPestana = async (req, res = response) => {
   try {
     const { codigoPestana } = req.params;
 
-    // 1. Validación de entrada con Joi
-    const schema = Joi.string().required();
-    const { error } = schema.validate(codigoPestana);
-    if (error) {
+    if (!codigoPestana) {
       return res.status(400).json({
         ok: false,
-        msg: 'El código de la pestaña es inválido o requerido.'
+        msg: 'El código de la pestaña es requerido.'
       });
     }
 
-    // 2. Ejecución en la capa de servicio
+    // A. Ejecución en la capa de servicio (Consulta a la Base de Datos)
+    // Este método de tu servicio debe hacer los SELECTs y JOINs en tu base de datos
     const dataCruda = await service.getPlantillaMaestra(codigoPestana);
 
     if (!dataCruda) {
@@ -168,10 +165,10 @@ const obtenerPlantillaPestana = async (req, res = response) => {
       });
     }
 
-    // 3. Transformación DTO para Angular
+    // B. Transformación mágica usando el DTO (El Contrato Irrompible)
     const jsonAngular = PlantillaLayoutDTO.formatearRespuesta(dataCruda);
 
-    // 4. Respuesta HTTP exitosa
+    // C. Respuesta HTTP exitosa hacia Angular
     return res.status(200).json({
       ok: true,
       data: jsonAngular
@@ -224,7 +221,7 @@ module.exports = {
   getPestanasUsuario,
   savePestanasUsuario,
   eliminarLayoutPorPestana,
-  // Exportamos los nuevos métodos
+  obtenerPlantillaPestana,
   getPlantillaMaestra,
   guardarConfiguracionMaestra
 };

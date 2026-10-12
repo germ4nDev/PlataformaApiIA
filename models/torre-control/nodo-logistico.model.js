@@ -1,102 +1,100 @@
 /*
     Author: German Valencia
-    Pattern: PORTTOS DTO Pattern - Nodos Logísticos (Bodegas, Patios, Muelles y Buques)
+    Refactored for: QPLUS DTO Pattern, Entity Standardization, Joi Validation
+    Entity: Maestro de Nodos Logísticos (Patios, Terminales, Bodegas y Mapa)
 */
 const Joi = require('joi');
 const { DataTypes } = require('sequelize');
-const { v4: uuidv4 } = require('uuid');
 
-// 1. EL ESCUDO: Validación Joi Expandida
 const NodoLogisticoSchema = Joi.object({
-  // Permitimos que envíen el código (Ej: Nombre del buque), si no viene, se asume que es nuevo
-  codigoNodo: Joi.string().max(36).allow(null, '').optional(),
+  id_puerto: Joi.string().max(50).required(),
+  nombre_nodo: Joi.string().max(150).required(),
+  tipo_nodo: Joi.string().max(60).default('patio_contenedores'),
+  capacidad_teus: Joi.number().integer().min(0).default(0),
+  ocupacion_actual_pct: Joi.number().min(0).max(100).default(0),
+  estado_operativo: Joi.string().max(40).default('libre'),
+  geometria_wkt: Joi.string().allow('', null).optional(),
+  color_ui: Joi.string().max(20).allow('', null).optional(),
+  activo: Joi.boolean().required().default(true),
 
-  nombreNodo: Joi.string().max(150).required(),
-
-  // 🔥 EXPANDIDO: Ahora soporta infraestructura estática y activos móviles
-  tipoNodo: Joi.string().valid(
-    'BODEGA_GRANEL', 'BODEGA_GENERAL', 'DEPOT_VACIOS', 'PATIO_PDI',
-    'BUQUE', 'MUELLE'
-  ).required(),
-
-  capacidadMaxima: Joi.number().min(0).precision(2).required(),
-  ocupacionActual: Joi.number().min(0).precision(2).max(Joi.ref('capacidadMaxima')).default(0),
-
-  // 🔥 EXPANDIDO: Soporte para vehículos
-  unidadMedida: Joi.string().valid('TM', 'TEU', 'UNIDADES', 'VEHICULOS').required(),
-
-  latitud: Joi.number().min(-90).max(90).allow(null).optional(),
-  longitud: Joi.number().min(-180).max(180).allow(null).optional(),
-
-  // 🔥 EXPANDIDO: Estados para buques y muelles
-  estadoOperativo: Joi.string().valid(
-    'ACTIVO', 'SUSPENDIDO',
-    'OPERANDO', 'FONDEO', 'EN TRÁNSITO', 'DISPONIBLE'
-  ).default('ACTIVO')
+  // Auditoría Estándar QPLUS
+  codigoUsuarioCreacion: Joi.string().max(200).allow('', null).optional(),
+  fechaCreacion: Joi.string().max(100).allow('', null).optional(),
+  codigoUsuarioModificacion: Joi.string().max(200).allow('', null).optional(),
+  fechaModificacion: Joi.string().max(100).allow('', null).optional()
 });
 
-// 2. EL ENSAMBLADOR: DTO
-const NodoLogisticoDTO = (rawData, userContext) => {
-  const { error, value } = NodoLogisticoSchema.validate(rawData, { abortEarly: false, stripUnknown: true });
+const NodoLogisticoDTO = (rawData, userContext = { codigoUsuario: 'SISTEMA_ADMIN' }) => {
+  const { error, value } = NodoLogisticoSchema.validate(rawData, {
+    abortEarly: false,
+    stripUnknown: true
+  });
 
   if (error) {
     throw {
       type: 'ValidationError',
-      details: error.details.map(d => ({ campo: d.context.key, mensaje: d.message }))
+      details: error.details.map((d) => ({ campo: d.context.key, mensaje: d.message }))
     };
   }
 
+  const fechaActual = new Date().toISOString();
+  const usuarioBase = value.codigoUsuarioCreacion || userContext.codigoUsuario || 'SISTEMA_ADMIN';
+
   return {
-    // 🔥 CORRECCIÓN UPSERT: Si viene un código (ej: el scraper mandó el nombre del buque), lo usamos. 
-    // Si no (ej: creando una bodega manual), generamos el UUID.
-    codigoNodo: value.codigoNodo ? value.codigoNodo.trim() : uuidv4(),
+    id_puerto: value.id_puerto.trim().toUpperCase(),
+    nombre_nodo: value.nombre_nodo.trim(),
+    tipo_nodo: value.tipo_nodo.trim().toLowerCase(),
+    capacidad_teus: value.capacidad_teus,
+    ocupacion_actual_pct: Number(value.ocupacion_actual_pct),
+    estado_operativo: value.estado_operativo.trim().toLowerCase(),
+    geometria_wkt: value.geometria_wkt ? value.geometria_wkt.trim() : null,
+    color_ui: value.color_ui || '#38bdf8',
+    activo: value.activo,
 
-    nombreNodo: value.nombreNodo.trim().toUpperCase(),
-    tipoNodo: value.tipoNodo,
-    capacidadMaxima: value.capacidadMaxima,
-    ocupacionActual: value.ocupacionActual,
-    unidadMedida: value.unidadMedida,
-    latitud: value.latitud,
-    longitud: value.longitud,
-    estadoOperativo: value.estadoOperativo,
-
-    // Auditoría PORTTOS
-    codigoUsuarioCreacion: userContext.codigoUsuario,
-    fechaCreacion: new Date(),
-    codigoUsuarioModificacion: userContext.codigoUsuario,
-    fechaModificacion: new Date()
+    // Auditoría QPLUS
+    codigoUsuarioCreacion: usuarioBase,
+    fechaCreacion: value.fechaCreacion || fechaActual,
+    codigoUsuarioModificacion: value.codigoUsuarioModificacion || usuarioBase,
+    fechaModificacion: value.fechaModificacion || fechaActual
   };
 };
 
-// 3. EL MAPEO: Modelo Sequelize (Se mantiene igual, estaba perfecto)
 const NodoLogisticoModel = (sequelize) => {
-  return sequelize.define('TCLNodosLogisticos', {
-    codigoNodo: {
-      type: DataTypes.STRING(36),
-      primaryKey: true,
-      allowNull: false
+  return sequelize.define(
+    'T_Maestro_NodosLogisticos',
+    {
+      id_nodo: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+        field: 'id_nodo'
+      },
+      id_puerto: { type: DataTypes.STRING(50), allowNull: false },
+      nombre_nodo: { type: DataTypes.STRING(150), allowNull: false },
+      tipo_nodo: { type: DataTypes.STRING(60), allowNull: false },
+      capacidad_teus: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+      ocupacion_actual_pct: {
+        type: DataTypes.DECIMAL(5, 2),
+        allowNull: false,
+        defaultValue: 0
+      },
+      estado_operativo: { type: DataTypes.STRING(40), allowNull: false },
+      geometria_wkt: { type: DataTypes.TEXT, allowNull: true },
+      color_ui: { type: DataTypes.STRING(20), allowNull: true },
+      activo: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+
+      // Auditoría QPLUS
+      codigoUsuarioCreacion: { type: DataTypes.STRING(200), allowNull: true },
+      fechaCreacion: { type: DataTypes.STRING(100), allowNull: true },
+      codigoUsuarioModificacion: { type: DataTypes.STRING(200), allowNull: true },
+      fechaModificacion: { type: DataTypes.STRING(100), allowNull: true }
     },
-    // ... (El resto de tu modelo queda exactamente igual) ...
-    nombreNodo: { type: DataTypes.STRING(150), allowNull: false },
-    tipoNodo: { type: DataTypes.STRING(50), allowNull: false },
-    capacidadMaxima: { type: DataTypes.DECIMAL(12, 2), allowNull: false },
-    ocupacionActual: { type: DataTypes.DECIMAL(12, 2), allowNull: false, defaultValue: 0.00 },
-    unidadMedida: { type: DataTypes.STRING(20), allowNull: false },
-    latitud: { type: DataTypes.DECIMAL(10, 8), allowNull: true },
-    longitud: { type: DataTypes.DECIMAL(11, 8), allowNull: true },
-    estadoOperativo: { type: DataTypes.STRING(20), allowNull: false, defaultValue: 'ACTIVO' },
-    codigoUsuarioCreacion: { type: DataTypes.STRING(200), allowNull: false },
-    fechaCreacion: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
-    codigoUsuarioModificacion: { type: DataTypes.STRING(200), allowNull: true },
-    fechaModificacion: { type: DataTypes.DATE, allowNull: true }
-  }, {
-    tableName: 'TCLNodosLogisticos',
-    timestamps: false
-  });
+    {
+      tableName: 'T_Maestro_NodosLogisticos',
+      schema: 'dbo',
+      timestamps: false
+    }
+  );
 };
 
-module.exports = {
-  NodoLogisticoModel,
-  NodoLogisticoDTO,   // <-- Debe estar escrito exactamente así (respetando mayúsculas)
-  NodoLogisticoSchema
-};
+module.exports = { NodoLogisticoModel, NodoLogisticoDTO, NodoLogisticoSchema };

@@ -15,6 +15,7 @@ const {
   getPestanasUsuario,
   savePestanasUsuario,
   getPlantillaMaestra,
+  obtenerPlantillaPestana,
   guardarConfiguracionMaestra,
   eliminarLayoutPorPestana
 } = require("../controllers/layout.controller");
@@ -29,11 +30,13 @@ router.post("/", saveOrUpdateLayout); // Puedes habilitar validarJWT aquí si lo
 // Módulo Pestañas (Tabs)
 router.get("/pestanas/user/:codigoUsuario", getPestanasUsuario);
 
+router.get('/plantilla/:codigoPestana', obtenerPlantillaPestana);
+
 router.post("/pestanas", savePestanasUsuario);
 
 router.delete('/usuario/:codigoUsuario/:codigoPestana', eliminarLayoutPorPestana);
 
-router.get('/plantilla/:codigoPestana', getPlantillaMaestra);
+// router.get('/plantilla/:codigoPestana', getPlantillaMaestra);
 
 router.put('/plantilla/configurar/:codigoPestana', guardarConfiguracionMaestra);
 

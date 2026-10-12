@@ -105,35 +105,90 @@ class LayoutService {
     }
   }
 
+  // async savePestanasUsuario(pestanasArray) {
+  //   if (!Array.isArray(pestanasArray) || pestanasArray.length === 0) return [];
+
+  //   const codigoUsuario = pestanasArray[0].codigoUsuario;
+
+  //   const dataDTOs = pestanasArray.map((pestana, index) => {
+  //     const pestanaDTO = LayoutPestanaDTO(pestana);
+  //     return {
+  //       codigoUsuario: pestanaDTO.codigoUsuario,
+  //       codigoPestana: pestanaDTO.codigoPestana,
+  //       posicion: pestanaDTO.posicion !== undefined ? pestana.posicion : index,
+  //       codigoTipo: pestanaDTO.codigoTipo,
+  //       estadoPestana: pestanaDTO.estadoPestana,
+  //       codigoUsuarioCreacion: pestanaDTO.codigoUsuarioCreacion || codigoUsuario,
+  //       fechaCreacion: pestanaDTO.fechaCreacion || new Date()
+  //     };
+  //   });
+
+  //   try {
+  //     return await sequelize.transaction(async (t) => {
+  //       await LayoutPestana.destroy({
+  //         where: { codigoUsuario },
+  //         transaction: t
+  //       });
+
+  //       console.log('✅ pestanas mapeadas listas para guardar:', dataDTOs);
+
+  //       return await LayoutPestana.bulkCreate(dataDTOs, { transaction: t });
+  //     });
+  //   } catch (error) {
+  //     console.error('❌ Error crítico en savePestanasUsuario (Transacción abortada):', error);
+  //     throw error;
+  //   }
+  // }
   async savePestanasUsuario(pestanasArray) {
     if (!Array.isArray(pestanasArray) || pestanasArray.length === 0) return [];
 
     const codigoUsuario = pestanasArray[0].codigoUsuario;
 
-    const dataDTOs = pestanasArray.map((pestana, index) => {
-      const pestanaDTO = LayoutPestanaDTO(pestana);
-      return {
-        codigoUsuario: pestanaDTO.codigoUsuario,
-        codigoPestana: pestanaDTO.codigoPestana,
-        posicion: pestanaDTO.posicion !== undefined ? pestana.posicion : index,
-        codigoTipo: pestanaDTO.codigoTipo,
-        estadoPestana: pestanaDTO.estadoPestana,
-        codigoUsuarioCreacion: pestanaDTO.codigoUsuarioCreacion || codigoUsuario,
-        fechaCreacion: pestanaDTO.fechaCreacion || new Date()
-      };
-    });
-
     try {
+      // 🟢 1. EL BLINDAJE: Extraer la verdad absoluta de la plantilla MASTER
+      // Buscamos cómo están configuradas las pestañas originalmente por el sistema
+      const pestanasMaestras = await LayoutPestana.findAll({
+        where: { codigoUsuario: 'MASTER' }
+      });
+
+      // Creamos un diccionario para búsqueda ultrarrápida en memoria
+      // Ej: { 'TLC_MARITIMO_001': 'CASCADA_DINAMICA', 'TLC_VIRTUAL_GATE_001': 'ESTATICO_ANALITICO' }
+      const diccionarioEstrategias = pestanasMaestras.reduce((acc, tab) => {
+        acc[tab.codigoPestana] = tab.codigoTipo;
+        return acc;
+      }, {});
+
+      // 🟢 2. FORMATEO: Mapeamos los datos del usuario e inyectamos la estrategia maestra
+      const dataDTOs = pestanasArray.map((pestana, index) => {
+        const pestanaDTO = LayoutPestanaDTO(pestana);
+
+        // ¡LA MAGIA AQUÍ! Ignoramos si el frontend mandó la estrategia vacía. 
+        // Obligamos a que herede la de MASTER. Si por algún motivo extremo no existe, usamos ESTATICO.
+        const estrategiaHeredada = diccionarioEstrategias[pestanaDTO.codigoPestana] || pestanaDTO.codigoTipo || 'ESTATICO_ANALITICO';
+
+        return {
+          codigoUsuario: pestanaDTO.codigoUsuario,
+          codigoPestana: pestanaDTO.codigoPestana,
+          posicion: pestanaDTO.posicion !== undefined ? pestana.posicion : index,
+          codigoTipo: estrategiaHeredada, // <--- 🛡️ Blindado contra pérdida de datos
+          estadoPestana: pestanaDTO.estadoPestana,
+          codigoUsuarioCreacion: pestanaDTO.codigoUsuarioCreacion || codigoUsuario,
+          fechaCreacion: pestanaDTO.fechaCreacion || new Date()
+        };
+      });
+
+      // 🟢 3. TRANSACCIÓN DB: Reemplazo seguro
       return await sequelize.transaction(async (t) => {
         await LayoutPestana.destroy({
           where: { codigoUsuario },
           transaction: t
         });
 
-        console.log('✅ pestanas mapeadas listas para guardar:', dataDTOs);
+        console.log('✅ Pestañas mapeadas con ESTRATEGIA HEREDADA listas para guardar:', dataDTOs);
 
         return await LayoutPestana.bulkCreate(dataDTOs, { transaction: t });
       });
+
     } catch (error) {
       console.error('❌ Error crítico en savePestanasUsuario (Transacción abortada):', error);
       throw error;
@@ -153,44 +208,124 @@ class LayoutService {
   // ==========================================
   // OBTENER PLANTILLA MAESTRA (METADATA-DRIVEN)
   // ==========================================
+  // async getPlantillaMaestra(codigoPestana) {
+  //   try {
+  //     const codigoLimpio = codigoPestana.trim();
+  //     console.log(`\n🔍 --- DEBUG: BUSCANDO PESTAÑA MAESTRA ---`);
+  //     console.log(`Parámetro recibido (limpio): '${codigoLimpio}'`);
+
+  //     // 1. PRIMERO SE HACE LA CONSULTA A LA BASE DE DATOS
+  //     const pestanaDB = await LayoutPestana.findOne({
+  //       where: {
+  //         codigoPestana: codigoLimpio,
+  //         codigoUsuario: 'MASTER'
+  //       },
+  //       // 🔥 EL TRUCO DEFINITIVO: 
+  //       // Pasamos las asociaciones como strings. Si TiposPestana está undefined en el require, no importa,
+  //       // Sequelize usará el alias 'estrategiaTipo' que ya definiste en tu index.js para hacer el JOIN.
+  //       include: ['estrategiaTipo', 'zonaDinamica']
+  //     });
+
+  //     // 2. LUEGO SE PONE EL ESCUDO ANTI-CRASH
+  //     if (!pestanaDB) {
+  //       console.log(`⚠️ No hay metadata en BD para la pestaña ${codigoLimpio}. Retornando plantilla ESTÁTICA por defecto.`);
+  //       return {
+  //         estrategia: 'ESTATICO_ANALITICO',
+  //         configuracion: {
+  //           widgetsEstaticos: [],
+  //           zonaDinamica: null
+  //         }
+  //       };
+  //     }
+
+  //     // 3. FINALMENTE LA BÚSQUEDA DE WIDGETS DEL CATÁLOGO
+  //     const widgetsMaestros = await WidgetsMaestro.findAll({
+  //       where: { codigoPestana: codigoLimpio }
+  //     });
+
+  //     // 4. ESTRUCTURAR EL PAYLOAD
+  //     const estrategia = dataServicio.estrategia || dataServicio.codigoTipoPestana || dataServicio.codigoTipo || 'ESTATICO_ANALITICO';
+
+  //     const layoutEstructurado = {
+  //       estrategia: estrategia,
+  //       configuracion: {
+  //         widgetsEstaticos: [],
+  //         zonaDinamica: null
+  //       }
+  //     };
+
+  //     // Mapear widgets estáticos
+  //     layoutEstructurado.configuracion.widgetsEstaticos = widgetsMaestros.map(w => ({
+  //       codigoWidget: w.codigoWidget,
+  //       x: w.pos_x,
+  //       y: (w.anclajeTipo === 'RELATIVO' || w.anclajeTipo === 'RELATIVO_DINAMICO') ? null : w.pos_y,
+  //       cols: w.defaultCols || 4,
+  //       rows: w.defaultRows || 3,
+  //       anclaje: w.anclajeTipo || 'ABSOLUTO',
+  //       offsetY: w.offsetY || 0
+  //     }));
+
+  //     // Mapear zona dinámica
+  //     if (estrategia === 'CASCADA_DINAMICA' && pestanaDB.zonaDinamica) {
+  //       layoutEstructurado.configuracion.widgetsEstaticos = widgetsMaestros.map(w => ({
+  //         codigoWidget: w.codigoWidget,
+  //         x: w.pos_x,
+  //         y: (w.anclajeTipo === 'RELATIVO' || w.anclajeTipo === 'RELATIVO_DINAMICO') ? null : w.pos_y,
+  //         cols: w.defaultCols || 4,
+  //         rows: w.defaultRows || 3,
+  //         anclaje: w.anclajeTipo || 'ABSOLUTO',
+  //         offsetY: w.offsetY || 0,
+  //         // 🟢 AGREGAMOS ESTO: Mapear la columna de la BD. 
+  //         // (Cambia 'inicial' por el nombre real de tu columna en SQL si se llama distinto, ej: w.es_inicial)
+  //         inicial: w.inicial
+  //       }));
+  //     }
+
+  //     console.log(`✅ Plantilla ensamblada con éxito para: ${codigoLimpio} | Estrategia: ${estrategia}`);
+  //     return layoutEstructurado;
+
+  //   } catch (error) {
+  //     console.error('❌ Error en LayoutService.getPlantillaMaestra:', error);
+  //     throw error;
+  //   }
+  // }
+  // ==========================================
+  // OBTENER PLANTILLA MAESTRA (METADATA-DRIVEN)
+  // ==========================================
   async getPlantillaMaestra(codigoPestana) {
     try {
       const codigoLimpio = codigoPestana.trim();
       console.log(`\n🔍 --- DEBUG: BUSCANDO PESTAÑA MAESTRA ---`);
-      console.log(`Parámetro recibido (limpio): '${codigoLimpio}'`);
+      console.log(`Parámetro recibido: '${codigoLimpio}'`);
 
-      // 1. PRIMERO SE HACE LA CONSULTA A LA BASE DE DATOS
-      const pestanaDB = await LayoutPestana.findOne({
+      // 🟢 1. CONSULTA A LA TABLA MAESTRA GLOBAL (Sin usar 'MASTER' ni usuarios)
+      // Asegúrate de usar el modelo de Sequelize que apunta a "dbo.PTLPestanas"
+      const pestanaGlobal = await LayoutPestana.findOne({
         where: {
-          codigoPestana: codigoLimpio,
-          codigoUsuario: 'MASTER'
+          codigoPestana: codigoLimpio
         },
-        // 🔥 EL TRUCO DEFINITIVO: 
-        // Pasamos las asociaciones como strings. Si TiposPestana está undefined en el require, no importa,
-        // Sequelize usará el alias 'estrategiaTipo' que ya definiste en tu index.js para hacer el JOIN.
-        include: ['estrategiaTipo', 'zonaDinamica']
+        // Si tienes la relación con la zona dinámica, la incluyes aquí:
+        include: ['zonaDinamica']
       });
 
-      // 2. LUEGO SE PONE EL ESCUDO ANTI-CRASH
-      if (!pestanaDB) {
-        console.log(`⚠️ No hay metadata en BD para la pestaña ${codigoLimpio}. Retornando plantilla ESTÁTICA por defecto.`);
+      // 🟢 2. VALIDAR Y EXTRAER LA ESTRATEGIA (Con el nombre de tu columna)
+      if (!pestanaGlobal) {
+        console.log(`⚠️ Pestaña no encontrada en la BD global. Retornando ESTÁTICA por defecto.`);
         return {
           estrategia: 'ESTATICO_ANALITICO',
-          configuracion: {
-            widgetsEstaticos: [],
-            zonaDinamica: null
-          }
+          configuracion: { widgetsEstaticos: [], zonaDinamica: null }
         };
       }
 
-      // 3. FINALMENTE LA BÚSQUEDA DE WIDGETS DEL CATÁLOGO
+      // Leemos tu columna 'codigoTipoPestana'
+      const estrategia = pestanaGlobal.codigoTipoPestana || 'ESTATICO_ANALITICO';
+
+      // 🟢 3. OBTENER LOS WIDGETS MAESTROS (Ya lo tenías bien)
       const widgetsMaestros = await WidgetsMaestro.findAll({
         where: { codigoPestana: codigoLimpio }
       });
 
-      // 4. ESTRUCTURAR EL PAYLOAD
-      const estrategia = pestanaDB.estrategiaTipo ? pestanaDB.estrategiaTipo.estrategia : 'ESTATICO_ANALITICO';
-
+      // 🟢 4. ESTRUCTURAR EL DTO
       const layoutEstructurado = {
         estrategia: estrategia,
         configuracion: {
@@ -199,7 +334,7 @@ class LayoutService {
         }
       };
 
-      // Mapear widgets estáticos
+      // Mapear widgets estáticos (Igual que antes)
       layoutEstructurado.configuracion.widgetsEstaticos = widgetsMaestros.map(w => ({
         codigoWidget: w.codigoWidget,
         x: w.pos_x,
@@ -207,19 +342,20 @@ class LayoutService {
         cols: w.defaultCols || 4,
         rows: w.defaultRows || 3,
         anclaje: w.anclajeTipo || 'ABSOLUTO',
-        offsetY: w.offsetY || 0
+        offsetY: w.offsetY || 0,
+        inicial: w.inicial // <- Nuestro filtro para el Lobby
       }));
 
       // Mapear zona dinámica
-      if (estrategia === 'CASCADA_DINAMICA' && pestanaDB.zonaDinamica) {
+      if (estrategia === 'CASCADA_DINAMICA' && pestanaGlobal.zonaDinamica) {
         layoutEstructurado.configuracion.zonaDinamica = {
           activa: true,
-          codigoMolde: pestanaDB.zonaDinamica.codigoMolde,
-          inicioX: Number(pestanaDB.zonaDinamica.inicioX),
-          inicioY: Number(pestanaDB.zonaDinamica.inicioY),
-          colsPorItem: Number(pestanaDB.zonaDinamica.colsPorItem),
-          rowsPorItem: Number(pestanaDB.zonaDinamica.rowsPorItem),
-          maxItemsPorFila: pestanaDB.zonaDinamica.maxItemsPorFila ? Number(pestanaDB.zonaDinamica.maxItemsPorFila) : 3
+          codigoMolde: pestanaGlobal.zonaDinamica.codigoMolde,
+          inicioX: Number(pestanaGlobal.zonaDinamica.inicioX),
+          inicioY: Number(pestanaGlobal.zonaDinamica.inicioY),
+          colsPorItem: Number(pestanaGlobal.zonaDinamica.colsPorItem),
+          rowsPorItem: Number(pestanaGlobal.zonaDinamica.rowsPorItem),
+          maxItemsPorFila: pestanaGlobal.zonaDinamica.maxItemsPorFila ? Number(pestanaGlobal.zonaDinamica.maxItemsPorFila) : 3
         };
       }
 

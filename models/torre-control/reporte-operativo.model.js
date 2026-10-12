@@ -37,7 +37,7 @@ const ReporteOperativoDTO = (rawData, userContext) => {
 
 // 3. EL MAPEO: Sequelize -> SQL Server
 const ReporteOperativoModel = (sequelize) => {
-  return sequelize.define('TLCReportesOperativos', {
+  return sequelize.define('TCL_ReportesOperativos', {
     id_reporte: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true, field: 'id_reporte' },
     puerto: { type: DataTypes.STRING(100), allowNull: false, field: 'puerto' },
     titulo: { type: DataTypes.STRING(150), allowNull: false, field: 'titulo' },
@@ -46,7 +46,7 @@ const ReporteOperativoModel = (sequelize) => {
     tipo_color: { type: DataTypes.STRING(20), allowNull: true, field: 'tipo_color' },
     fecha_registro: { type: DataTypes.STRING(100), allowNull: false, field: 'fecha_registro' }
   }, {
-    tableName: 'TLCReportesOperativos',
+    tableName: 'TCL_ReportesOperativos',
     schema: 'dbo',
     timestamps: false
   });

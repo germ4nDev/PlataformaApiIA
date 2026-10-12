@@ -4,7 +4,7 @@
     Descripción: Mapeo completo de la estructura de operación terrestre RNDC
 */
 module.exports = (sequelize, DataTypes) => {
-  const RNDCOperacion = sequelize.define('TLCRNDCOperacionTerrestre', {
+  const RNDCOperacion = sequelize.define('TCL_RNDCOperacionTerrestre', {
     codigoRegistroRNDC: { type: DataTypes.UUID, primaryKey: true, allowNull: false },
     anomes: { type: DataTypes.INTEGER },
     codConfiguracionVehicular: { type: DataTypes.STRING(20) },
@@ -40,7 +40,9 @@ module.exports = (sequelize, DataTypes) => {
     codigoUsuarioCreacion: { type: DataTypes.STRING(200) },
     fechaCreacion: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
   }, {
-    tableName: 'TLCRNDCOperacionTerrestre',
+    tableName: 'TCL_RNDCOperacionTerrestre',
+    schema: 'dbo',
+    freezeTableName: true,
     timestamps: false
   });
 

@@ -1,97 +1,96 @@
 /*
     Author: German Valencia
-    Pattern: PORTTOS DTO Pattern - Unidad de Carga (Inventario y Free Time)
+    Refactored for: QPLUS DTO Pattern, Entity Standardization, Joi Validation
+    Entity: Inventario de Unidades de Carga (TLC_CONTENEDORES_001)
 */
 const Joi = require('joi');
 const { DataTypes } = require('sequelize');
-const { v4: uuidv4 } = require('uuid');
 
-// 1. ESQUEMA DE VALIDACIÓN (Joi)
 const UnidadCargaSchema = Joi.object({
-  codigoUnidad: Joi.string().max(36).optional(),
-  codigoOperacion: Joi.string().max(36).required(), // FK al Buque
-  codigoNodo_actual: Joi.string().max(36).optional().allow(null, ''), // FK al Patio/Bodega
-  identificador: Joi.string().max(100).required(), // Ej: CMAU1234567, VIN, Folio
-  tipoCarga: Joi.string().valid('CONTENEDOR', 'VEHICULO', 'BREAK_BULK', 'GRANEL').required(),
-  producto: Joi.string().max(100).optional().allow(null, ''),
-  pesoTM: Joi.number().precision(2).optional().allow(null),
+  id_puerto: Joi.string().max(50).required(),
+  codigoUnidad: Joi.string().max(30).required(),
+  tipoContenedor: Joi.string().max(30).default("40' HC"),
+  naviera: Joi.string().max(80).required(),
+  condicionCarga: Joi.string().valid('CARGADO', 'VACIO').default('CARGADO'),
+  esReefer: Joi.boolean().default(false),
+  diasFreeTime: Joi.number().integer().min(-60).max(60).default(5),
+  temperaturaSet: Joi.number().min(-40).max(30).allow(null).optional(),
+  activo: Joi.boolean().required().default(true),
 
-  estadoOperativo: Joi.string().valid('EN_BUQUE', 'DESCARGANDO', 'EN_PATIO', 'DESPACHADO').required(),
-  estadoAduanero: Joi.string().valid('ESPERA_DIAN', 'INSPECCION', 'LEVANTE_AUTORIZADO').default('ESPERA_DIAN'),
-  vencimientoFreeTime: Joi.date().iso().optional().allow(null),
-
-  // Capa Geoespacial (Candados IoT)
-  latitudIoT: Joi.number().min(-90).max(90).optional().allow(null),
-  longitudIoT: Joi.number().min(-180).max(180).optional().allow(null),
-  bateriaTracker: Joi.number().min(0).max(100).optional().allow(null),
-  fechaUltimaPosicion: Joi.date().iso().optional().allow(null),
-
-  fechaCreacion: Joi.string().optional()
+  // Auditoría Estándar QPLUS
+  codigoUsuarioCreacion: Joi.string().max(200).allow('', null).optional(),
+  fechaCreacion: Joi.string().max(100).allow('', null).optional(),
+  codigoUsuarioModificacion: Joi.string().max(200).allow('', null).optional(),
+  fechaModificacion: Joi.string().max(100).allow('', null).optional()
 });
 
-// 2. DATA TRANSFER OBJECT (DTO)
 const UnidadCargaDTO = (rawData, userContext = { codigoUsuario: 'SISTEMA_ADMIN' }) => {
-  const { error, value } = UnidadCargaSchema.validate(rawData, { abortEarly: false, stripUnknown: true });
+  const { error, value } = UnidadCargaSchema.validate(rawData, {
+    abortEarly: false,
+    stripUnknown: true
+  });
 
   if (error) {
     throw {
       type: 'ValidationError',
-      details: error.details.map(d => ({ campo: d.context.key, mensaje: d.message }))
+      details: error.details.map((d) => ({ campo: d.context.key, mensaje: d.message }))
     };
   }
 
   const fechaActual = new Date().toISOString();
-  const usuarioIngesta = userContext.codigoUsuario;
+  const usuarioBase = value.codigoUsuarioCreacion || userContext.codigoUsuario || 'SISTEMA_ADMIN';
 
   return {
-    codigoUnidad: value.codigoUnidad || uuidv4(),
-    codigoOperacion: value.codigoOperacion,
-    codigoNodo_actual: value.codigoNodo_actual || null,
-    identificador: value.identificador.trim().toUpperCase(),
-    tipoCarga: value.tipoCarga,
-    producto: value.producto ? value.producto.trim().toUpperCase() : null,
-    pesoTM: value.pesoTM || null,
+    id_puerto: value.id_puerto.trim().toUpperCase(),
+    codigoUnidad: value.codigoUnidad.trim().toUpperCase(),
+    tipoContenedor: value.tipoContenedor.trim(),
+    naviera: value.naviera.trim(),
+    condicionCarga: value.condicionCarga.trim().toUpperCase(),
+    esReefer: Boolean(value.esReefer || value.tipoContenedor.toUpperCase().includes('RF')),
+    diasFreeTime: value.diasFreeTime,
+    temperaturaSet: value.temperaturaSet !== undefined ? value.temperaturaSet : null,
+    activo: value.activo,
 
-    estadoOperativo: value.estadoOperativo,
-    estadoAduanero: value.estadoAduanero,
-    vencimientoFreeTime: value.vencimientoFreeTime || null,
-
-    latitudIoT: value.latitudIoT || null,
-    longitudIoT: value.longitudIoT || null,
-    bateriaTracker: value.bateriaTracker || null,
-    fechaUltimaPosicion: value.fechaUltimaPosicion || null,
-
-    codigoUsuarioCreacion: usuarioIngesta,
-    fechaCreacion: value.fechaCreacion || fechaActual
+    // Auditoría QPLUS
+    codigoUsuarioCreacion: usuarioBase,
+    fechaCreacion: value.fechaCreacion || fechaActual,
+    codigoUsuarioModificacion: value.codigoUsuarioModificacion || usuarioBase,
+    fechaModificacion: value.fechaModificacion || fechaActual
   };
 };
 
-// 3. MODELO ORM (Sequelize)
 const UnidadCargaModel = (sequelize) => {
-  return sequelize.define('TLC_Unidad_Carga', {
-    codigoUnidad: { type: DataTypes.STRING(36), primaryKey: true, allowNull: false },
-    codigoOperacion: { type: DataTypes.STRING(36), allowNull: false },
-    codigoNodo_actual: { type: DataTypes.STRING(36), allowNull: true },
-    identificador: { type: DataTypes.STRING(100), allowNull: false },
-    tipoCarga: { type: DataTypes.STRING(50), allowNull: false },
-    producto: { type: DataTypes.STRING(100), allowNull: true },
-    pesoTM: { type: DataTypes.DECIMAL(12, 2), allowNull: true },
-    estadoOperativo: { type: DataTypes.STRING(50), allowNull: false },
-    estadoAduanero: { type: DataTypes.STRING(50), allowNull: false, defaultValue: 'ESPERA_DIAN' },
-    vencimientoFreeTime: { type: DataTypes.DATE, allowNull: true },
+  return sequelize.define(
+    'TCL_UnidadCarga',
+    {
+      id_unidad: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+        field: 'id_unidad'
+      },
+      id_puerto: { type: DataTypes.STRING(50), allowNull: false },
+      codigoUnidad: { type: DataTypes.STRING(30), allowNull: false },
+      tipoContenedor: { type: DataTypes.STRING(30), allowNull: false },
+      naviera: { type: DataTypes.STRING(80), allowNull: false },
+      condicionCarga: { type: DataTypes.STRING(20), allowNull: false },
+      esReefer: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+      diasFreeTime: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 5 },
+      temperaturaSet: { type: DataTypes.DECIMAL(5, 2), allowNull: true },
+      activo: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
 
-    latitudIoT: { type: DataTypes.DECIMAL(10, 8), allowNull: true },
-    longitudIoT: { type: DataTypes.DECIMAL(11, 8), allowNull: true },
-    bateriaTracker: { type: DataTypes.DECIMAL(5, 2), allowNull: true },
-    fechaUltimaPosicion: { type: DataTypes.DATE, allowNull: true },
-
-    codigoUsuarioCreacion: { type: DataTypes.STRING(200), allowNull: false },
-    fechaCreacion: { type: DataTypes.STRING(100), allowNull: false }
-  }, {
-    tableName: 'TLC_Unidad_Carga',
-    schema: 'dbo',
-    timestamps: false
-  });
+      // Auditoría QPLUS
+      codigoUsuarioCreacion: { type: DataTypes.STRING(200), allowNull: true },
+      fechaCreacion: { type: DataTypes.STRING(100), allowNull: true },
+      codigoUsuarioModificacion: { type: DataTypes.STRING(200), allowNull: true },
+      fechaModificacion: { type: DataTypes.STRING(100), allowNull: true }
+    },
+    {
+      tableName: 'TCL_UnidadCarga',
+      schema: 'dbo',
+      timestamps: false
+    }
+  );
 };
 
 module.exports = { UnidadCargaModel, UnidadCargaDTO, UnidadCargaSchema };

@@ -1,3 +1,118 @@
+// /*
+//     Author: German Valencia
+//     Refactored for: QPLUS DTO Pattern, Entity Standardization, Joi Validation
+//     Updated for: Metadata-Driven Layouts (anclajeTipo y offsetY)
+// */
+// const Joi = require('joi');
+// const { DataTypes } = require('sequelize');
+
+// const WidgetMaestroSchema = Joi.object({
+//   codigoWidget: Joi.string().max(200).required(),
+//   codigoTipo: Joi.string().max(200).required(),
+//   codigoPestana: Joi.string().max(200).required(),
+//   codigoAplicacion: Joi.string().max(200).required(),
+//   codigoSuite: Joi.string().max(200).required(),
+//   nombreWidget: Joi.string().max(150).required(),
+//   descripcionWidget: Joi.string().max(4000).allow('', null).optional().default(''),
+//   imagenWidget_light: Joi.string().max(100).allow('', null).optional().default('no-widget.png'),
+//   imagenWidget_dark: Joi.string().max(100).allow('', null).optional().default('no-widget.png'),
+//   defaultCols: Joi.number().integer().min(1).max(12).required().default(4),
+//   defaultRows: Joi.number().integer().min(1).required().default(3),
+//   pos_x: Joi.number().integer().min(0).required().default(0),
+//   pos_y: Joi.number().integer().min(0).required().default(0),
+//   tipo: Joi.string().max(50).allow('', null).optional().default('indefinido'),
+//   layoutVersion: Joi.number().integer().min(1).required(),
+//   inicial: Joi.boolean().required().default(false),
+
+//   // 🚨 ATRIBUTOS DEL MOTOR DE CASCADA
+//   anclajeTipo: Joi.string().max(100).required(),
+//   offsetY: Joi.number().integer().min(0).max(12).required().default(0), // CORREGIDO: min(0)
+
+//   estadoWidget: Joi.boolean().required().default(true),
+//   codigoUsuarioCreacion: Joi.string().max(200).allow('', null).optional(),
+//   fechaCreacion: Joi.string().max(100).allow('', null).optional(),
+//   codigoUsuarioModificacion: Joi.string().max(200).allow('', null).optional(),
+//   fechaModificacion: Joi.string().max(100).allow('', null).optional()
+// });
+
+// const WidgetMaestroDTO = (rawData) => {
+//   const { error, value } = WidgetMaestroSchema.validate(rawData, { abortEarly: false, stripUnknown: true });
+
+//   if (error) {
+//     throw {
+//       type: 'ValidationError',
+//       details: error.details.map(d => ({ campo: d.context.key, mensaje: d.message }))
+//     };
+//   }
+
+//   const fechaActual = new Date().toISOString();
+
+//   return {
+//     codigoWidget: value.codigoWidget.trim().toUpperCase(),
+//     codigoTipo: value.codigoTipo,
+//     codigoPestana: value.codigoPestana,
+//     codigoAplicacion: value.codigoAplicacion.trim(),
+//     codigoSuite: value.codigoSuite.trim(),
+//     nombreWidget: value.nombreWidget.trim(),
+//     descripcionWidget: value.descripcionWidget ? value.descripcionWidget.trim() : '',
+//     imagenWidget_light: value.imagenWidget_light ? value.imagenWidget_light.trim() : 'no-widget.png',
+//     imagenWidget_dark: value.imagenWidget_dark ? value.imagenWidget_dark.trim() : 'no-widget.png',
+
+//     defaultCols: value.defaultCols,
+//     defaultRows: value.defaultRows,
+//     pos_x: value.pos_x,
+//     pos_y: value.pos_y,
+//     layoutVersion: value.layoutVersion,
+//     inicial: value.inicial,
+//     anclajeTipo: value.anclajeTipo,
+//     offsetY: value.offsetY,
+//     estadoWidget: value.estadoWidget,
+
+//     codigoUsuarioCreacion: value.codigoUsuarioCreacion,
+//     fechaCreacion: value.fechaCreacion || fechaActual,
+//     codigoUsuarioModificacion: value.codigoUsuarioModificacion || value.codigoUsuarioCreacion,
+//     fechaModificacion: value.fechaModificacion || fechaActual
+//   };
+// };
+
+// const WidgetMaestroModel = (sequelize) => {
+//   return sequelize.define('PTLWidgetsMaestro', {
+//     widgetId: { type: DataTypes.INTEGER, autoIncrement: true },
+//     codigoWidget: { type: DataTypes.STRING(200), primaryKey: true, allowNull: false },
+//     codigoTipo: { type: DataTypes.STRING(200), allowNull: false },
+//     codigoPestana: { type: DataTypes.STRING(200), allowNull: false },
+//     codigoAplicacion: { type: DataTypes.STRING(200), allowNull: false },
+//     codigoSuite: { type: DataTypes.STRING(200), allowNull: false },
+//     nombreWidget: { type: DataTypes.STRING(150), allowNull: false },
+//     descripcionWidget: { type: DataTypes.STRING(4000), allowNull: true, defaultValue: '' },
+//     imagenWidget_light: { type: DataTypes.STRING(100), allowNull: true, defaultValue: 'no-widget.png' },
+//     imagenWidget_dark: { type: DataTypes.STRING(100), allowNull: true, defaultValue: 'no-widget.png' },
+
+//     defaultCols: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 4 },
+//     defaultRows: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 3 },
+//     pos_x: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+//     pos_y: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+//     layoutVersion: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
+//     inicial: { type: DataTypes.BOOLEAN, defaultValue: false },
+//     anclajeTipo: { type: DataTypes.STRING(100), allowNull: false },
+//     offsetY: { type: DataTypes.INTEGER, defaultValue: 0 },
+//     estadoWidget: { type: DataTypes.BOOLEAN, defaultValue: true },
+
+//     codigoUsuarioCreacion: { type: DataTypes.STRING(200), allowNull: true },
+//     fechaCreacion: { type: DataTypes.STRING(100), allowNull: true },
+//     codigoUsuarioModificacion: { type: DataTypes.STRING(200), allowNull: true },
+//     fechaModificacion: { type: DataTypes.STRING(100), allowNull: true }
+//   }, {
+//     tableName: 'PTLWidgetsMaestro',
+//     timestamps: false
+//   });
+// };
+
+// module.exports = {
+//   WidgetMaestroModel,
+//   WidgetMaestroDTO,
+//   WidgetMaestroSchema
+// };
 /*
     Author: German Valencia
     Refactored for: QPLUS DTO Pattern, Entity Standardization, Joi Validation
@@ -26,7 +141,7 @@ const WidgetMaestroSchema = Joi.object({
 
   // 🚨 ATRIBUTOS DEL MOTOR DE CASCADA
   anclajeTipo: Joi.string().max(100).required(),
-  offsetY: Joi.number().integer().min(0).max(12).required().default(0), // CORREGIDO: min(0)
+  offsetY: Joi.number().integer().min(0).max(12).required().default(0),
 
   estadoWidget: Joi.boolean().required().default(true),
   codigoUsuarioCreacion: Joi.string().max(200).allow('', null).optional(),
@@ -35,24 +150,28 @@ const WidgetMaestroSchema = Joi.object({
   fechaModificacion: Joi.string().max(100).allow('', null).optional()
 });
 
-const WidgetMaestroDTO = (rawData) => {
-  const { error, value } = WidgetMaestroSchema.validate(rawData, { abortEarly: false, stripUnknown: true });
+const WidgetMaestroDTO = (rawData, userContext = { codigoUsuario: 'SISTEMA_ADMIN' }) => {
+  const { error, value } = WidgetMaestroSchema.validate(rawData, {
+    abortEarly: false,
+    stripUnknown: true
+  });
 
   if (error) {
     throw {
       type: 'ValidationError',
-      details: error.details.map(d => ({ campo: d.context.key, mensaje: d.message }))
+      details: error.details.map((d) => ({ campo: d.context.key, mensaje: d.message }))
     };
   }
 
   const fechaActual = new Date().toISOString();
+  const usuarioBase = value.codigoUsuarioCreacion || userContext.codigoUsuario || 'SISTEMA_ADMIN';
 
   return {
     codigoWidget: value.codigoWidget.trim().toUpperCase(),
-    codigoTipo: value.codigoTipo,
-    codigoPestana: value.codigoPestana,
-    codigoAplicacion: value.codigoAplicacion.trim(),
-    codigoSuite: value.codigoSuite.trim(),
+    codigoTipo: value.codigoTipo.trim().toUpperCase(),
+    codigoPestana: value.codigoPestana.trim().toUpperCase(),
+    codigoAplicacion: value.codigoAplicacion.trim().toUpperCase(),
+    codigoSuite: value.codigoSuite.trim().toUpperCase(),
     nombreWidget: value.nombreWidget.trim(),
     descripcionWidget: value.descripcionWidget ? value.descripcionWidget.trim() : '',
     imagenWidget_light: value.imagenWidget_light ? value.imagenWidget_light.trim() : 'no-widget.png',
@@ -64,48 +183,53 @@ const WidgetMaestroDTO = (rawData) => {
     pos_y: value.pos_y,
     layoutVersion: value.layoutVersion,
     inicial: value.inicial,
-    anclajeTipo: value.anclajeTipo,
+    anclajeTipo: value.anclajeTipo.trim().toUpperCase(),
     offsetY: value.offsetY,
     estadoWidget: value.estadoWidget,
 
-    codigoUsuarioCreacion: value.codigoUsuarioCreacion,
+    codigoUsuarioCreacion: usuarioBase,
     fechaCreacion: value.fechaCreacion || fechaActual,
-    codigoUsuarioModificacion: value.codigoUsuarioModificacion || value.codigoUsuarioCreacion,
+    codigoUsuarioModificacion: value.codigoUsuarioModificacion || usuarioBase,
     fechaModificacion: value.fechaModificacion || fechaActual
   };
 };
 
 const WidgetMaestroModel = (sequelize) => {
-  return sequelize.define('PTLWidgetsMaestro', {
-    widgetId: { type: DataTypes.INTEGER, autoIncrement: true },
-    codigoWidget: { type: DataTypes.STRING(200), primaryKey: true, allowNull: false },
-    codigoTipo: { type: DataTypes.STRING(200), allowNull: false },
-    codigoPestana: { type: DataTypes.STRING(200), allowNull: false },
-    codigoAplicacion: { type: DataTypes.STRING(200), allowNull: false },
-    codigoSuite: { type: DataTypes.STRING(200), allowNull: false },
-    nombreWidget: { type: DataTypes.STRING(150), allowNull: false },
-    descripcionWidget: { type: DataTypes.STRING(4000), allowNull: true, defaultValue: '' },
-    imagenWidget_light: { type: DataTypes.STRING(100), allowNull: true, defaultValue: 'no-widget.png' },
-    imagenWidget_dark: { type: DataTypes.STRING(100), allowNull: true, defaultValue: 'no-widget.png' },
+  return sequelize.define(
+    'PTLWidgetsMaestro',
+    {
+      widgetId: { type: DataTypes.INTEGER, autoIncrement: true },
+      codigoWidget: { type: DataTypes.STRING(200), primaryKey: true, allowNull: false },
+      codigoTipo: { type: DataTypes.STRING(200), allowNull: false },
+      codigoPestana: { type: DataTypes.STRING(200), allowNull: false },
+      codigoAplicacion: { type: DataTypes.STRING(200), allowNull: false },
+      codigoSuite: { type: DataTypes.STRING(200), allowNull: false },
+      nombreWidget: { type: DataTypes.STRING(150), allowNull: false },
+      descripcionWidget: { type: DataTypes.STRING(4000), allowNull: true, defaultValue: '' },
+      imagenWidget_light: { type: DataTypes.STRING(100), allowNull: true, defaultValue: 'no-widget.png' },
+      imagenWidget_dark: { type: DataTypes.STRING(100), allowNull: true, defaultValue: 'no-widget.png' },
 
-    defaultCols: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 4 },
-    defaultRows: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 3 },
-    pos_x: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
-    pos_y: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
-    layoutVersion: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
-    inicial: { type: DataTypes.BOOLEAN, defaultValue: false },
-    anclajeTipo: { type: DataTypes.STRING(100), allowNull: false },
-    offsetY: { type: DataTypes.INTEGER, defaultValue: 0 },
-    estadoWidget: { type: DataTypes.BOOLEAN, defaultValue: true },
+      defaultCols: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 4 },
+      defaultRows: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 3 },
+      pos_x: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+      pos_y: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+      layoutVersion: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
+      inicial: { type: DataTypes.BOOLEAN, defaultValue: false },
+      anclajeTipo: { type: DataTypes.STRING(100), allowNull: false },
+      offsetY: { type: DataTypes.INTEGER, defaultValue: 0 },
+      estadoWidget: { type: DataTypes.BOOLEAN, defaultValue: true },
 
-    codigoUsuarioCreacion: { type: DataTypes.STRING(200), allowNull: true },
-    fechaCreacion: { type: DataTypes.STRING(100), allowNull: true },
-    codigoUsuarioModificacion: { type: DataTypes.STRING(200), allowNull: true },
-    fechaModificacion: { type: DataTypes.STRING(100), allowNull: true }
-  }, {
-    tableName: 'PTLWidgetsMaestro',
-    timestamps: false
-  });
+      codigoUsuarioCreacion: { type: DataTypes.STRING(200), allowNull: true },
+      fechaCreacion: { type: DataTypes.STRING(100), allowNull: true },
+      codigoUsuarioModificacion: { type: DataTypes.STRING(200), allowNull: true },
+      fechaModificacion: { type: DataTypes.STRING(100), allowNull: true }
+    },
+    {
+      tableName: 'PTLWidgetsMaestro',
+      schema: 'dbo',
+      timestamps: false
+    }
+  );
 };
 
 module.exports = {
