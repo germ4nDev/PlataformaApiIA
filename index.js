@@ -172,6 +172,7 @@ app.use('/api/contenedores', require('./routes/torre-control/contenedores.routes
 app.use('/api/inventario-contenedores', require('./routes/torre-control/inventario-contenedores.routes'));
 app.use('/api/gnl-telemetria', require('./routes/torre-control/gnl-telemetria.routes'));
 app.use('/api/bodegas', require('./routes/torre-control/bodegas.routes'));
+app.use('/api/virtual-gate', require('./routes/torre-control/virtual-gate.routes'));
 
 // ✅ INICIO DEL SIMULADOR SIN PARÁMETROS (el servicio ya usa getIO() por dentro)
 simuladorGNL.iniciarSimulador('BUENAVENTURA')
