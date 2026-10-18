@@ -78,7 +78,7 @@ const MatrizOperacionModel = (sequelize) => {
     usuario_cargue: { type: DataTypes.STRING(50), allowNull: false },
     fecha_cargue: { type: DataTypes.STRING(100), allowNull: false }
   }, {
-    tableName: 'TLCMatriz_Operaciones',
+    tableName: 'TCL_MaestroMatrizOperaciones',
     schema: 'dbo',
     timestamps: false
   });

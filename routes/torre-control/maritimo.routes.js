@@ -15,6 +15,8 @@ const { obtenerPosicionesMapa, obtenerInfraestructuraMapa, obtenerPosicionesAis 
 // console.log("Contenido del Controlador:", MaritimoController);
 // console.log("=================================\n\n");
 
+// Todo /api/maritimo exige sesión (antes validarJWT se importaba pero no se aplicaba). PorttosCore reenvía el token.
+router.use(validarJWT);
 router.get('/operaciones-sla', MaritimoController.obtenerOperacionesSLA);
 
 router.get('/lineup', MaritimoController.obtenerLineUp);
@@ -30,5 +32,12 @@ router.get('/capa-naves', obtenerPosicionesMapa);
 router.get('/mapa-infraestructura', obtenerInfraestructuraMapa);
 
 router.get('/posiciones', obtenerPosicionesAis);
+
+// KPIs marítimos en vivo (estado AIS + avisos DIMAR). Dos segmentos: no chocan con /resumen ni /clima.
+const MaritimoVivo = require('../../controllers/torre-control/maritimo-vivo.controller');
+router.get('/:puerto/resumen', MaritimoVivo.obtenerResumenVivo);
+router.get('/:puerto/tiempos', MaritimoVivo.obtenerTiemposVivo);
+router.get('/:puerto/ocupacion', MaritimoVivo.obtenerOcupacionVivo);
+router.get('/:puerto/llegadas', MaritimoVivo.obtenerLlegadasVivo);
 
 module.exports = router;

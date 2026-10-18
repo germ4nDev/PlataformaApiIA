@@ -75,7 +75,7 @@ const TipoInfraestructuraModel = (sequelize) => {
     }
   }, {
     // ⚠️ IMPORTANTE: Cambia esto por el nombre real de tu tabla en SQL Server
-    tableName: 'T_Tipos_Infraestructura',
+    tableName: 'TCL_TiposInfraestructura',
     schema: 'dbo',
     timestamps: false
   });

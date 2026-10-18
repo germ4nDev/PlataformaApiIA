@@ -13,7 +13,7 @@ WITH MovimientoBase AS (
         velocidad AS Velocidad_Nominal,
         estado_camion,
         ubicacion_geo
-    FROM TLC_CamionesOperaciones
+    FROM TCL_CamionesOperaciones
     WHERE estado_camion IN ('EN_RUTA', 'DETENIDO_POR_TRAFICO')
       AND ubicacion_geo IS NOT NULL 
       AND punto_destino IS NOT NULL
@@ -33,7 +33,7 @@ ImpactoTrafico AS (
                 WHEN e.nivelSeveridad = 2 THEN 0.5         -- Tráfico lento (50% vel)
                 ELSE 0.8                                   -- Afectación leve (80% vel)
             END AS Multiplicador
-        FROM TCLEventosViales e
+        FROM TCL_EventosViales e
         WHERE e.estadoEvento = 'ACTIVO'
           AND e.ubicacion_geo IS NOT NULL
           AND e.ubicacion_geo.STDistance(m.ubicacion_geo) < 0.02 
@@ -76,7 +76,7 @@ SET
     END,
     
     ultima_actualizacion = GETDATE()
-FROM TLC_CamionesOperaciones T
+FROM TCL_CamionesOperaciones T
 INNER JOIN Vectores V ON T._id = V._id
 WHERE V.Distancia_Total > 0 AND (T.velocidad > 0 OR T.estado_camion = 'DETENIDO_POR_TRAFICO');
 

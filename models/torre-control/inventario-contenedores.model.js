@@ -124,7 +124,7 @@ const InventarioContenedoresModel = (sequelize) => {
     codigoUsuarioModificacion: { type: DataTypes.STRING(200), allowNull: true },
     fechaModificacion: { type: DataTypes.STRING(100), allowNull: true }
   }, {
-    tableName: 'T_Inventario_Contenedores',
+    tableName: 'TCL_InventarioContenedores',
     timestamps: false
   });
 };

@@ -78,7 +78,7 @@ const EventoVialModel = (sequelize) => {
     codigoUsuarioModificacion: { type: DataTypes.STRING(200), allowNull: true },
     fechaModificacion: { type: DataTypes.DATE, allowNull: true }
   }, {
-    tableName: 'TCLEventosViales',
+    tableName: 'TCL_EventosViales',
     timestamps: false
   });
 };

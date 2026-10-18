@@ -56,7 +56,7 @@ const HomologacionMmsiModel = (sequelize) => {
       allowNull: true
     }
   }, {
-    tableName: 'TCL_Homologacion_MMSI',
+    tableName: 'TCL_HomologacionMMSI',
     schema: 'dbo',
     timestamps: false
   });

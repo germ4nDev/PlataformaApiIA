@@ -1,441 +1,142 @@
-// /*
-//     Author: German Valencia
-//     Manager: Orquestador Central de Tareas Programadas (CRON)
-// */
-// const cron = require('node-cron');
-// const { sequelize } = require('../database/connection');
-
-// // 🟢 Importaciones requeridas para evitar el crash del CRON 10
-// const db = require('../models');
-// const MaritimoRepository = require('../repositories/torre-control/maritimo.repository');
-// const MapaGeneralRepository = require('../repositories/torre-control/mapa-general.repository');
-
-// const ClimateIngestionService = require('../services/torre-control/climate-ingestion.service');
-// const IngestionService = require('../services/torre-control/ingestion.service');
-// const ReportesService = require('../services/torre-control/reportes.service');
-// const MapaGeneralService = require('../services/torre-control/mapa-general.service');
-// const SincronizacionService = require('./sincronizacion.service');
-// const flotaTerrestreService = require('../services/torre-control/flota-terrestre.service');
-
-// // 🟢 NUEVO: Importación e instanciación del servicio GNL
-// const GnlTelemetriaService = require('../services/torre-control/gnl-telemetria.service');
-// const gnlService = new GnlTelemetriaService();
-
-// const mapaRepository = new MapaGeneralRepository(sequelize);
-// const mapaGeneralService = new MapaGeneralService(mapaRepository);
-
-// const ejecutarConMonitoreo = require('../utils/monitorETL');
-
-// const initCronJobs = (sequelizeInstance) => {
-//   console.log('--- [CRON MANAGER] Inicializando tareas en segundo plano ---');
-//   let simulacionEnCurso = false;
-
-//   // ---------------------------------------------------------
-//   // CRON 1: NUEVO ETL DE CLIMA Y ALERTAS (Open-Meteo / IDEAM)
-//   // Frecuencia: Cada 15 minutos (*/15 * * * *)
-//   // ---------------------------------------------------------
-//   cron.schedule('*/15 * * * *', async () => {
-//     console.log('⏰ [CRON 15m] Disparando ETL Nacional de Clima...');
-//     ejecutarConMonitoreo('🔄 ETL Nacional de Clima', async () => {
-//       return await ClimateIngestionService.ejecutarIngesta(sequelizeInstance);
-//     });
-//   });
-
-//   // ---------------------------------------------------------
-//   // CRON 2: MOTONAVES (VesselFinder/Puertos)
-//   // Frecuencia: Cada 30 minutos
-//   // ---------------------------------------------------------
-//   cron.schedule('*/30 * * * *', async () => {
-//     console.log('⏰ [CRON 30m] Iniciando escaneo de motonaves...');
-//     ejecutarConMonitoreo('🔄 Escaneo de motonaves', async () => {
-//       return await IngestionService.sincronizarMotonavesColombia();
-//     });
-//   });
-
-//   // ---------------------------------------------------------
-//   // CRON 3: BOLETINES MARÍTIMOS (DIMAR)
-//   // Frecuencia: Cada 6 horas
-//   // ---------------------------------------------------------
-//   cron.schedule('0 */6 * * *', async () => {
-//     console.log('⏰ [CRON 6h] Actualizando boletines externos DIMAR...');
-//     ejecutarConMonitoreo('🔄 Actualizando boletines externos DIMAR', async () => {
-//       return await ReportesService.escanearBoletinesDIMAR();
-//     });
-//   });
-
-//   // ---------------------------------------------------------
-//   // CRON 4a: PRODUCTIVIDAD INTERNA Y CIERRE DE CAJA
-//   // Frecuencia: Todos los días a las 02:00 AM
-//   // ---------------------------------------------------------
-//   cron.schedule('0 2 * * *', async () => {
-//     console.log('⏰ [CRON 02:00 AM] Generando reportes de productividad del día anterior...');
-//     ejecutarConMonitoreo('🔄 Generando reportes de productividad del día anterior', async () => {
-//       return await ReportesService.generarReporteProductividadAyer();
-//     });
-//   });
-
-//   // ---------------------------------------------------------
-//   // CRON 4b: BOLETINES SEMANALES
-//   // Frecuencia: Todos los días a las 02:00 AM
-//   // ---------------------------------------------------------
-//   cron.schedule('0 2 * * *', async () => {
-//     console.log('⏰ [CRON 02:00 AM] Generando boletines semanales...');
-//     ejecutarConMonitoreo('🔄 Boletines semanales', async () => {
-//       return await ReportesService.generarBoletinSemanal();
-//     });
-//   });
-
-//   // ---------------------------------------------------------
-//   // CRON 5: CAPTURA DE PRODUCTIVIDAD (APAGADO)
-//   // 🟢 CORRECCIÓN: Comentado bloque completo por redundancia con CRON 2
-//   // ---------------------------------------------------------
-//   // cron.schedule('0 */2 * * *', async () => {
-//   //   console.log('⏰ [CRON 2H] Iniciando captura de productividad por terminales...');
-//   //   ejecutarConMonitoreo('🔄 Iniciando captura de productividad por terminales', async () => {
-//   //     return await IngestionService.sincronizarTodosLosPuertos();
-//   //   });
-//   // });
-
-//   // -------------------------------------------------------------------
-//   // CRON 6: SIMULADOR DE FLOTA TERRESTRE (APAGADO)
-//   // 🟢 CORRECCIÓN: Desactivado. Delegado al CRON 9 por seguridad anti-deadlocks
-//   // -------------------------------------------------------------------
-//   // cron.schedule('*/30 * * * * *', async () => {
-//   //   console.log('⏰ [CRON 2H] Iniciando captura de posiciones de camiones ...');
-//   //   ejecutarConMonitoreo('🔄 Iniciando captura de posiciones de camiones', async () => {
-//   //     return await mapaGeneralService.simularMovimientoFlota();
-//   //   });
-//   // });
-
-//   // -------------------------------------------------------------------
-//   // CRON 7: EVENTOS VIALES (Cada 10 minutos)
-//   // -------------------------------------------------------------------
-//   cron.schedule('*/10 * * * *', () => {
-//     console.log('🕒 Iniciando sincronización de eventos viales...');
-//     ejecutarConMonitoreo('🔄 Eventos Viales TomTom', async () => {
-//       return await SincronizacionService.sincronizarEventosViales();
-//     });
-//   });
-
-//   // -------------------------------------------------------------------
-//   // CRON 8: SIMULADOR AUTOMATICO DE CAPAS (Clima - Cada 15 min)
-//   // -------------------------------------------------------------------
-//   cron.schedule('*/15 * * * *', () => {
-//     console.log('🔄 Iniciando sincronización automática de alertas climáticas...');
-//     (async () => {
-//       ejecutarConMonitoreo('🔄 Iniciando sincronización automática de alertas climáticas', async () => {
-//         return await SincronizacionService.sincronizarAlertasClimaticas();
-//       });
-//     })();
-//   });
-
-//   // -------------------------------------------------------------------
-//   // CRON 9: SIMULADOR DE MOVIMIENTO DE CAMIONES (El Oficial)
-//   // -------------------------------------------------------------------
-//   cron.schedule('*/50 * * * * *', () => {
-//     if (simulacionEnCurso) {
-//       console.log('⚠️ [Simulación] Saltando ciclo: el anterior aún está procesando.');
-//       return;
-//     }
-
-//     simulacionEnCurso = true;
-//     console.log('🔄 Iniciando simulación de movimiento...');
-
-//     (async () => {
-//       try {
-//         await ejecutarConMonitoreo('🔄 Iniciando simulación de movimiento', async () => {
-//           return await flotaTerrestreService.simularMovimientoFlota();
-//         });
-//       } finally {
-//         simulacionEnCurso = false;
-//       }
-//     })();
-//   });
-
-//   // -------------------------------------------------------------------
-//   // CRON GNL: CONSOLIDACIÓN DE TELEMETRÍA (Cold Path)
-//   // Frecuencia: Cada 5 minutos (*/5 * * * *)
-//   // -------------------------------------------------------------------
-//   cron.schedule('*/5 * * * *', async () => {
-//     console.log('⏰ [CRON 5m] Iniciando consolidación de telemetría GNL (Cold Path)...');
-//     // Envuelto en el monitor ETL para que la auditoría de Porttos lo registre
-//     ejecutarConMonitoreo('🔄 Consolidación Telemetría GNL', async () => {
-//       await gnlService.consolidarTelemetria();
-//       return { procesado: true };
-//     });
-//   });
-
-//   // -------------------------------------------------------------------
-//   // CRON 10: BUSQUEDA DE NAVES SIN HOMOLOGAR
-//   // 🟢 CORRECCIÓN: Envuelto todo el proceso para un solo registro en bitácora
-//   // -------------------------------------------------------------------
-//   // cron.schedule('0 * * * *', async () => {
-//   //   console.log('🤖 [Cron] Iniciando búsqueda de naves sin homologar...');
-
-//   //   ejecutarConMonitoreo('🔄 Homologación de Naves', async () => {
-//   //     const pendientes = await MaritimoRepository.getNavesSinHomologar();
-//   //     console.log(`🔎 Se encontraron ${pendientes.length} naves pendientes.`);
-
-//   //     let homologadas = 0;
-
-//   //     for (const barco of pendientes) {
-//   //       const mmsiEncontrado = await buscarMmsiEnTuBaseDeDatos(barco.omi);
-
-//   //       if (mmsiEncontrado) {
-//   //         await MaritimoRepository.registrarHomologacion(barco.id_aviso, mmsiEncontrado);
-//   //         console.log(`✅ ${barco.motonave} homologada con MMSI: ${mmsiEncontrado}`);
-//   //         homologadas++;
-//   //       }
-//   //     }
-
-//   //     // Retornamos la cantidad de registros homologados para que la bitácora lo guarde
-//   //     return { insertados: homologadas };
-//   //   });
-//   // });
-
-//   // Función de búsqueda para CRON 10
-//   async function buscarMmsiEnTuBaseDeDatos(omi) {
-//     try {
-//       const query = `
-//             SELECT mmsi 
-//             FROM dbo.TCL_Referencia_OMI_MMSI 
-//             WHERE omi = :omi
-//         `;
-
-//       const resultado = await db.sequelize.query(query, {
-//         replacements: { omi: omi },
-//         type: db.sequelize.QueryTypes.SELECT
-//       });
-
-//       return resultado.length > 0 ? resultado[0].mmsi : null;
-
-//     } catch (error) {
-//       console.error(`❌ Error buscando MMSI para OMI ${omi}:`, error);
-//       return null;
-//     }
-//   }
-
-//   console.log('--- [CRON MANAGER] Todas las tareas registradas exitosamente ---');
-// };
-
-// module.exports = initCronJobs;
 /*
     Author: German Valencia
-    Manager: Orquestador Central de Tareas Programadas (CRON)
+    Manager: Orquestador central de tareas en segundo plano (CRON)
+
+    Variables de entorno:
+      CRON_ENABLED=true               Enciende el orquestador (apagado por defecto).
+      CRON_JOBS_OFF=clave1,clave2     Apaga jobs puntuales aunque estén activos por defecto.
+      CRON_JOBS_ON=clave1,clave2      Enciende jobs que vienen apagados por defecto (simuladores, homologación).
+      CRON_TZ=America/Bogota          Zona horaria de los horarios (por defecto America/Bogota).
+
+    Cada job pasa por utils/monitorETL: candado anti-solapamiento, timeout, bitácora y aviso por socket.
 */
 const cron = require('node-cron');
 const { sequelize } = require('../database/connection');
 
-// 🟢 Importaciones requeridas para evitar el crash del CRON 10
-const db = require('../models');
 const MaritimoRepository = require('../repositories/torre-control/maritimo.repository');
-const MapaGeneralRepository = require('../repositories/torre-control/mapa-general.repository');
-
 const ClimateIngestionService = require('../services/torre-control/climate-ingestion.service');
 const IngestionService = require('../services/torre-control/ingestion.service');
 const ReportesService = require('../services/torre-control/reportes.service');
-const MapaGeneralService = require('../services/torre-control/mapa-general.service');
 const SincronizacionService = require('./sincronizacion.service');
 const flotaTerrestreService = require('../services/torre-control/flota-terrestre.service');
-
-// ✅ CORRECCIÓN: Importación del servicio GNL directo (ya viene instanciado como objeto)
 const gnlService = require('../services/torre-control/gnl-telemetria.service');
-
-const mapaRepository = new MapaGeneralRepository(sequelize);
-const mapaGeneralService = new MapaGeneralService(mapaRepository);
-
 const ejecutarConMonitoreo = require('../utils/monitorETL');
 
-const initCronJobs = (sequelizeInstance) => {
-  console.log('--- [CRON MANAGER] Inicializando tareas en segundo plano ---');
-  let simulacionEnCurso = false;
+const MINUTO = 60 * 1000;
+const esProduccion = process.env.NODE_ENV === 'production';
 
-  // ---------------------------------------------------------
-  // CRON 1: NUEVO ETL DE CLIMA Y ALERTAS (Open-Meteo / IDEAM)
-  // Frecuencia: Cada 15 minutos (*/15 * * * *)
-  // ---------------------------------------------------------
-  cron.schedule('*/15 * * * *', async () => {
-    console.log('⏰ [CRON 15m] Disparando ETL Nacional de Clima...');
-    ejecutarConMonitoreo('🔄 ETL Nacional de Clima', async () => {
-      return await ClimateIngestionService.ejecutarIngesta(sequelizeInstance);
-    });
-  });
+async function homologarNavesPendientes() {
+  const pendientes = await MaritimoRepository.getNavesSinHomologar();
+  let homologadas = 0;
 
-  // ---------------------------------------------------------
-  // CRON 2: MOTONAVES (VesselFinder/Puertos)
-  // Frecuencia: Cada 30 minutos
-  // ---------------------------------------------------------
-  cron.schedule('*/30 * * * *', async () => {
-    console.log('⏰ [CRON 30m] Iniciando escaneo de motonaves...');
-    ejecutarConMonitoreo('🔄 Escaneo de motonaves', async () => {
-      return await IngestionService.sincronizarMotonavesColombia();
-    });
-  });
-
-  // ---------------------------------------------------------
-  // CRON 3: BOLETINES MARÍTIMOS (DIMAR)
-  // Frecuencia: Cada 6 horas
-  // ---------------------------------------------------------
-  cron.schedule('0 */6 * * *', async () => {
-    console.log('⏰ [CRON 6h] Actualizando boletines externos DIMAR...');
-    ejecutarConMonitoreo('🔄 Actualizando boletines externos DIMAR', async () => {
-      return await ReportesService.escanearBoletinesDIMAR();
-    });
-  });
-
-  // ---------------------------------------------------------
-  // CRON 4a: PRODUCTIVIDAD INTERNA Y CIERRE DE CAJA
-  // Frecuencia: Todos los días a las 02:00 AM
-  // ---------------------------------------------------------
-  cron.schedule('0 2 * * *', async () => {
-    console.log('⏰ [CRON 02:00 AM] Generando reportes de productividad del día anterior...');
-    ejecutarConMonitoreo('🔄 Generando reportes de productividad del día anterior', async () => {
-      return await ReportesService.generarReporteProductividadAyer();
-    });
-  });
-
-  // ---------------------------------------------------------
-  // CRON 4b: BOLETINES SEMANALES
-  // Frecuencia: Todos los días a las 02:00 AM
-  // ---------------------------------------------------------
-  cron.schedule('0 2 * * *', async () => {
-    console.log('⏰ [CRON 02:00 AM] Generando boletines semanales...');
-    ejecutarConMonitoreo('🔄 Boletines semanales', async () => {
-      return await ReportesService.generarBoletinSemanal();
-    });
-  });
-
-  // ---------------------------------------------------------
-  // CRON 5: CAPTURA DE PRODUCTIVIDAD (APAGADO)
-  // 🟢 CORRECCIÓN: Comentado bloque completo por redundancia con CRON 2
-  // ---------------------------------------------------------
-  // cron.schedule('0 */2 * * *', async () => {
-  //   console.log('⏰ [CRON 2H] Iniciando captura de productividad por terminales...');
-  //   ejecutarConMonitoreo('🔄 Iniciando captura de productividad por terminales', async () => {
-  //     return await IngestionService.sincronizarTodosLosPuertos();
-  //   });
-  // });
-
-  // -------------------------------------------------------------------
-  // CRON 6: SIMULADOR DE FLOTA TERRESTRE (APAGADO)
-  // 🟢 CORRECCIÓN: Desactivado. Delegado al CRON 9 por seguridad anti-deadlocks
-  // -------------------------------------------------------------------
-  // cron.schedule('*/30 * * * * *', async () => {
-  //   console.log('⏰ [CRON 2H] Iniciando captura de posiciones de camiones ...');
-  //   ejecutarConMonitoreo('🔄 Iniciando captura de posiciones de camiones', async () => {
-  //     return await mapaGeneralService.simularMovimientoFlota();
-  //   });
-  // });
-
-  // -------------------------------------------------------------------
-  // CRON 7: EVENTOS VIALES (Cada 10 minutos)
-  // -------------------------------------------------------------------
-  cron.schedule('*/10 * * * *', () => {
-    console.log('🕒 Iniciando sincronización de eventos viales...');
-    ejecutarConMonitoreo('🔄 Eventos Viales TomTom', async () => {
-      return await SincronizacionService.sincronizarEventosViales();
-    });
-  });
-
-  // -------------------------------------------------------------------
-  // CRON 8: SIMULADOR AUTOMATICO DE CAPAS (Clima - Cada 15 min)
-  // -------------------------------------------------------------------
-  cron.schedule('*/15 * * * *', () => {
-    console.log('🔄 Iniciando sincronización automática de alertas climáticas...');
-    (async () => {
-      ejecutarConMonitoreo('🔄 Iniciando sincronización automática de alertas climáticas', async () => {
-        return await SincronizacionService.sincronizarAlertasClimaticas();
-      });
-    })();
-  });
-
-  // -------------------------------------------------------------------
-  // CRON 9: SIMULADOR DE MOVIMIENTO DE CAMIONES (El Oficial)
-  // -------------------------------------------------------------------
-  cron.schedule('*/50 * * * * *', () => {
-    if (simulacionEnCurso) {
-      console.log('⚠️ [Simulación] Saltando ciclo: el anterior aún está procesando.');
-      return;
-    }
-
-    simulacionEnCurso = true;
-    console.log('🔄 Iniciando simulación de movimiento...');
-
-    (async () => {
-      try {
-        await ejecutarConMonitoreo('🔄 Iniciando simulación de movimiento', async () => {
-          return await flotaTerrestreService.simularMovimientoFlota();
-        });
-      } finally {
-        simulacionEnCurso = false;
-      }
-    })();
-  });
-
-  // -------------------------------------------------------------------
-  // CRON GNL: CONSOLIDACIÓN DE TELEMETRÍA (Cold Path)
-  // Frecuencia: Cada 5 minutos (*/5 * * * *)
-  // -------------------------------------------------------------------
-  cron.schedule('*/5 * * * *', async () => {
-    console.log('⏰ [CRON 5m] Iniciando consolidación de telemetría GNL (Cold Path)...');
-    // Envuelto en el monitor ETL para que la auditoría de Porttos lo registre
-    ejecutarConMonitoreo('🔄 Consolidación Telemetría GNL', async () => {
-      await gnlService.consolidarTelemetria();
-      return { procesado: true };
-    });
-  });
-
-  // -------------------------------------------------------------------
-  // CRON 10: BUSQUEDA DE NAVES SIN HOMOLOGAR
-  // 🟢 CORRECCIÓN: Envuelto todo el proceso para un solo registro en bitácora
-  // -------------------------------------------------------------------
-  // cron.schedule('0 * * * *', async () => {
-  //   console.log('🤖 [Cron] Iniciando búsqueda de naves sin homologar...');
-
-  //   ejecutarConMonitoreo('🔄 Homologación de Naves', async () => {
-  //     const pendientes = await MaritimoRepository.getNavesSinHomologar();
-  //     console.log(`🔎 Se encontraron ${pendientes.length} naves pendientes.`);
-
-  //     let homologadas = 0;
-
-  //     for (const barco of pendientes) {
-  //       const mmsiEncontrado = await buscarMmsiEnTuBaseDeDatos(barco.omi);
-
-  //       if (mmsiEncontrado) {
-  //         await MaritimoRepository.registrarHomologacion(barco.id_aviso, mmsiEncontrado);
-  //         console.log(`✅ ${barco.motonave} homologada con MMSI: ${mmsiEncontrado}`);
-  //         homologadas++;
-  //       }
-  //     }
-
-  //     // Retornamos la cantidad de registros homologados para que la bitácora lo guarde
-  //     return { insertados: homologadas };
-  //   });
-  // });
-
-  // Función de búsqueda para CRON 10
-  async function buscarMmsiEnTuBaseDeDatos(omi) {
-    try {
-      const query = `
-            SELECT mmsi 
-            FROM dbo.TCL_Referencia_OMI_MMSI 
-            WHERE omi = :omi
-        `;
-
-      const resultado = await db.sequelize.query(query, {
-        replacements: { omi: omi },
-        type: db.sequelize.QueryTypes.SELECT
-      });
-
-      return resultado.length > 0 ? resultado[0].mmsi : null;
-
-    } catch (error) {
-      console.error(`❌ Error buscando MMSI para OMI ${omi}:`, error);
-      return null;
+  for (const nave of pendientes) {
+    const [ref] = await sequelize.query(
+      'SELECT TOP 1 mmsi FROM dbo.TCL_Referencia_OMI_MMSI WHERE omi = :omi',
+      { replacements: { omi: nave.omi }, type: sequelize.QueryTypes.SELECT }
+    );
+    if (ref?.mmsi) {
+      await MaritimoRepository.registrarHomologacion(nave.id_aviso, ref.mmsi);
+      homologadas++;
     }
   }
+  return { insertados: homologadas };
+}
 
-  console.log('--- [CRON MANAGER] Todas las tareas registradas exitosamente ---');
-};
+/**
+ * Catálogo de jobs. `activo` es el valor por defecto; se sobreescribe con CRON_JOBS_ON / CRON_JOBS_OFF.
+ */
+const JOBS = [
+  {
+    clave: 'clima-etl', nombre: '🔄 ETL Nacional de Clima', horario: '*/15 * * * *',
+    activo: true, timeoutMs: 10 * MINUTO,
+    tarea: () => ClimateIngestionService.ejecutarIngesta(sequelize),
+  },
+  {
+    clave: 'alertas-climaticas', nombre: '🔄 Sincronización de alertas climáticas', horario: '7-59/15 * * * *',
+    activo: true, timeoutMs: 10 * MINUTO,
+    tarea: () => SincronizacionService.sincronizarAlertasClimaticas(),
+  },
+  {
+    clave: 'motonaves', nombre: '🔄 Escaneo de motonaves', horario: '*/30 * * * *',
+    activo: true, timeoutMs: 20 * MINUTO,
+    tarea: () => IngestionService.sincronizarMotonavesColombia(),
+  },
+  {
+    clave: 'eventos-viales', nombre: '🔄 Eventos viales TomTom', horario: '*/10 * * * *',
+    activo: true, timeoutMs: 5 * MINUTO,
+    tarea: () => SincronizacionService.sincronizarEventosViales(),
+  },
+  {
+    clave: 'boletines-dimar', nombre: '🔄 Boletines externos DIMAR', horario: '0 */6 * * *',
+    activo: true, timeoutMs: 15 * MINUTO,
+    tarea: () => ReportesService.escanearBoletinesDIMAR(),
+  },
+  {
+    clave: 'productividad-diaria', nombre: '🔄 Reporte de productividad del día anterior', horario: '0 2 * * *',
+    activo: true, timeoutMs: 20 * MINUTO,
+    tarea: () => ReportesService.generarReporteProductividadAyer(),
+  },
+  {
+    clave: 'boletin-semanal', nombre: '🔄 Boletín semanal', horario: '30 2 * * *',
+    activo: true, timeoutMs: 20 * MINUTO,
+    tarea: () => ReportesService.generarBoletinSemanal(),
+  },
+  {
+    clave: 'gnl-consolidacion', nombre: '🔄 Consolidación telemetría GNL', horario: '*/5 * * * *',
+    activo: true, timeoutMs: 4 * MINUTO,
+    tarea: async () => { await gnlService.consolidarTelemetria(); return 0; },
+  },
+  {
+    // Simulador: apagado en producción por defecto.
+    clave: 'simulador-flota', nombre: '🔄 Simulación de movimiento de flota', horario: '*/50 * * * * *',
+    activo: !esProduccion, timeoutMs: 45 * 1000,
+    tarea: () => flotaTerrestreService.simularMovimientoFlota(),
+  },
+  {
+    // Requerido por AIS: alimenta el MMSI de las naves. Apagado hasta validarlo en BD.
+    clave: 'homologacion-mmsi', nombre: '🔄 Homologación de naves (OMI → MMSI)', horario: '0 * * * *',
+    activo: false, timeoutMs: 10 * MINUTO,
+    tarea: homologarNavesPendientes,
+  },
+];
 
-module.exports = initCronJobs;
+function listaEnv(nombre) {
+  return new Set((process.env[nombre] || '').split(',').map(s => s.trim()).filter(Boolean));
+}
+
+function initCronJobs() {
+  if (process.env.CRON_ENABLED !== 'true') {
+    console.log('⏸️ [CRON] Orquestador apagado (CRON_ENABLED != true).');
+    return [];
+  }
+
+  const encender = listaEnv('CRON_JOBS_ON');
+  const apagar = listaEnv('CRON_JOBS_OFF');
+  const timezone = process.env.CRON_TZ || 'America/Bogota';
+  const programados = [];
+
+  for (const job of JOBS) {
+    const activo = apagar.has(job.clave) ? false : (encender.has(job.clave) || job.activo);
+    if (!activo) {
+      console.log(`   ⚪ ${job.clave} (apagado)`);
+      continue;
+    }
+    if (!cron.validate(job.horario)) {
+      console.error(`   ❌ ${job.clave}: horario inválido "${job.horario}"`);
+      continue;
+    }
+
+    const tarea = cron.schedule(
+      job.horario,
+      () => ejecutarConMonitoreo(job.nombre, job.tarea, { timeoutMs: job.timeoutMs }),
+      { name: job.clave, timezone }
+    );
+    programados.push(tarea);
+    console.log(`   🟢 ${job.clave} · ${job.horario}`);
+  }
+
+  console.log(`✅ [CRON] ${programados.length} de ${JOBS.length} tareas programadas (${timezone}).`);
+  return programados;
+}
+
+module.exports = { initCronJobs, JOBS };

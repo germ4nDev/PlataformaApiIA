@@ -85,7 +85,7 @@ const NaveAvisadaModel = (sequelize) => {
     usuario_cargue: { type: DataTypes.STRING(50), allowNull: false },
     fecha_cargue: { type: DataTypes.STRING(100), allowNull: false }
   }, {
-    tableName: 'TLCNaves_Avisadas',
+    tableName: 'TCL_NavesAvisadas',
     schema: 'dbo',
     timestamps: false // Lo mantengo en false porque manejas fecha_cargue manualmente
   });

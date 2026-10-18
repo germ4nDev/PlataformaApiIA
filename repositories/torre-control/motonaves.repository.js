@@ -7,13 +7,13 @@ class MotonavesRepository {
     async obtenerPosicionesConDimar() {
         const query = `
         WITH DimarMaster AS (
-            SELECT id_aviso, omi, motonave, agencia, eta, 'ARRIBADA' as estado FROM dbo.TLCNaves_Arribadas
+            SELECT id_aviso, omi, motonave, agencia, eta, 'ARRIBADA' as estado FROM dbo.TCL_NavesArribadas
             UNION ALL
-            SELECT id_aviso, omi, motonave, agencia, eta, 'AVISADA' as estado FROM dbo.TLCNaves_Avisadas
+            SELECT id_aviso, omi, motonave, agencia, eta, 'AVISADA' as estado FROM dbo.TCL_NavesAvisadas
             UNION ALL
-            SELECT id_aviso, omi, motonave, agencia, eta, 'FONDEO' as estado FROM dbo.TLCNaves_Fondeadas
+            SELECT id_aviso, omi, motonave, agencia, eta, 'FONDEO' as estado FROM dbo.TCL_NavesFondeadas
             UNION ALL
-            SELECT id_aviso, omi, motonave, agencia, eta, 'ZARPADA' as estado FROM dbo.TLCNaves_Zarpadas
+            SELECT id_aviso, omi, motonave, agencia, eta, 'ZARPADA' as estado FROM dbo.TCL_NavesZarpadas
         )
         SELECT 
             ais.mmsi,
@@ -31,10 +31,10 @@ class MotonavesRepository {
             dimar.eta,
             dimar.id_aviso
 
-        FROM dbo.TCLAisUltimaPosicion ais WITH(NOLOCK)
+        FROM dbo.TCL_AisUltimaPosicion ais WITH(NOLOCK)
         
         -- 1. Cruzamos la posición con la homologación por el MMSI
-        LEFT JOIN dbo.TCL_Homologacion_MMSI hom WITH(NOLOCK) 
+        LEFT JOIN dbo.TCL_HomologacionMMSI hom WITH(NOLOCK) 
             ON CAST(ais.mmsi AS VARCHAR(20)) = CAST(hom.mmsi AS VARCHAR(20))
             
         -- 2. Cruzamos la homologación con la DIMAR usando la llave maestra: id_aviso
@@ -52,7 +52,7 @@ class MotonavesRepository {
     // Ejecuta el MERGE para guardar la homologación manual
     async guardarHomologacion(mmsi, id_aviso, nombre_referencia) {
         const query = `
-            MERGE INTO dbo.TCL_Homologacion_MMSI AS target
+            MERGE INTO dbo.TCL_HomologacionMMSI AS target
             USING (SELECT :mmsi AS mmsi, :id_aviso AS id_aviso, :nombre_referencia AS nombre_referencia) AS source
             ON (target.mmsi = source.mmsi)
             WHEN MATCHED THEN 
@@ -69,7 +69,7 @@ class MotonavesRepository {
     // Ejecuta el MERGE para registrar la última posición recibida de la antena AIS
     async upsertPosicionAis(datos) {
         const query = `
-            MERGE INTO dbo.TCLAisUltimaPosicion AS target
+            MERGE INTO dbo.TCL_AisUltimaPosicion AS target
             USING (SELECT :mmsi AS mmsi) AS source
             ON (target.mmsi = source.mmsi)
             WHEN MATCHED THEN 

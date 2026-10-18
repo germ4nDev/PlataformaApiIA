@@ -149,7 +149,7 @@ const AlertaClimaticaModel = (sequelize) => {
     codigoUsuarioModificacion: { type: DataTypes.STRING(200), allowNull: true },
     fechaModificacion: { type: DataTypes.STRING(100), allowNull: true },
   }, {
-    tableName: 'TCLAlertasClimaticas',
+    tableName: 'TCL_AlertasClimaticas',
     timestamps: false
   });
 };

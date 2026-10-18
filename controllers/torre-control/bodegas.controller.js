@@ -6,18 +6,16 @@
 const { response, request } = require('express');
 // Ajusta la ruta relativa según donde tengas ubicado bodegas.service.js (ej: ../../services/torre-control/bodegas.service)
 const bodegasService = require('../../services/torre-control/bodegas.service');
+const { responderError } = require('../../helpers/errores.helper');
 
 /**
  * Extrae el usuario de la sesión/token JWT para el estándar de auditoría QPLUS
  */
+// Corregido 2026-10-17: validarJWT deja el usuario en req.codigoUsuario (antes se leía req.usuario/req.uid,
+// que nunca existen, y la auditoría quedaba siempre en SISTEMA_ADMIN). Ya no se acepta la cabecera x-usuario:
+// cualquiera podía enviarla y firmar registros a nombre de otro.
 const obtenerContextoUsuario = (req) => ({
-  codigoUsuario:
-    req.usuario?.codigoUsuario ||
-    req.usuario?.nombre ||
-    req.user?.username ||
-    req.uid ||
-    req.headers['x-usuario'] ||
-    'SISTEMA_ADMIN'
+  codigoUsuario: req.codigoUsuario || req.userNameUsuario || 'SISTEMA_ADMIN'
 });
 
 /**
@@ -37,12 +35,7 @@ const obtenerDashboardBodegas = async (req = request, res = response) => {
       data
     });
   } catch (error) {
-    console.error('❌ [BodegasController - obtenerDashboardBodegas]:', error);
-    return res.status(500).json({
-      ok: false,
-      msg: 'Error interno al consultar el dashboard de bodegas y silos',
-      error: error.message
-    });
+    return responderError(res, error, 'BodegasController.obtenerDashboardBodegas');
   }
 };
 
@@ -61,12 +54,7 @@ const obtenerMaestroBodegas = async (req = request, res = response) => {
       data: bodegas
     });
   } catch (error) {
-    console.error('❌ [BodegasController - obtenerMaestroBodegas]:', error);
-    return res.status(500).json({
-      ok: false,
-      msg: 'Error al listar el maestro de bodegas',
-      error: error.message
-    });
+    return responderError(res, error, 'BodegasController.obtenerMaestroBodegas');
   }
 };
 
@@ -85,20 +73,7 @@ const crearBodega = async (req = request, res = response) => {
       data: nuevaBodega
     });
   } catch (error) {
-    if (error.type === 'ValidationError') {
-      return res.status(400).json({
-        ok: false,
-        msg: 'Error de validación en los datos de la bodega (Escudo Joi)',
-        errores: error.details
-      });
-    }
-
-    console.error('❌ [BodegasController - crearBodega]:', error);
-    return res.status(500).json({
-      ok: false,
-      msg: 'Error interno al registrar la bodega',
-      error: error.message
-    });
+    return responderError(res, error, 'BodegasController.crearBodega');
   }
 };
 
@@ -130,20 +105,7 @@ const actualizarBodega = async (req = request, res = response) => {
       data: bodegaActualizada
     });
   } catch (error) {
-    if (error.type === 'ValidationError') {
-      return res.status(400).json({
-        ok: false,
-        msg: 'Error de validación al actualizar la bodega (Escudo Joi)',
-        errores: error.details
-      });
-    }
-
-    console.error('❌ [BodegasController - actualizarBodega]:', error);
-    return res.status(500).json({
-      ok: false,
-      msg: 'Error interno al actualizar la bodega',
-      error: error.message
-    });
+    return responderError(res, error, 'BodegasController.actualizarBodega');
   }
 };
 
@@ -162,12 +124,7 @@ const obtenerMovimientosBodega = async (req = request, res = response) => {
       data: movimientos
     });
   } catch (error) {
-    console.error('❌ [BodegasController - obtenerMovimientosBodega]:', error);
-    return res.status(500).json({
-      ok: false,
-      msg: 'Error al consultar los movimientos de bodega',
-      error: error.message
-    });
+    return responderError(res, error, 'BodegasController.obtenerMovimientosBodega');
   }
 };
 
@@ -187,20 +144,7 @@ const registrarMovimientoBodega = async (req = request, res = response) => {
       data: nuevoMovimiento
     });
   } catch (error) {
-    if (error.type === 'ValidationError') {
-      return res.status(400).json({
-        ok: false,
-        msg: 'Error de validación en los datos del movimiento de bodega (Escudo Joi)',
-        errores: error.details
-      });
-    }
-
-    console.error('❌ [BodegasController - registrarMovimientoBodega]:', error);
-    return res.status(500).json({
-      ok: false,
-      msg: 'Error interno al registrar el movimiento en bodega',
-      error: error.message
-    });
+    return responderError(res, error, 'BodegasController.registrarMovimientoBodega');
   }
 };
 

@@ -93,7 +93,7 @@ const TLCFlotaTerrestreModel = (sequelize) => {
       allowNull: true
     }
   }, {
-    tableName: 'TLCFlotaTerrestre',
+    tableName: 'TCL_FlotaTerrestre',
     schema: 'dbo',
     timestamps: false
   });

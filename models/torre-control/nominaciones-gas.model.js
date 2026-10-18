@@ -72,7 +72,7 @@ const NominacionesGasModel = (sequelize) => {
     codigoUsuarioModificacion: { type: DataTypes.STRING(100), allowNull: true },
     fechaModificacion: { type: DataTypes.STRING(100), allowNull: true }
   }, {
-    tableName: 'T_Nominaciones_Gas',
+    tableName: 'TCL_NominacionesGas',
     timestamps: false
   });
 };

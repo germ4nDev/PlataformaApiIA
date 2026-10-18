@@ -100,7 +100,7 @@ const ClimaPronosticoModel = (sequelize) => {
       allowNull: true
     }
   }, {
-    tableName: 'TCL_Clima_Pronostico',
+    tableName: 'TCL_ClimaPronostico',
     schema: 'dbo',
     timestamps: false
   });

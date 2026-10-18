@@ -19,8 +19,8 @@
 //         v.tipo_camion,
 //         v.modelo,
 //         v.marca
-//       FROM TLCFlotaTerrestre c WITH(NOLOCK)
-//       LEFT JOIN T_Maestro_Camiones v WITH(NOLOCK) ON c.placa = v.placa 
+//       FROM TCL_FlotaTerrestre c WITH(NOLOCK)
+//       LEFT JOIN TCL_MaestroCamiones v WITH(NOLOCK) ON c.placa = v.placa 
 //       WHERE c.ubicacion_geo IS NOT NULL
 //     `;
 
@@ -50,8 +50,8 @@
 //   async detectarEventosGeocerca() {
 //     const query = `
 //         SELECT T.placa, G.nombre_faro AS Lugar, G.tipo_faro AS tipo, GETDATE() AS FechaEvento
-//         FROM TLCFlotaTerrestre T WITH(NOLOCK)
-//         INNER JOIN T_Maestro_Faros G WITH(NOLOCK) 
+//         FROM TCL_FlotaTerrestre T WITH(NOLOCK)
+//         INNER JOIN TCL_MaestroFaros G WITH(NOLOCK) 
 //             ON T.ubicacion_geo.STIntersects(G.geocerca_geo) = 1
 //         WHERE G.estado = 1 AND T.ubicacion_geo IS NOT NULL;
 //     `;
@@ -73,7 +73,7 @@
 //   //           ubicacion_geo = ISNULL(ViaCercana.PuntoAsfalto, Teorico.Punto),
 //   //           ultima_actualizacion = GETDATE()
 //   //       OUTPUT inserted.placa
-//   //       FROM TLCFlotaTerrestre T
+//   //       FROM TCL_FlotaTerrestre T
 //   //       -- 1. Calculamos el vector de movimiento libre (hacia dónde avanza)
 //   //       CROSS APPLY (
 //   //           SELECT geometry::Point(
@@ -118,8 +118,8 @@
 //                 WHEN F.paso_actual >= R.max_pasos THEN 1 
 //                 ELSE F.paso_actual + 1 
 //             END
-//         FROM TLCFlotaTerrestre F
-//         INNER JOIN TCL_Simulador_Rutas R ON F.id_ruta = R.id_ruta
+//         FROM TCL_FlotaTerrestre F
+//         INNER JOIN TCL_SimuladorRutas R ON F.id_ruta = R.id_ruta
 //         WHERE F.id_ruta IS NOT NULL;
 
 //         -- 2. Teletransportamos la flota masivamente al paso exacto en su ruta
@@ -128,8 +128,8 @@
 //             F.ubicacion_geo = W.ubicacion_geo,
 //             F.ultima_actualizacion = GETDATE()
 //         OUTPUT inserted.placa
-//         FROM TLCFlotaTerrestre F
-//         INNER JOIN TCL_Simulador_Waypoints W 
+//         FROM TCL_FlotaTerrestre F
+//         INNER JOIN TCL_SimuladorWaypoints W 
 //             ON F.id_ruta = W.id_ruta AND F.paso_actual = W.paso;
 //     `;
 
@@ -171,14 +171,14 @@
 //               ELSE 'VERDE'
 //           END as estado_kpi
 
-//       FROM T_Maestro_Faros g WITH(NOLOCK)
+//       FROM TCL_MaestroFaros g WITH(NOLOCK)
 
 //       OUTER APPLY (
 //           SELECT 
 //               COUNT(DISTINCT c.placa) as total_camiones,
 //               SUM(CASE WHEN c.estado = 'EN_RUTA' THEN 1 ELSE 0 END) as en_ruta,
 //               SUM(CASE WHEN c.estado != 'EN_RUTA' THEN 1 ELSE 0 END) as detenidos
-//           FROM TLCFlotaTerrestre c WITH(NOLOCK) 
+//           FROM TCL_FlotaTerrestre c WITH(NOLOCK) 
 //           WHERE c.ubicacion_geo IS NOT NULL 
 //           AND c.ubicacion_geo.STIntersects(g.geocerca_geo) = 1
 //       ) kpi_camiones
@@ -189,15 +189,15 @@
 //               SUM(CASE WHEN perfiles.estado_nave = 'FONDEADAS' THEN 1 ELSE 0 END) as fondeadas,
 //               SUM(CASE WHEN perfiles.estado_nave = 'AVISADAS' THEN 1 ELSE 0 END) as avisadas,
 //               SUM(CASE WHEN perfiles.estado_nave = 'ARRIBADAS' THEN 1 ELSE 0 END) as arribadas
-//           FROM TCLAisUltimaPosicion ais WITH(NOLOCK)
+//           FROM TCL_AisUltimaPosicion ais WITH(NOLOCK)
 //           LEFT JOIN (
-//               SELECT omi, 'AVISADAS' as estado_nave FROM TLCNaves_Avisadas WITH(NOLOCK) WHERE omi IS NOT NULL
+//               SELECT omi, 'AVISADAS' as estado_nave FROM TCL_NavesAvisadas WITH(NOLOCK) WHERE omi IS NOT NULL
 //               UNION ALL
-//               SELECT omi, 'FONDEADAS' as estado_nave FROM TLCNaves_Fondeadas WITH(NOLOCK) WHERE omi IS NOT NULL
+//               SELECT omi, 'FONDEADAS' as estado_nave FROM TCL_NavesFondeadas WITH(NOLOCK) WHERE omi IS NOT NULL
 //               UNION ALL
-//               SELECT omi, 'ARRIBADAS' as estado_nave FROM TLCNaves_Arribadas WITH(NOLOCK) WHERE omi IS NOT NULL
+//               SELECT omi, 'ARRIBADAS' as estado_nave FROM TCL_NavesArribadas WITH(NOLOCK) WHERE omi IS NOT NULL
 //               UNION ALL
-//               SELECT omi, 'ZARPADAS' as estado_nave FROM TLCNaves_Zarpadas WITH(NOLOCK) WHERE omi IS NOT NULL
+//               SELECT omi, 'ZARPADAS' as estado_nave FROM TCL_NavesZarpadas WITH(NOLOCK) WHERE omi IS NOT NULL
 //           ) perfiles ON RIGHT(LTRIM(RTRIM(ais.omi)), 6) = LTRIM(RTRIM(perfiles.omi))
 //           WHERE ais.latitud IS NOT NULL AND ais.longitud IS NOT NULL
 //           AND geometry::Point(ais.longitud, ais.latitud, 4326).STIntersects(g.geocerca_geo) = 1
@@ -220,7 +220,7 @@
 //     const query = `
 //       SELECT id_faro, nombre_faro, radio_metros, color_ui, descripcion, 
 //              geocerca_geo.STAsText() as wkt
-//       FROM T_Maestro_Faros WITH(NOLOCK)
+//       FROM TCL_MaestroFaros WITH(NOLOCK)
 //       WHERE tipo_faro = 'MARITIMA' AND estado = 1;
 //     `;
 //     try {
@@ -236,7 +236,7 @@
 //   async upsertPosicion(dtoData) {
 //     const { placa, lon, lat, estado, velocidad } = dtoData;
 //     const query = `
-//       MERGE INTO TLCFlotaTerrestre AS target
+//       MERGE INTO TCL_FlotaTerrestre AS target
 //       USING (SELECT :placa AS placa) AS source
 //       ON (target.placa = source.placa)
 //       WHEN MATCHED THEN
@@ -274,7 +274,8 @@ const { QueryTypes } = require('sequelize');
 class FlotaTerrestreRepository {
 
   // 1. Obtiene los datos geográficos para el mapa
-  async obtenerDatosGeograficosFlota() {
+  /** @param {{sur,oeste,norte,este}|null} caja filtro opcional por puerto (agregado 2026-10-18) */
+  async obtenerDatosGeograficosFlota(caja = null) {
     const query = `
       SELECT 
         c.placa, 
@@ -286,13 +287,14 @@ class FlotaTerrestreRepository {
         v.tipo_camion,
         v.modelo,
         v.marca
-      FROM TLCFlotaTerrestre c WITH(NOLOCK)
-      LEFT JOIN T_Maestro_Camiones v WITH(NOLOCK) ON c.placa = v.placa 
+      FROM TCL_FlotaTerrestre c WITH(NOLOCK)
+      LEFT JOIN TCL_MaestroCamiones v WITH(NOLOCK) ON c.placa = v.placa 
       WHERE c.ubicacion_geo IS NOT NULL
+      ${caja ? 'AND c.ubicacion_geo.STY BETWEEN :sur AND :norte AND c.ubicacion_geo.STX BETWEEN :oeste AND :este' : ''}
     `;
 
     try {
-      const resultados = await sequelize.query(query, { type: QueryTypes.SELECT });
+      const resultados = await sequelize.query(query, { replacements: caja || {}, type: QueryTypes.SELECT });
 
       return resultados.map(item => {
         // 🟢 REGEX MEJORADO: Ignora espacios vacíos y captura solo los números/signos
@@ -317,8 +319,8 @@ class FlotaTerrestreRepository {
   async detectarEventosGeocerca() {
     const query = `
         SELECT T.placa, G.nombre_faro AS Lugar, G.tipo_faro AS tipo, GETDATE() AS FechaEvento
-        FROM TLCFlotaTerrestre T WITH(NOLOCK)
-        INNER JOIN T_Maestro_Faros G WITH(NOLOCK) 
+        FROM TCL_FlotaTerrestre T WITH(NOLOCK)
+        INNER JOIN TCL_MaestroFaros G WITH(NOLOCK) 
             ON T.ubicacion_geo.STIntersects(G.geocerca_geo) = 1
         WHERE G.estado = 1 AND T.ubicacion_geo IS NOT NULL;
     `;
@@ -342,8 +344,8 @@ class FlotaTerrestreRepository {
                 WHEN F.paso_actual >= R.max_pasos THEN 1 
                 ELSE F.paso_actual + 1 
             END
-        FROM TLCFlotaTerrestre F
-        INNER JOIN TCL_Simulador_Rutas R ON F.id_ruta = R.id_ruta
+        FROM TCL_FlotaTerrestre F
+        INNER JOIN TCL_SimuladorRutas R ON F.id_ruta = R.id_ruta
         WHERE F.id_ruta IS NOT NULL;
 
         -- 2. Teletransportamos la flota masivamente al paso exacto en su ruta y aplicamos rotación
@@ -353,8 +355,8 @@ class FlotaTerrestreRepository {
             F.rumbo = W.rumbo, -- 🟢 Hereda la rotación exacta del waypoint actual
             F.ultima_actualizacion = GETDATE()
         OUTPUT inserted.placa
-        FROM TLCFlotaTerrestre F
-        INNER JOIN TCL_Simulador_Waypoints W 
+        FROM TCL_FlotaTerrestre F
+        INNER JOIN TCL_SimuladorWaypoints W 
             ON F.id_ruta = W.id_ruta AND F.paso_actual = W.paso;
     `;
 
@@ -370,7 +372,8 @@ class FlotaTerrestreRepository {
   }
 
   // 4. Tablero de KPIs unificado (Terrestre y Marítimo)
-  async obtenerGeocercasConKPIs() {
+  /** @param {string|null} cajaWkt POLYGON de la caja del puerto: solo geocercas que la tocan (agregado 2026-10-18) */
+  async obtenerGeocercasConKPIs(cajaWkt = null) {
     const query = `
       SELECT 
           g.id_faro, 
@@ -396,14 +399,14 @@ class FlotaTerrestreRepository {
               ELSE 'VERDE'
           END as estado_kpi
 
-      FROM T_Maestro_Faros g WITH(NOLOCK)
+      FROM TCL_MaestroFaros g WITH(NOLOCK)
       
       OUTER APPLY (
           SELECT 
               COUNT(DISTINCT c.placa) as total_camiones,
               SUM(CASE WHEN c.estado = 'EN_RUTA' THEN 1 ELSE 0 END) as en_ruta,
               SUM(CASE WHEN c.estado != 'EN_RUTA' THEN 1 ELSE 0 END) as detenidos
-          FROM TLCFlotaTerrestre c WITH(NOLOCK) 
+          FROM TCL_FlotaTerrestre c WITH(NOLOCK) 
           WHERE c.ubicacion_geo IS NOT NULL 
           AND c.ubicacion_geo.STIntersects(g.geocerca_geo) = 1
       ) kpi_camiones
@@ -414,25 +417,26 @@ class FlotaTerrestreRepository {
               SUM(CASE WHEN perfiles.estado_nave = 'FONDEADAS' THEN 1 ELSE 0 END) as fondeadas,
               SUM(CASE WHEN perfiles.estado_nave = 'AVISADAS' THEN 1 ELSE 0 END) as avisadas,
               SUM(CASE WHEN perfiles.estado_nave = 'ARRIBADAS' THEN 1 ELSE 0 END) as arribadas
-          FROM TCLAisUltimaPosicion ais WITH(NOLOCK)
+          FROM TCL_AisUltimaPosicion ais WITH(NOLOCK)
           LEFT JOIN (
-              SELECT omi, 'AVISADAS' as estado_nave FROM TLCNaves_Avisadas WITH(NOLOCK) WHERE omi IS NOT NULL
+              SELECT omi, 'AVISADAS' as estado_nave FROM TCL_NavesAvisadas WITH(NOLOCK) WHERE omi IS NOT NULL
               UNION ALL
-              SELECT omi, 'FONDEADAS' as estado_nave FROM TLCNaves_Fondeadas WITH(NOLOCK) WHERE omi IS NOT NULL
+              SELECT omi, 'FONDEADAS' as estado_nave FROM TCL_NavesFondeadas WITH(NOLOCK) WHERE omi IS NOT NULL
               UNION ALL
-              SELECT omi, 'ARRIBADAS' as estado_nave FROM TLCNaves_Arribadas WITH(NOLOCK) WHERE omi IS NOT NULL
+              SELECT omi, 'ARRIBADAS' as estado_nave FROM TCL_NavesArribadas WITH(NOLOCK) WHERE omi IS NOT NULL
               UNION ALL
-              SELECT omi, 'ZARPADAS' as estado_nave FROM TLCNaves_Zarpadas WITH(NOLOCK) WHERE omi IS NOT NULL
+              SELECT omi, 'ZARPADAS' as estado_nave FROM TCL_NavesZarpadas WITH(NOLOCK) WHERE omi IS NOT NULL
           ) perfiles ON RIGHT(LTRIM(RTRIM(ais.omi)), 6) = LTRIM(RTRIM(perfiles.omi))
           WHERE ais.latitud IS NOT NULL AND ais.longitud IS NOT NULL
           AND geometry::Point(ais.longitud, ais.latitud, 4326).STIntersects(g.geocerca_geo) = 1
       ) kpi_naves
       
-      WHERE g.estado = 1;
+      WHERE g.estado = 1
+      ${cajaWkt ? 'AND g.geocerca_geo IS NOT NULL AND g.geocerca_geo.STIntersects(geometry::STGeomFromText(:cajaWkt, 4326)) = 1' : ''};
     `;
 
     try {
-      const [resultados] = await sequelize.query(query);
+      const [resultados] = await sequelize.query(query, { replacements: cajaWkt ? { cajaWkt } : {} });
       return resultados || [];
     } catch (error) {
       console.error('❌ [ERROR KPIS GEOCERCAS]:', error?.message);
@@ -445,7 +449,7 @@ class FlotaTerrestreRepository {
     const query = `
       SELECT id_faro, nombre_faro, radio_metros, color_ui, descripcion, 
              geocerca_geo.STAsText() as wkt
-      FROM T_Maestro_Faros WITH(NOLOCK)
+      FROM TCL_MaestroFaros WITH(NOLOCK)
       WHERE tipo_faro = 'MARITIMA' AND estado = 1;
     `;
     try {
@@ -461,7 +465,7 @@ class FlotaTerrestreRepository {
   async upsertPosicion(dtoData) {
     const { placa, lon, lat, estado, velocidad } = dtoData;
     const query = `
-      MERGE INTO TLCFlotaTerrestre AS target
+      MERGE INTO TCL_FlotaTerrestre AS target
       USING (SELECT :placa AS placa) AS source
       ON (target.placa = source.placa)
       WHEN MATCHED THEN

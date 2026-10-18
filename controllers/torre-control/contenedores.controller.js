@@ -3,15 +3,15 @@
     Pattern: PORTTOS Controller Pattern - Contenedores
 */
 const { obtenerDatosContenedores } = require('../../services/torre-control/contenedores.service');
+const { responderError } = require('../../helpers/errores.helper');
 // Importa tu instancia global de sequelize configurada en el proyecto
 // const { sequelize } = require('../../config/database'); 
 
 const getDashboardContenedores = async (req, res) => {
   try {
-    // Asumiendo que req.sequelize o tu instancia global está disponible
-    const sequelizeInstance = req.sequelize || global.sequelize;
-
-    const data = await obtenerDatosContenedores(sequelizeInstance);
+    // Corregido 2026-10-17: antes se pasaba una instancia de sequelize (que el servicio ignoraba) y nunca el puerto
+    const puerto = req.query.puerto || req.params.puerto || 'BUENAVENTURA';
+    const data = await obtenerDatosContenedores(puerto);
 
     return res.status(200).json({
       success: true,
@@ -20,12 +20,7 @@ const getDashboardContenedores = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("❌ Error en getDashboardContenedores:", error);
-    return res.status(500).json({
-      success: false,
-      msg: "Error interno al procesar el tablero de contenedores",
-      error: error.message
-    });
+    return responderError(res, error, 'ContenedoresController.getDashboardContenedores');
   }
 };
 

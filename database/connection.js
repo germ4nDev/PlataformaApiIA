@@ -28,8 +28,15 @@ const sequelize = new Sequelize(
     host: process.env.DB_SERVER,
     port: process.env.DB_PORT,
     dialect: 'mssql',
-    logging: true,
-    //logging: console.log,
+    // SQL en consola solo si DB_LOGGING=true (imprimir cada consulta degrada el rendimiento)
+    logging: process.env.DB_LOGGING === 'true' ? console.log : false,
+    // Pool ampliado: AIS, crons, sockets y la API comparten conexiones
+    pool: {
+      max: parseInt(process.env.DB_POOL_MAX, 10) || 20,
+      min: 2,
+      acquire: 30000,
+      idle: 10000,
+    },
     dialectOptions: {
       options: {
         requestTimeout: 30000,

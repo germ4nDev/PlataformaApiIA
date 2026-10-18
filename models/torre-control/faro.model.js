@@ -110,7 +110,7 @@
 //     usuario_cargue: { type: DataTypes.STRING(200), allowNull: false },
 //     fecha_cargue: { type: DataTypes.STRING(100), allowNull: false }
 //   }, {
-//     tableName: 'T_Maestro_Faros',
+//     tableName: 'TCL_MaestroFaros',
 //     schema: 'dbo',
 //     timestamps: false
 //   });
@@ -227,7 +227,7 @@ const FaroModel = (sequelize) => {
     usuario_cargue: { type: DataTypes.STRING(200), allowNull: false },
     fecha_cargue: { type: DataTypes.STRING(100), allowNull: false }
   }, {
-    tableName: 'T_Maestro_Faros',
+    tableName: 'TCL_MaestroFaros',
     schema: 'dbo',
     timestamps: false
   });

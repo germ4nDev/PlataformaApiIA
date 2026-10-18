@@ -8,7 +8,7 @@
 
 //     const query = `
 //         SELECT SUM(viajesTotales) AS viajes
-//         FROM TLCRNDCOperacionTerrestre
+//         FROM TCL_RNDCOperacionTerrestre
 //         WHERE UPPER(municipioDestino) LIKE UPPER(:puerto)
 //            OR UPPER(municipioOrigen)  LIKE UPPER(:puerto)
 //     `;
@@ -44,7 +44,7 @@
 //         SUM(CAST(kilogramos AS FLOAT)) as c, 
 //         SUM(CAST(valoresPagados AS FLOAT)) as f, 
 //         SUM(CAST(galones AS FLOAT)) as g 
-//       FROM TLCRNDCOperacionTerrestre 
+//       FROM TCL_RNDCOperacionTerrestre 
 //       WHERE YEAR(TRY_CAST(fechaInicioPeriodo AS DATETIME)) = :anio 
 //         AND MONTH(TRY_CAST(fechaInicioPeriodo AS DATETIME)) = :mes
 //     `;
@@ -61,7 +61,7 @@
 //   }
 
 //   async getAlertasViales() {
-//     return await db.sequelize.query(`SELECT COUNT(*) as a FROM TCLEventosViales WHERE estadoEvento = 'ACTIVO'`, { type: QueryTypes.SELECT });
+//     return await db.sequelize.query(`SELECT COUNT(*) as a FROM TCL_EventosViales WHERE estadoEvento = 'ACTIVO'`, { type: QueryTypes.SELECT });
 //   }
 
 //   async getTerminalesLineUp(ciudadKey) {
@@ -119,7 +119,7 @@
 //                     COALESCE(O.estadoOperativo, 'EN TRÁNSITO') as estadoReal
 //                 FROM TLCLineUpMaritimo L
 
-//                 LEFT JOIN TCLNodosLogisticos O 
+//                 LEFT JOIN TCL_MaestroNodosLogisticos O 
 //                     ON UPPER(TRIM(L.motonave)) = UPPER(TRIM(O.nombreNodo))
 //                     AND O.tipoNodo = 'BUQUE'
 
@@ -153,11 +153,11 @@
 //   }
 
 //   async getPeriodoMasReciente() {
-//     return await db.sequelize.query(`SELECT TOP 1 YEAR(fechaInicioPeriodo) as anio, MONTH(fechaInicioPeriodo) as mes FROM TLCRNDCOperacionTerrestre ORDER BY fechaInicioPeriodo DESC`, { type: QueryTypes.SELECT });
+//     return await db.sequelize.query(`SELECT TOP 1 YEAR(fechaInicioPeriodo) as anio, MONTH(fechaInicioPeriodo) as mes FROM TCL_RNDCOperacionTerrestre ORDER BY fechaInicioPeriodo DESC`, { type: QueryTypes.SELECT });
 //   }
 
 //   async getUltimoPeriodo() {
-//     const query = `SELECT MAX(fechaInicioPeriodo) as ultimaFecha FROM TLCRNDCOperacionTerrestre`;
+//     const query = `SELECT MAX(fechaInicioPeriodo) as ultimaFecha FROM TCL_RNDCOperacionTerrestre`;
 //     const result = await db.sequelize.query(query, { type: QueryTypes.SELECT });
 //     return result[0].ultimaFecha;
 //   }
@@ -186,9 +186,9 @@
 //         m.estado_mantenimiento,
 //         m.geocerca_geo.STAsText() as muelle_wkt
 
-//       FROM T_Maestro_Puertos p
-//       LEFT JOIN T_Maestro_Terminales t ON p.id_puerto = t.id_puerto
-//       LEFT JOIN T_Maestro_Muelles m ON t.id_terminal = m.id_terminal
+//       FROM TCL_MaestroPuertos p
+//       LEFT JOIN TCL_MaestroTerminales t ON p.id_puerto = t.id_puerto
+//       LEFT JOIN TCL_MaestroMuelles m ON t.id_terminal = m.id_terminal
 //       ORDER BY p.nombre, t.id_terminal, m.codigo_muelle
 //     `;
 
@@ -211,7 +211,7 @@
 //                 THEN COALESCE(O.ocupacionActual, 0) ELSE 0 END) as totalVehiculos
 
 //           FROM TLCLineUpMaritimo L
-//           LEFT JOIN TCLNodosLogisticos O 
+//           LEFT JOIN TCL_MaestroNodosLogisticos O 
 //                 ON UPPER(TRIM(L.motonave)) = UPPER(TRIM(O.nombreNodo))
 //                 AND O.tipoNodo = 'BUQUE'
 //           WHERE UPPER(L.puerto) LIKE :puerto
@@ -246,7 +246,7 @@
 //                 descripcion, 
 //                 fecha_evento as etiquetaTiempo, 
 //                 tipo_color as colorLinea
-//             FROM TLCReportesOperativos
+//             FROM TCL_ReportesOperativos
 //             WHERE UPPER(puerto) = UPPER(:puerto)
 //             ORDER BY id_reporte DESC
 //         `;
@@ -266,11 +266,11 @@
 //     try {
 //       const sql = `
 //             SELECT terminal, hora_etiqueta, movimientos_hora 
-//             FROM TCLProductividadTerminales
+//             FROM TCL_ProductividadTerminales
 //             WHERE UPPER(puerto) = UPPER(:puerto)
 //             AND fecha = (
 //                 SELECT MAX(fecha) 
-//                 FROM TCLProductividadTerminales 
+//                 FROM TCL_ProductividadTerminales 
 //                 WHERE UPPER(puerto) = UPPER(:puerto)
 //             )
 //             ORDER BY hora_etiqueta ASC
@@ -294,18 +294,18 @@
 //       for (const dto of registrosDTO) {
 //         const sql = `
 //           IF EXISTS (
-//               SELECT 1 FROM TCLProductividadTerminales 
+//               SELECT 1 FROM TCL_ProductividadTerminales 
 //               WHERE puerto = :puerto AND terminal = :terminal 
 //               AND fecha = :fecha AND hora_etiqueta = :horaEtiqueta
 //           )
-//               UPDATE TCLProductividadTerminales 
+//               UPDATE TCL_ProductividadTerminales 
 //               SET movimientos_hora = :movimientosHora, 
 //                   fechaModificacion = :fechaModificacion, 
 //                   codigoUsuarioModificacion = :codigoUsuarioModificacion
 //               WHERE puerto = :puerto AND terminal = :terminal 
 //               AND fecha = :fecha AND hora_etiqueta = :horaEtiqueta
 //           ELSE
-//               INSERT INTO TCLProductividadTerminales 
+//               INSERT INTO TCL_ProductividadTerminales 
 //               (puerto, terminal, fecha, hora_etiqueta, movimientos_hora, codigoUsuarioCreacion, fechaCreacion)
 //               VALUES 
 //               (:puerto, :terminal, :fecha, :horaEtiqueta, :movimientosHora, :codigoUsuarioCreacion, :fechaCreacion)
@@ -331,7 +331,7 @@
 //                 SELECT DISTINCT 
 //                     UPPER(TRIM(motonave)) as motonave, 
 //                     omi 
-//                 FROM dbo.TLCNaves_Avisadas 
+//                 FROM dbo.TCL_NavesAvisadas 
 //                 WHERE fecha_cargue >= DATEADD(day, -7, GETDATE())
 //             `;
 //       const naves = await db.sequelize.query(sql, { type: db.sequelize.QueryTypes.SELECT });
@@ -350,8 +350,8 @@
 //                     bbox_lon_oeste, 
 //                     bbox_lat_norte, 
 //                     bbox_lon_este 
-//                 FROM dbo.T_Maestro_Puertos 
-//                 WHERE bbox_lat_sur IS NOT NULL
+//                 FROM dbo.TCL_MaestroPuertos 
+//                 WHERE geocerca_geo IS NOT NULL
 //             `;
 
 //       const puertos = await db.sequelize.query(sql, { type: db.sequelize.QueryTypes.SELECT });
@@ -400,7 +400,7 @@
 //       console.log("💾 [DEBUG] Enviando a SQL (dataSegura):", dataSegura);
 
 //       const sql = `
-//         MERGE INTO dbo.TCLAisUltimaPosicion AS Target
+//         MERGE INTO dbo.TCL_AisUltimaPosicion AS Target
 //         USING (SELECT 
 //             :mmsi as mmsi, :imo as imo, :nombre_motonave as nombre_motonave, 
 //             :latitud as latitud, :longitud as longitud, :velocidad as velocidad, 
@@ -456,9 +456,9 @@
 //   //           n.bandera,
 //   //           n.calado,
 //   //           n.eslora
-//   //       FROM dbo.TCLAisUltimaPosicion p
+//   //       FROM dbo.TCL_AisUltimaPosicion p
 //   //       /* Usamos CAST para asegurar compatibilidad de tipos en el JOIN */
-//   //       LEFT JOIN dbo.TLCNaves_Avisadas n 
+//   //       LEFT JOIN dbo.TCL_NavesAvisadas n 
 //   //           ON p.mmsi = CAST(n.id_aviso AS VARCHAR(20))
 //   //       WHERE p.latitud IS NOT NULL 
 //   //         AND p.longitud IS NOT NULL
@@ -499,14 +499,14 @@
 //   //           n.calado,
 //   //           n.eslora
 
-//   //       FROM dbo.TCLAisUltimaPosicion p
+//   //       FROM dbo.TCL_AisUltimaPosicion p
 
 //   //       /* 
 //   //          EL CRUCE MÁGICO POR NOMBRE:
 //   //          Quitamos todos los espacios en blanco y convertimos a mayúsculas en ambas tablas.
 //   //          Así 'DOLE ASIA' cruzará perfecto con 'DOLEASIA' o ' DOLE ASIA '.
 //   //       */
-//   //       LEFT JOIN dbo.TLCNaves_Avisadas n 
+//   //       LEFT JOIN dbo.TCL_NavesAvisadas n 
 //   //           ON REPLACE(UPPER(LTRIM(RTRIM(p.nombre_motonave))), ' ', '') = 
 //   //              REPLACE(UPPER(LTRIM(RTRIM(n.motonave))), ' ', '')
 
@@ -526,13 +526,13 @@
 //   static async getUltimasPosicionesNaves() {
 //     const query = `
 //         WITH DimarMaster AS (
-//             SELECT id_aviso, omi, motonave, agencia, eta, 'ARRIBADA' as estado FROM dbo.TLCNaves_Arribadas
+//             SELECT id_aviso, omi, motonave, agencia, eta, 'ARRIBADA' as estado FROM dbo.TCL_NavesArribadas
 //             UNION ALL
-//             SELECT id_aviso, omi, motonave, agencia, eta, 'AVISADA' as estado FROM dbo.TLCNaves_Avisadas
+//             SELECT id_aviso, omi, motonave, agencia, eta, 'AVISADA' as estado FROM dbo.TCL_NavesAvisadas
 //             UNION ALL
-//             SELECT id_aviso, omi, motonave, agencia, eta, 'FONDEO' as estado FROM dbo.TLCNaves_Fondeo
+//             SELECT id_aviso, omi, motonave, agencia, eta, 'FONDEO' as estado FROM dbo.TCL_NavesFondeadas
 //             UNION ALL
-//             SELECT id_aviso, omi, motonave, agencia, eta, 'ZARPADA' as estado FROM dbo.TLCNaves_Zarpadas
+//             SELECT id_aviso, omi, motonave, agencia, eta, 'ZARPADA' as estado FROM dbo.TCL_NavesZarpadas
 //         )
 //         SELECT 
 //             dimar.motonave,
@@ -545,8 +545,8 @@
 //             ais.estado_inferido,
 //             ais.mmsi
 //         FROM DimarMaster dimar
-//         LEFT JOIN dbo.TCL_Homologacion_MMSI hom ON dimar.id_aviso = hom.id_aviso
-//         LEFT JOIN dbo.TCLAisUltimaPosicion ais ON hom.mmsi = ais.mmsi
+//         LEFT JOIN dbo.TCL_HomologacionMMSI hom ON dimar.id_aviso = hom.id_aviso
+//         LEFT JOIN dbo.TCL_AisUltimaPosicion ais ON hom.mmsi = ais.mmsi
 //         -- ESTE ES EL FILTRO SALVADOR: 
 //         -- Solo trae barcos si NO tienen AIS (los de puerto) O si tienen AIS pero son coordenadas reales
 //         WHERE ais.mmsi IS NULL OR (ais.latitud <> 0 AND ais.longitud <> 0)
@@ -561,13 +561,13 @@
 //   static async getPosicionesNavesUnificadas() {
 //     const query = `
 //             WITH DimarMaster AS (
-//                 SELECT id_aviso, motonave, agencia, eta, 'ARRIBADA' as estado FROM dbo.TLCNaves_Arribadas
+//                 SELECT id_aviso, motonave, agencia, eta, 'ARRIBADA' as estado FROM dbo.TCL_NavesArribadas
 //                 UNION ALL
-//                 SELECT id_aviso, motonave, agencia, eta, 'AVISADA' as estado FROM dbo.TLCNaves_Avisadas
+//                 SELECT id_aviso, motonave, agencia, eta, 'AVISADA' as estado FROM dbo.TCL_NavesAvisadas
 //                 UNION ALL
-//                 SELECT id_aviso, motonave, agencia, eta, 'FONDEO' as estado FROM dbo.TLCNaves_Fondeo
+//                 SELECT id_aviso, motonave, agencia, eta, 'FONDEO' as estado FROM dbo.TCL_NavesFondeadas
 //                 UNION ALL
-//                 SELECT id_aviso, motonave, agencia, eta, 'ZARPADA' as estado FROM dbo.TLCNaves_Zarpadas
+//                 SELECT id_aviso, motonave, agencia, eta, 'ZARPADA' as estado FROM dbo.TCL_NavesZarpadas
 //             )
 //             SELECT 
 //                 dimar.motonave,
@@ -580,9 +580,9 @@
 //                 ais.estado_inferido,
 //                 ais.mmsi
 //             FROM DimarMaster dimar
-//             LEFT JOIN dbo.TCL_Homologacion_MMSI hom 
+//             LEFT JOIN dbo.TCL_HomologacionMMSI hom 
 //                 ON CAST(dimar.id_aviso AS VARCHAR(20)) = CAST(hom.id_aviso AS VARCHAR(20))
-//             LEFT JOIN dbo.TCLAisUltimaPosicion ais 
+//             LEFT JOIN dbo.TCL_AisUltimaPosicion ais 
 //                 ON CAST(hom.mmsi AS VARCHAR(20)) = CAST(ais.mmsi AS VARCHAR(20))
 //             WHERE (ais.latitud IS NULL OR (ais.latitud <> 0 AND ais.longitud <> 0))
 //         `;
@@ -598,7 +598,7 @@
 //    */
 //   static async getNavePorId(idAviso) {
 //     return await db.sequelize.query(
-//       "SELECT * FROM dbo.TLCNaves_Arribadas WHERE id_aviso = :id",
+//       "SELECT * FROM dbo.TCL_NavesArribadas WHERE id_aviso = :id",
 //       {
 //         replacements: { id: idAviso },
 //         type: db.sequelize.QueryTypes.SELECT
@@ -609,11 +609,11 @@
 //   async purgarMotonavesZarpadas() {
 //     try {
 //       const sql = `
-//         DELETE FROM dbo.TCLAisUltimaPosicion
+//         DELETE FROM dbo.TCL_AisUltimaPosicion
 //           WHERE 
 //               (nombre_motonave IS NOT NULL AND NOT EXISTS (
-//                   SELECT 1 FROM dbo.TLCNaves_Avisadas n 
-//                   WHERE n.motonave = dbo.TCLAisUltimaPosicion.nombre_motonave
+//                   SELECT 1 FROM dbo.TCL_NavesAvisadas n 
+//                   WHERE n.motonave = dbo.TCL_AisUltimaPosicion.nombre_motonave
 //               ))
 //               OR
 //               (TRY_CAST(fechaModificacion AS DATETIMEOFFSET) < DATEADD(hour, -12, GETUTCDATE()))
@@ -633,7 +633,7 @@
 //             id_puerto, nombre, 
 //             ubicacion.Lat as lat, ubicacion.Long as lon,
 //             bbox_lat_sur, bbox_lon_oeste, bbox_lat_norte, bbox_lon_este
-//         FROM dbo.T_Maestro_Puertos 
+//         FROM dbo.TCL_MaestroPuertos 
 //         WHERE estado = 1
 //     `;
 
@@ -651,8 +651,8 @@
 //                     bbox_lon_oeste, 
 //                     bbox_lat_norte, 
 //                     bbox_lon_este 
-//                 FROM dbo.T_Maestro_Puertos 
-//                 WHERE bbox_lat_sur IS NOT NULL
+//                 FROM dbo.TCL_MaestroPuertos 
+//                 WHERE geocerca_geo IS NOT NULL
 //             `;
 //       return await db.sequelize.query(sql, { type: db.sequelize.QueryTypes.SELECT });
 //     } catch (error) {
@@ -666,9 +666,9 @@
 //   async getNavesSinHomologar() {
 //     const query = `
 //             SELECT d.id_aviso, d.motonave, d.omi 
-//             FROM dbo.TLCNaves_Arribadas d
+//             FROM dbo.TCL_NavesArribadas d
 //             WHERE NOT EXISTS (
-//                 SELECT 1 FROM dbo.TCL_Homologacion_MMSI h 
+//                 SELECT 1 FROM dbo.TCL_HomologacionMMSI h 
 //                 WHERE CAST(h.id_aviso AS VARCHAR(20)) = CAST(d.id_aviso AS VARCHAR(20))
 //             )
 //         `;
@@ -680,7 +680,7 @@
 //    */
 //   async registrarHomologacion(idAviso, mmsi) {
 //     const query = `
-//             INSERT INTO dbo.TCL_Homologacion_MMSI (id_aviso, mmsi) 
+//             INSERT INTO dbo.TCL_HomologacionMMSI (id_aviso, mmsi) 
 //             VALUES (:id_aviso, :mmsi)
 //         `;
 //     return await db.sequelize.query(query, {
@@ -724,7 +724,7 @@ class MaritimoRepository {
 
   /**
    * 2. Volumen operativo por tipo de carga:
-   * Prioriza la nueva tabla dbo.TCL_HistoricoProductividad y respalda con dbo.TCL_LineUpMaritimo + dbo.TCL_NodosLogisticos
+   * Prioriza la nueva tabla dbo.TCL_HistoricoProductividad y respalda con dbo.TCL_LineUpMaritimo + dbo.TCL_MaestroNodosLogisticos
    */
   async getCargasLineUp(ciudadKey) {
     const filtro = `%${(ciudadKey || '').trim()}%`;
@@ -763,7 +763,7 @@ class MaritimoRepository {
           COUNT(L.motonave) AS cantidadBuques,
           SUM(COALESCE(TRY_CAST(O.ocupacionActual AS FLOAT), 0)) AS volumenTotal
         FROM dbo.TCL_LineUpMaritimo L
-        LEFT JOIN dbo.TCL_NodosLogisticos O
+        LEFT JOIN dbo.TCL_MaestroNodosLogisticos O
           ON UPPER(TRIM(L.motonave)) = UPPER(TRIM(O.nombreNodo))
         WHERE UPPER(L.puerto) LIKE UPPER(:puerto)
           AND COALESCE(L.estadoRegistro, 1) = 1
@@ -803,7 +803,7 @@ class MaritimoRepository {
   }
 
   /**
-   * 4. KPIs Marítimos desde dbo.TCL_LineUpMaritimo + dbo.TCL_NodosLogisticos
+   * 4. KPIs Marítimos desde dbo.TCL_LineUpMaritimo + dbo.TCL_MaestroNodosLogisticos
    */
   async getKpisMaritimos(ciudadKey) {
     const query = `
@@ -811,7 +811,7 @@ class MaritimoRepository {
         COUNT(DISTINCT L.motonave) AS n,
         COALESCE(SUM(TRY_CAST(O.ocupacionActual AS FLOAT)), 0) AS c
       FROM dbo.TCL_LineUpMaritimo L
-      LEFT JOIN dbo.TCL_NodosLogisticos O
+      LEFT JOIN dbo.TCL_MaestroNodosLogisticos O
         ON UPPER(TRIM(L.motonave)) = UPPER(TRIM(O.nombreNodo))
       WHERE UPPER(L.puerto) LIKE UPPER(:puerto)
         AND COALESCE(L.estadoRegistro, 1) = 1
@@ -833,7 +833,7 @@ class MaritimoRepository {
   }
 
   /**
-   * 6. Estado de Terminales y Muelles desde dbo.TCL_LineUpMaritimo + dbo.TCL_NodosLogisticos
+   * 6. Estado de Terminales y Muelles desde dbo.TCL_LineUpMaritimo + dbo.TCL_MaestroNodosLogisticos
    */
   async getTerminalesLineUp(ciudadKey) {
     const sql = `
@@ -846,7 +846,7 @@ class MaritimoRepository {
         L.eslora,
         COALESCE(TRY_CAST(O.ocupacionActual AS FLOAT), 0) AS cantidadMovida
       FROM dbo.TCL_LineUpMaritimo L
-      LEFT JOIN dbo.TCL_NodosLogisticos O
+      LEFT JOIN dbo.TCL_MaestroNodosLogisticos O
         ON UPPER(TRIM(L.motonave)) = UPPER(TRIM(O.nombreNodo))
       WHERE UPPER(L.puerto) LIKE UPPER(:puerto) 
         AND COALESCE(L.estadoRegistro, 1) = 1
@@ -881,8 +881,8 @@ class MaritimoRepository {
   }
 
   /**
-   * 8. Pronóstico de Motonaves cruzando dbo.TCL_LineUpMaritimo, dbo.TCL_NodosLogisticos,
-   * dbo.TCL_Naves_Arribadas y dbo.TCL_Naves_Avisadas
+   * 8. Pronóstico de Motonaves cruzando dbo.TCL_LineUpMaritimo, dbo.TCL_MaestroNodosLogisticos,
+   * dbo.TCL_NavesArribadas y dbo.TCL_NavesAvisadas
    */
   async getPronosticoMotonaves(ciudadKey) {
     try {
@@ -890,9 +890,9 @@ class MaritimoRepository {
         WITH DimarAgencias AS (
           SELECT UPPER(TRIM(motonave)) AS motonave_key, MAX(agencia) AS agencia
           FROM (
-            SELECT motonave, agencia FROM dbo.TCL_Naves_Arribadas WHERE motonave IS NOT NULL
+            SELECT motonave, agencia FROM dbo.TCL_NavesArribadas WHERE motonave IS NOT NULL
             UNION ALL
-            SELECT motonave, agencia FROM dbo.TCL_Naves_Avisadas WHERE motonave IS NOT NULL
+            SELECT motonave, agencia FROM dbo.TCL_NavesAvisadas WHERE motonave IS NOT NULL
           ) D
           GROUP BY UPPER(TRIM(motonave))
         )
@@ -908,7 +908,7 @@ class MaritimoRepository {
           COALESCE(O.tipoNodo, L.trabajoOperacion, 'GENERAL') AS tipoCarga,
           COALESCE(O.estadoOperativo, L.posicion, 'EN TRÁNSITO') AS estadoReal
         FROM dbo.TCL_LineUpMaritimo L
-        LEFT JOIN dbo.TCL_NodosLogisticos O 
+        LEFT JOIN dbo.TCL_MaestroNodosLogisticos O 
           ON UPPER(TRIM(L.motonave)) = UPPER(TRIM(O.nombreNodo))
         LEFT JOIN DimarAgencias DA
           ON UPPER(TRIM(L.motonave)) = DA.motonave_key
@@ -967,7 +967,7 @@ class MaritimoRepository {
           UPPER(COALESCE(NULLIF(TRIM(O.tipoNodo), ''), NULLIF(TRIM(L.trabajoOperacion), ''), 'GENERAL')) AS tipoCarga,
           SUM(COALESCE(TRY_CAST(O.ocupacionActual AS FLOAT), 0)) AS totalVolumen
         FROM dbo.TCL_LineUpMaritimo L
-        LEFT JOIN dbo.TCL_NodosLogisticos O
+        LEFT JOIN dbo.TCL_MaestroNodosLogisticos O
           ON UPPER(TRIM(L.motonave)) = UPPER(TRIM(O.nombreNodo))
         WHERE UPPER(L.puerto) LIKE UPPER(:puerto)
           AND L.terminal IS NOT NULL
@@ -1056,7 +1056,7 @@ class MaritimoRepository {
   }
 
   /**
-   * 12. Saturación de Bodegas desde la tabla renombrada dbo.TCL_Bodegas (antes TCLNodosMonitoreo)
+   * 12. Saturación de Bodegas desde la tabla renombrada dbo.TCL_MaestroBodegas (antes TCLNodosMonitoreo)
    */
   async getResumenSaturacionBodegasSQL(ciudadKey) {
     try {
@@ -1070,7 +1070,7 @@ class MaritimoRepository {
              AND (COALESCE(TRY_CAST(ocupacionActual AS FLOAT), 0) / TRY_CAST(capacidadMaxima AS FLOAT)) >= 0.85 
             THEN 1 ELSE 0 END
           ) AS bodegasCriticas
-        FROM dbo.TCL_Bodegas
+        FROM dbo.TCL_MaestroBodegas
         WHERE UPPER(COALESCE(puerto, ubicacion, '')) LIKE UPPER(:puerto)
       `;
       const res = await db.sequelize.query(sql, {
@@ -1126,9 +1126,9 @@ class MaritimoRepository {
         m.calado_metros, 
         m.estado_mantenimiento,
         m.geocerca_geo.STAsText() AS muelle_wkt
-      FROM dbo.T_Maestro_Puertos p
-      LEFT JOIN dbo.T_Maestro_Terminales t ON p.id_puerto = t.id_puerto
-      LEFT JOIN dbo.T_Maestro_Muelles m ON t.id_terminal = m.id_terminal
+      FROM dbo.TCL_MaestroPuertos p
+      LEFT JOIN dbo.TCL_MaestroTerminales t ON p.id_puerto = t.id_puerto
+      LEFT JOIN dbo.TCL_MaestroMuelles m ON t.id_terminal = m.id_terminal
       ORDER BY p.nombre, t.id_terminal, m.codigo_muelle
     `;
 
@@ -1190,7 +1190,7 @@ class MaritimoRepository {
           SUM(CASE WHEN UPPER(COALESCE(O.tipoNodo, '')) LIKE '%VEHICULO%' OR UPPER(COALESCE(O.tipoNodo, '')) LIKE '%RO-RO%' 
               THEN COALESCE(TRY_CAST(O.ocupacionActual AS FLOAT), 0) ELSE 0 END) AS totalVehiculos
         FROM dbo.TCL_LineUpMaritimo L
-        LEFT JOIN dbo.TCL_NodosLogisticos O 
+        LEFT JOIN dbo.TCL_MaestroNodosLogisticos O 
           ON UPPER(TRIM(L.motonave)) = UPPER(TRIM(O.nombreNodo))
         WHERE UPPER(L.puerto) LIKE UPPER(:puerto)
       `;
@@ -1306,7 +1306,7 @@ class MaritimoRepository {
   }
 
   /**
-   * 16. Naves Avisadas desde dbo.TCL_Naves_Avisadas
+   * 16. Naves Avisadas desde dbo.TCL_NavesAvisadas
    */
   async getMotonavesAvisadasParaRastreo() {
     try {
@@ -1314,7 +1314,7 @@ class MaritimoRepository {
         SELECT DISTINCT 
           UPPER(TRIM(motonave)) AS motonave, 
           omi 
-        FROM dbo.TCL_Naves_Avisadas 
+        FROM dbo.TCL_NavesAvisadas 
         WHERE fecha_cargue >= DATEADD(day, -7, GETDATE())
       `;
       return await db.sequelize.query(sql, { type: QueryTypes.SELECT });
@@ -1328,12 +1328,12 @@ class MaritimoRepository {
       const sql = `
         SELECT 
           nombre,
-          bbox_lat_sur, 
-          bbox_lon_oeste, 
-          bbox_lat_norte, 
-          bbox_lon_este 
-        FROM dbo.T_Maestro_Puertos 
-        WHERE bbox_lat_sur IS NOT NULL
+          geocerca_geo.STEnvelope().STPointN(1).STY AS bbox_lat_sur,
+        geocerca_geo.STEnvelope().STPointN(1).STX AS bbox_lon_oeste,
+        geocerca_geo.STEnvelope().STPointN(3).STY AS bbox_lat_norte,
+        geocerca_geo.STEnvelope().STPointN(3).STX AS bbox_lon_este 
+        FROM dbo.TCL_MaestroPuertos 
+        WHERE geocerca_geo IS NOT NULL
       `;
 
       const puertos = await db.sequelize.query(sql, { type: QueryTypes.SELECT });
@@ -1416,13 +1416,13 @@ class MaritimoRepository {
   async getUltimasPosicionesNaves() {
     const query = `
       WITH DimarMaster AS (
-        SELECT id_aviso, omi, motonave, agencia, eta, 'ARRIBADA' AS estado FROM dbo.TCL_Naves_Arribadas
+        SELECT id_aviso, omi, motonave, agencia, eta, 'ARRIBADA' AS estado FROM dbo.TCL_NavesArribadas
         UNION ALL
-        SELECT id_aviso, omi, motonave, agencia, eta, 'AVISADA' AS estado FROM dbo.TCL_Naves_Avisadas
+        SELECT id_aviso, omi, motonave, agencia, eta, 'AVISADA' AS estado FROM dbo.TCL_NavesAvisadas
         UNION ALL
-        SELECT id_aviso, omi, motonave, agencia, eta, 'FONDEO' AS estado FROM dbo.TCL_Naves_Fondeo
+        SELECT id_aviso, omi, motonave, agencia, eta, 'FONDEO' AS estado FROM dbo.TCL_NavesFondeadas
         UNION ALL
-        SELECT id_aviso, omi, motonave, agencia, eta, 'ZARPADA' AS estado FROM dbo.TCL_Naves_Zarpadas
+        SELECT id_aviso, omi, motonave, agencia, eta, 'ZARPADA' AS estado FROM dbo.TCL_NavesZarpadas
       )
       SELECT 
         dimar.motonave,
@@ -1435,7 +1435,7 @@ class MaritimoRepository {
         ais.estado_inferido,
         ais.mmsi
       FROM DimarMaster dimar
-      LEFT JOIN dbo.TCL_Homologacion_MMSI hom 
+      LEFT JOIN dbo.TCL_HomologacionMMSI hom 
         ON CAST(dimar.id_aviso AS VARCHAR(20)) = CAST(hom.id_aviso AS VARCHAR(20))
       LEFT JOIN dbo.TCL_AisUltimaPosicion ais 
         ON CAST(hom.mmsi AS VARCHAR(20)) = CAST(ais.mmsi AS VARCHAR(20))
@@ -1450,7 +1450,7 @@ class MaritimoRepository {
 
   async getNavePorId(idAviso) {
     return await db.sequelize.query(
-      'SELECT * FROM dbo.TCL_Naves_Arribadas WHERE id_aviso = :id',
+      'SELECT * FROM dbo.TCL_NavesArribadas WHERE id_aviso = :id',
       {
         replacements: { id: idAviso },
         type: QueryTypes.SELECT
@@ -1464,7 +1464,7 @@ class MaritimoRepository {
         DELETE FROM dbo.TCL_AisUltimaPosicion
         WHERE 
           (nombre_motonave IS NOT NULL AND NOT EXISTS (
-            SELECT 1 FROM dbo.TCL_Naves_Avisadas n 
+            SELECT 1 FROM dbo.TCL_NavesAvisadas n 
             WHERE n.motonave = dbo.TCL_AisUltimaPosicion.nombre_motonave
           ))
           OR
@@ -1479,7 +1479,7 @@ class MaritimoRepository {
   }
 
   /**
-   * 19. Puertos Activos desde dbo.T_Maestro_Puertos (usando ubicacion_geo estandarizada)
+   * 19. Puertos Activos desde dbo.TCL_MaestroPuertos (usando ubicacion_geo estandarizada)
    */
   async getPuertosActivos() {
     const query = `
@@ -1488,11 +1488,11 @@ class MaritimoRepository {
         nombre, 
         ubicacion_geo.STStartPoint().STY AS lat, 
         ubicacion_geo.STStartPoint().STX AS lon,
-        bbox_lat_sur, 
-        bbox_lon_oeste, 
-        bbox_lat_norte, 
-        bbox_lon_este
-      FROM dbo.T_Maestro_Puertos 
+        geocerca_geo.STEnvelope().STPointN(1).STY AS bbox_lat_sur,
+        geocerca_geo.STEnvelope().STPointN(1).STX AS bbox_lon_oeste,
+        geocerca_geo.STEnvelope().STPointN(3).STY AS bbox_lat_norte,
+        geocerca_geo.STEnvelope().STPointN(3).STX AS bbox_lon_este
+      FROM dbo.TCL_MaestroPuertos 
       WHERE COALESCE(estado, 1) = 1
     `;
 
@@ -1505,13 +1505,14 @@ class MaritimoRepository {
     try {
       const sql = `
         SELECT 
+          id_puerto,
           nombre,
-          bbox_lat_sur, 
-          bbox_lon_oeste, 
-          bbox_lat_norte, 
-          bbox_lon_este 
-        FROM dbo.T_Maestro_Puertos 
-        WHERE bbox_lat_sur IS NOT NULL
+          geocerca_geo.STEnvelope().STPointN(1).STY AS bbox_lat_sur,
+        geocerca_geo.STEnvelope().STPointN(1).STX AS bbox_lon_oeste,
+        geocerca_geo.STEnvelope().STPointN(3).STY AS bbox_lat_norte,
+        geocerca_geo.STEnvelope().STPointN(3).STX AS bbox_lon_este 
+        FROM dbo.TCL_MaestroPuertos 
+        WHERE geocerca_geo IS NOT NULL
       `;
       return await db.sequelize.query(sql, { type: QueryTypes.SELECT });
     } catch (error) {
@@ -1522,9 +1523,9 @@ class MaritimoRepository {
   async getNavesSinHomologar() {
     const query = `
       SELECT d.id_aviso, d.motonave, d.omi 
-      FROM dbo.TCL_Naves_Arribadas d
+      FROM dbo.TCL_NavesArribadas d
       WHERE NOT EXISTS (
-        SELECT 1 FROM dbo.TCL_Homologacion_MMSI h 
+        SELECT 1 FROM dbo.TCL_HomologacionMMSI h 
         WHERE CAST(h.id_aviso AS VARCHAR(20)) = CAST(d.id_aviso AS VARCHAR(20))
       )
     `;
@@ -1533,12 +1534,219 @@ class MaritimoRepository {
 
   async registrarHomologacion(idAviso, mmsi) {
     const query = `
-      INSERT INTO dbo.TCL_Homologacion_MMSI (id_aviso, mmsi) 
+      INSERT INTO dbo.TCL_HomologacionMMSI (id_aviso, mmsi) 
       VALUES (:id_aviso, :mmsi)
     `;
     return await db.sequelize.query(query, {
       replacements: { id_aviso: idAviso, mmsi }
     });
+  }
+
+  /**
+   * MMSI de naves avisadas (últimos 7 días) resueltos vía la tabla de referencia OMI → MMSI.
+   * Lo usa el motor AIS cuando AIS_SOLO_AVISADAS=true.
+   */
+  async getMmsiParaRastreo() {
+    try {
+      // MMSI homologados (TCL_Homologacion_MMSI) de naves avisadas con ETA en la ventana -7d / +15d
+      const sql = `
+        SELECT DISTINCT CAST(h.mmsi AS VARCHAR(20)) AS mmsi
+        FROM dbo.TCL_NavesAvisadas a
+        INNER JOIN dbo.TCL_HomologacionMMSI h
+          ON CAST(h.id_aviso AS VARCHAR(100)) = a.id_aviso
+        WHERE TRY_CONVERT(DATETIMEOFFSET, a.eta, 127) BETWEEN DATEADD(day, -7, SYSDATETIMEOFFSET()) AND DATEADD(day, 15, SYSDATETIMEOFFSET())
+          AND h.mmsi IS NOT NULL
+      `;
+      const filas = await db.sequelize.query(sql, { type: QueryTypes.SELECT });
+      return filas.map((f) => String(f.mmsi).trim()).filter((m) => /^\d{9}$/.test(m));
+    } catch (error) {
+      console.error('❌ [AIS] Error obteniendo MMSI para rastreo:', error.message);
+      return [];
+    }
+  }
+
+  /**
+   * Geocercas operativas para ubicar cada nave: muelles, terminales y puertos.
+   * Se consultan por separado para que un error en una tabla no apague las otras.
+   * Devuelve WKT (X = longitud, Y = latitud); MakeValid() corrige polígonos mal cerrados.
+   */
+  async getZonasOperativasAIS() {
+    const consultas = {
+      muelles: `
+        SELECT m.codigo_muelle, m.id_terminal, t.id_puerto, m.codigo_muelle AS nombre,
+               m.geocerca_geo.MakeValid().STAsText() AS wkt
+        FROM dbo.TCL_MaestroMuelles m
+        LEFT JOIN dbo.TCL_MaestroTerminales t ON t.id_terminal = m.id_terminal
+        WHERE m.geocerca_geo IS NOT NULL`,
+      terminales: `
+        SELECT NULL AS codigo_muelle, t.id_terminal, t.id_puerto, t.nombre,
+               t.geocerca_geo.MakeValid().STAsText() AS wkt
+        FROM dbo.TCL_MaestroTerminales t
+        WHERE t.geocerca_geo IS NOT NULL AND (t.estado = 1 OR t.estado IS NULL)`,
+      puertos: `
+        SELECT NULL AS codigo_muelle, NULL AS id_terminal, p.id_puerto, p.nombre,
+               p.geocerca_geo.MakeValid().STAsText() AS wkt
+        FROM dbo.TCL_MaestroPuertos p
+        WHERE p.geocerca_geo IS NOT NULL`,
+    };
+
+    const zonas = { muelles: [], terminales: [], puertos: [] };
+    for (const [tipo, sql] of Object.entries(consultas)) {
+      try {
+        zonas[tipo] = await db.sequelize.query(sql, { type: QueryTypes.SELECT });
+      } catch (error) {
+        console.error(`❌ [AIS] Error cargando geocercas de ${tipo}:`, error.message);
+      }
+    }
+    return zonas;
+  }
+
+  /**
+   * Detecta si ya se corrió la migración 005 (columnas extendidas + bitácora de eventos).
+   * El motor AIS funciona con o sin ellas.
+   */
+  async getCapacidadesEstadoAIS() {
+    try {
+      const [fila] = await db.sequelize.query(`
+        SELECT
+          (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME = 'TCL_AisUltimaPosicion'
+              AND COLUMN_NAME IN ('estado_nav_ais','id_puerto','id_terminal','codigo_muelle','fecha_cambio_estado')) AS columnas,
+          CASE WHEN OBJECT_ID(N'dbo.TCL_EventosEstadoNave', N'U') IS NOT NULL THEN 1 ELSE 0 END AS tabla_eventos
+      `, { type: QueryTypes.SELECT });
+      return {
+        columnasExtendidas: Number(fila?.columnas) === 5,
+        tablaEventos: Number(fila?.tabla_eventos) === 1,
+      };
+    } catch (error) {
+      console.error('❌ [AIS] Error detectando columnas de estado:', error.message);
+      return { columnasExtendidas: false, tablaEventos: false };
+    }
+  }
+
+  /** Último estado conocido de cada nave, para no perder el "desde cuándo" al reiniciar el API. */
+  async getEstadosAISVigentes(extendido = false) {
+    try {
+      const sql = `
+        SELECT CAST(mmsi AS VARCHAR(20)) AS mmsi, estado_inferido
+               ${extendido ? ', fecha_cambio_estado' : ''}
+        FROM dbo.TCL_AisUltimaPosicion
+        WHERE estado_inferido IS NOT NULL`;
+      return await db.sequelize.query(sql, { type: QueryTypes.SELECT });
+    } catch (error) {
+      console.error('❌ [AIS] Error leyendo estados vigentes:', error.message);
+      return [];
+    }
+  }
+
+  /**
+   * Upsert por lotes en dbo.TCL_AisUltimaPosicion (una sola sentencia MERGE por lote).
+   * No sobreescribe nombre/destino con NULL cuando aún no llega la trama estática.
+   * Con { extendido: true } también guarda estado AIS declarado, zona y fecha del último cambio de estado
+   * (requiere la migración 005).
+   * @param {Array<{mmsi:string,lat:number,lon:number,velocidad:number,rumbo:number,
+   *               estadoInferido:string,nombre_motonave?:string|null,destino?:string|null,
+   *               navStatus?:number|null,zona?:object|null,estadoDesde?:number|null}>} posiciones
+   * @param {{extendido?:boolean}} opciones
+   */
+  async guardarPosicionesAISLote(posiciones, { extendido = false } = {}) {
+    if (!Array.isArray(posiciones) || posiciones.length === 0) return 0;
+
+    const replacements = { ahora: new Date().toISOString() };
+    const filas = posiciones.map((p, i) => {
+      replacements[`mmsi${i}`] = String(p.mmsi);
+      replacements[`nom${i}`] = p.nombre_motonave ? String(p.nombre_motonave).substring(0, 50) : null;
+      replacements[`lat${i}`] = Number(p.lat);
+      replacements[`lon${i}`] = Number(p.lon);
+      replacements[`vel${i}`] = Number(p.velocidad) || 0;
+      replacements[`rum${i}`] = Number(p.rumbo) || 0;
+      replacements[`des${i}`] = p.destino ? String(p.destino).substring(0, 50) : null;
+      replacements[`est${i}`] = String(p.estadoInferido || 'DESCONOCIDO').substring(0, 50);
+      // CAST explícito: si todo un lote trae NULL, SQL Server tiparía la columna como INT y el COALESCE fallaría
+      const base = `CAST(:mmsi${i} AS NVARCHAR(20)), CAST(:nom${i} AS NVARCHAR(50)), :lat${i}, :lon${i}, :vel${i}, :rum${i}, `
+        + `CAST(:des${i} AS NVARCHAR(50)), CAST(:est${i} AS NVARCHAR(50))`;
+      if (!extendido) return `(${base})`;
+
+      replacements[`nav${i}`] = Number.isInteger(p.navStatus) ? p.navStatus : null;
+      replacements[`pto${i}`] = p.zona?.id_puerto ? String(p.zona.id_puerto).substring(0, 50) : null;
+      replacements[`ter${i}`] = p.zona?.id_terminal ? String(p.zona.id_terminal).substring(0, 50) : null;
+      replacements[`mue${i}`] = p.zona?.codigo_muelle ? String(p.zona.codigo_muelle).substring(0, 50) : null;
+      replacements[`fce${i}`] = p.estadoDesde ? new Date(p.estadoDesde).toISOString() : null;
+      return `(${base}, CAST(:nav${i} AS TINYINT), CAST(:pto${i} AS NVARCHAR(50)), CAST(:ter${i} AS NVARCHAR(50)), `
+        + `CAST(:mue${i} AS NVARCHAR(50)), CAST(:fce${i} AS NVARCHAR(100)))`;
+    });
+
+    const colsExtra = extendido ? ', estado_nav_ais, id_puerto, id_terminal, codigo_muelle, fecha_cambio_estado' : '';
+    const setExtra = extendido ? `,
+          estado_nav_ais = Source.estado_nav_ais,
+          id_puerto = Source.id_puerto, id_terminal = Source.id_terminal, codigo_muelle = Source.codigo_muelle,
+          fecha_cambio_estado = COALESCE(Source.fecha_cambio_estado, Target.fecha_cambio_estado)` : '';
+    const valExtra = extendido
+      ? ', Source.estado_nav_ais, Source.id_puerto, Source.id_terminal, Source.codigo_muelle, Source.fecha_cambio_estado'
+      : '';
+
+    const sql = `
+      MERGE INTO dbo.TCL_AisUltimaPosicion AS Target
+      USING (VALUES ${filas.join(',\n             ')})
+        AS Source (mmsi, nombre_motonave, latitud, longitud, velocidad, rumbo, destino, estado_inferido${colsExtra})
+      ON (Target.mmsi = Source.mmsi)
+      WHEN MATCHED THEN
+        UPDATE SET
+          latitud = Source.latitud, longitud = Source.longitud,
+          velocidad = Source.velocidad, rumbo = Source.rumbo,
+          estado_inferido = Source.estado_inferido,
+          nombre_motonave = COALESCE(Source.nombre_motonave, Target.nombre_motonave),
+          destino = COALESCE(Source.destino, Target.destino),
+          codigoUsuarioModificacion = 'SYS_AIS_ENGINE',
+          fechaModificacion = :ahora${setExtra}
+      WHEN NOT MATCHED THEN
+        INSERT (mmsi, omi, nombre_motonave, latitud, longitud, velocidad, rumbo,
+                destino, estado_inferido, codigoUsuarioCreacion, fechaCreacion,
+                codigoUsuarioModificacion, fechaModificacion${colsExtra})
+        VALUES (Source.mmsi, NULL, COALESCE(Source.nombre_motonave, 'DESCONOCIDO'),
+                Source.latitud, Source.longitud, Source.velocidad, Source.rumbo,
+                COALESCE(Source.destino, 'SIN DESTINO'), Source.estado_inferido,
+                'SYS_AIS_ENGINE', :ahora, 'SYS_AIS_ENGINE', :ahora${valExtra});
+    `;
+
+    await db.sequelize.query(sql, { replacements, type: QueryTypes.RAW });
+    return posiciones.length;
+  }
+
+  /**
+   * Bitácora de transiciones de estado (requiere la migración 005). Fechas en ISO UTC (convención Porttos).
+   * Es la materia prima de los KPIs de tiempo en fondeo, tiempo atracado y congestión.
+   */
+  async guardarEventosEstadoNaveLote(eventos) {
+    if (!Array.isArray(eventos) || eventos.length === 0) return 0;
+
+    const replacements = { ahora: new Date().toISOString() };
+    const filas = eventos.map((e, i) => {
+      replacements[`mmsi${i}`] = String(e.mmsi);
+      replacements[`nom${i}`] = e.nombre_motonave ? String(e.nombre_motonave).substring(0, 100) : null;
+      replacements[`ant${i}`] = e.estado_anterior ? String(e.estado_anterior).substring(0, 30) : null;
+      replacements[`nue${i}`] = String(e.estado_nuevo).substring(0, 30);
+      replacements[`pto${i}`] = e.id_puerto ? String(e.id_puerto).substring(0, 50) : null;
+      replacements[`ter${i}`] = e.id_terminal ? String(e.id_terminal).substring(0, 50) : null;
+      replacements[`mue${i}`] = e.codigo_muelle ? String(e.codigo_muelle).substring(0, 50) : null;
+      replacements[`lat${i}`] = Number.isFinite(e.lat) ? e.lat : null;
+      replacements[`lon${i}`] = Number.isFinite(e.lon) ? e.lon : null;
+      replacements[`vel${i}`] = Number.isFinite(e.velocidad) ? e.velocidad : null;
+      replacements[`nav${i}`] = Number.isInteger(e.nav_status) ? e.nav_status : null;
+      replacements[`dur${i}`] = Number.isFinite(e.duracion_anterior_min) ? Math.round(e.duracion_anterior_min) : null;
+      replacements[`fec${i}`] = new Date(e.fecha).toISOString();
+      return `(:mmsi${i}, :nom${i}, :ant${i}, :nue${i}, :pto${i}, :ter${i}, :mue${i}, :lat${i}, :lon${i}, :vel${i}, :nav${i}, :dur${i}, :fec${i}, 'SYS_AIS_ENGINE', :ahora)`;
+    });
+
+    const sql = `
+      INSERT INTO dbo.TCL_EventosEstadoNave
+        (mmsi, nombre_motonave, estado_anterior, estado_nuevo, id_puerto, id_terminal, codigo_muelle,
+         latitud, longitud, velocidad, estado_nav_ais, duracion_anterior_min, fecha_evento,
+         codigoUsuarioCreacion, fechaCreacion)
+      VALUES ${filas.join(',\n             ')};
+    `;
+    await db.sequelize.query(sql, { replacements, type: QueryTypes.RAW });
+    return eventos.length;
   }
 }
 

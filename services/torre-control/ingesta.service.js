@@ -62,7 +62,7 @@ const procesarExcelRNDC = async (fileBuffer, idUsuario) => {
   };
 
   // Limpieza inicial de la tabla
-  await sequelize.query('TRUNCATE TABLE TLCRNDCOperacionTerrestre');
+  await sequelize.query('TRUNCATE TABLE TCL_RNDCOperacionTerrestre');
 
   try {
     for await (const worksheetReader of workbook) {
@@ -168,7 +168,7 @@ const procesarExcelRNDC = async (fileBuffer, idUsuario) => {
         if (recordsChunk.length >= chunkSize) {
           try {
             await sequelize.transaction(async (t) => {
-              await sequelize.getQueryInterface().bulkInsert('TLCRNDCOperacionTerrestre', recordsChunk, { transaction: t });
+              await sequelize.getQueryInterface().bulkInsert('TCL_RNDCOperacionTerrestre', recordsChunk, { transaction: t });
             });
             totalInsertados += recordsChunk.length;
             // console.log(` -> [RNDC] Lote insertado. Acumulado: ${totalInsertados}`);
@@ -184,7 +184,7 @@ const procesarExcelRNDC = async (fileBuffer, idUsuario) => {
     // Insertamos el remanente final
     if (recordsChunk.length > 0) {
       await sequelize.transaction(async (t) => {
-        await sequelize.getQueryInterface().bulkInsert('TLCRNDCOperacionTerrestre', recordsChunk, { transaction: t });
+        await sequelize.getQueryInterface().bulkInsert('TCL_RNDCOperacionTerrestre', recordsChunk, { transaction: t });
       });
       totalInsertados += recordsChunk.length;
     }
@@ -260,7 +260,7 @@ const procesarCsvMaritimo = async (fileBuffer, idUsuario) => {
 
         try {
           // console.log("🧹 [MARÍTIMO] Truncando tabla...");
-          await db.sequelize.query('TRUNCATE TABLE TLCTraficoPortuarioMaritimo');
+          await db.sequelize.query('TRUNCATE TABLE TCL_TraficoPortuarioMaritimo');
 
           // MAPEO SEGURO: Usamos las llaves normalizadas (sin espacios ni tildes)
           const records = rawData.map(row => ({
@@ -289,7 +289,7 @@ const procesarCsvMaritimo = async (fileBuffer, idUsuario) => {
           // INSERCIÓN BATCH
           for (let i = 0; i < records.length; i += chunkSize) {
             const chunk = records.slice(i, i + chunkSize);
-            await db.sequelize.getQueryInterface().bulkInsert('TLCTraficoPortuarioMaritimo', chunk);
+            await db.sequelize.getQueryInterface().bulkInsert('TCL_TraficoPortuarioMaritimo', chunk);
             totalInsertados += chunk.length;
           }
 
@@ -348,7 +348,7 @@ const procesarExcelMatriz = async (fileBuffer, idUsuario) => {
 
   try {
     // console.log("🧹 [MATRIZ] Truncando tabla...");
-    await db.sequelize.query('TRUNCATE TABLE TLCMatriz_Operaciones');
+    await db.sequelize.query('TRUNCATE TABLE TCL_MaestroMatrizOperaciones');
 
     // Recorremos TODAS las hojas del libro
     for await (const worksheetReader of workbook) {
@@ -390,7 +390,7 @@ const procesarExcelMatriz = async (fileBuffer, idUsuario) => {
         });
 
         if (recordsChunk.length >= chunkSize) {
-          await db.sequelize.getQueryInterface().bulkInsert('TLCMatriz_Operaciones', recordsChunk);
+          await db.sequelize.getQueryInterface().bulkInsert('TCL_MaestroMatrizOperaciones', recordsChunk);
           totalInsertados += recordsChunk.length;
           // console.log(` 🚀 [MATRIZ] Lote insertado. Acumulado: ${totalInsertados}`);
           recordsChunk = [];
@@ -400,7 +400,7 @@ const procesarExcelMatriz = async (fileBuffer, idUsuario) => {
     }
 
     if (recordsChunk.length > 0) {
-      await db.sequelize.getQueryInterface().bulkInsert('TLCMatriz_Operaciones', recordsChunk);
+      await db.sequelize.getQueryInterface().bulkInsert('TCL_MaestroMatrizOperaciones', recordsChunk);
       totalInsertados += recordsChunk.length;
       console.log(` 🚀 [MATRIZ] Lote final insertado. Acumulado: ${totalInsertados}`);
     }
@@ -457,7 +457,7 @@ const procesarBoletinesViales = async (textoCrudoBoletin, idUsuario = 'SISTEMA_Q
     }));
 
     if (records.length > 0) {
-      await sequelize.getQueryInterface().bulkInsert('TCLEventosViales', records);
+      await sequelize.getQueryInterface().bulkInsert('TCL_EventosViales', records);
       // console.log(`✅ [BOLETINES] ${records.length} eventos registrados.`);
     }
 
@@ -502,13 +502,13 @@ const procesarHistoricoSuper = async (fileBuffer, idUsuario) => {
         });
 
         if (records.length >= 500) {
-          await db.sequelize.getQueryInterface().bulkInsert('TLCHistoricosSupertransporte', records);
+          await db.sequelize.getQueryInterface().bulkInsert('TCL_HistoricosSupertransporte', records);
           records = [];
         }
       }
     }
     if (records.length > 0) {
-      await db.sequelize.getQueryInterface().bulkInsert('TLCHistoricosSupertransporte', records);
+      await db.sequelize.getQueryInterface().bulkInsert('TCL_HistoricosSupertransporte', records);
     }
 
     // console.log("✅ [HISTÓRICOS] Reporte Supertransporte procesado exitosamente.");

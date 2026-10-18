@@ -95,7 +95,7 @@
 //   async emitirCapaMaritimaInicial(socket = null) {
 //     try {
 //       // NOTA: Asegúrate de tener este método en tu MaritimoRepository que haga un 
-//       // SELECT * FROM dbo.TCLAisUltimaPosicion
+//       // SELECT * FROM dbo.TCL_AisUltimaPosicion
 //       const navesActivas = await MaritimoRepository.getUltimasPosicionesNaves();
 //       const geoJsonMaritimo = this._crearGeoJSON(navesActivas, 'MARITIMA');
 

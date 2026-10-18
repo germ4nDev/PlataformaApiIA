@@ -118,7 +118,7 @@ const MotonavesOperacionModel = (sequelize) => {
       field: 'fechaModificacion'
     }
   }, {
-    tableName: 'TCLMotonavesOperacion',
+    tableName: 'TCL_MotonavesOperacion',
     schema: 'dbo',
     timestamps: false
   });

@@ -76,7 +76,7 @@ const NodoMonitoreoModel = (sequelize) => {
     codigoUsuarioModificacion: { type: DataTypes.STRING(200), allowNull: true },
     fechaModificacion: { type: DataTypes.DATE, allowNull: true }
   }, {
-    tableName: 'TCLNodosMonitoreo',
+    tableName: 'TCL_MaestroNodosMonitoreo',
     timestamps: false
   });
 };

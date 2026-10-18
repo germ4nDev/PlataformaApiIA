@@ -99,7 +99,7 @@ const AisUltimaPosicionModel = (sequelize) => {
             allowNull: true
         }
     }, {
-        tableName: 'TCLAisUltimaPosicion',
+        tableName: 'TCL_AisUltimaPosicion',
         schema: 'dbo',
         timestamps: false
     });

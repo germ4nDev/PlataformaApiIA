@@ -81,7 +81,7 @@ const OperacionesFlujoGNLModel = (sequelize) => {
     codigoUsuarioCreacion: { type: DataTypes.STRING(100), defaultValue: 'SYSTEM_WORKER' },
     fechaCreacion: { type: DataTypes.STRING(100), allowNull: true }
   }, {
-    tableName: 'TCL_Operaciones_FlujoGNL',
+    tableName: 'TCL_OperacionesFlujoGNL',
     timestamps: false
   });
 };

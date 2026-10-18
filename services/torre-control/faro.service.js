@@ -152,10 +152,12 @@
     Description: Servicio para la gestión unificada de peajes, geocercas terrestres y zonas marítimas.
 */
 const { Sequelize } = require('sequelize');
+const { literalGeometria, SRID_PORTTOS } = require('../../helpers/geometria-segura.helper');
 const { sequelize } = require('../../database/connection');
 // NOTA: Asegúrate de tener el FaroDTO configurado igual que el TerminalDTO
 const { FaroModel, FaroDTO } = require('../../models/torre-control/faro.model');
 const { wrapToFeatureCollection } = require('../../utils/geoJsonHelper');
+const wellknown = require('wellknown');
 const { io } = require('../../index');
 
 class FarosService {
@@ -164,6 +166,16 @@ class FarosService {
   }
 
   // 1. Parsers para convertir WKT a GeoJSON Geometry puro
+  _parseWkt(wkt) {
+    if (!wkt) return null;
+    try {
+      const geometria = wellknown.parse(String(wkt));
+      return geometria && geometria.type ? geometria : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
   _parseWktPoint(wkt) {
     if (!wkt) return null;
     const match = wkt.match(/POINT\s*\(\s*([-\d.]+)\s+([-\d.]+)\s*\)/);
@@ -210,7 +222,9 @@ class FarosService {
     const f = faroInstancia.get({ plain: true });
 
     // Intentamos extraer como Polígono, y si falla (ej. peaje), probamos como Punto
-    let rawGeometry = this._parseWktPolygon(f.geocerca_text);
+    // Corregido 2026-10-18: el parser por regex solo entendía POLYGON de un anillo o POINT; un polígono con
+    // huecos o un MULTIPOLYGON salía con coordenadas null y rompía el radar AIS del mapa. wellknown entiende todo el WKT.
+    let rawGeometry = this._parseWkt(f.geocerca_text);
     if (!rawGeometry) {
       rawGeometry = this._parseWktPoint(f.geocerca_text);
     }
@@ -290,8 +304,7 @@ class FarosService {
       }
 
       if (dataDTO.geocerca_geo) {
-        const wkt = this._geoJsonToWkt(dataDTO.geocerca_geo);
-        dataDTO.geocerca_geo = Sequelize.literal(`geometry::STGeomFromText('${wkt}', 4326)`);
+        dataDTO.geocerca_geo = literalGeometria(Sequelize, dataDTO.geocerca_geo, SRID_PORTTOS, 'geocerca_geo');
       }
 
       return await sequelize.transaction(async (t) => {
@@ -311,8 +324,7 @@ class FarosService {
       }
 
       if (dataDTO.geocerca_geo) {
-        const wkt = this._geoJsonToWkt(dataDTO.geocerca_geo);
-        dataDTO.geocerca_geo = Sequelize.literal(`geometry::STGeomFromText('${wkt}', 4326)`);
+        dataDTO.geocerca_geo = literalGeometria(Sequelize, dataDTO.geocerca_geo, SRID_PORTTOS, 'geocerca_geo');
       } else if (dataDTO.geocerca_geo === null) {
         dataDTO.geocerca_geo = null;
       } else {

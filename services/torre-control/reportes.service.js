@@ -57,7 +57,7 @@ const ReportesService = {
                 SELECT 
                     COUNT(*) as total_motonaves,
                     SUM(ocupacionActual) as total_toneladas
-                FROM TCLNodosLogisticos
+                FROM TCL_MaestroNodosLogisticos
                 WHERE tipoNodo = 'BUQUE' AND estadoOperativo = 'ZARPADO'
                 -- AND fechaModificacion >= DATEADD(day, -1, GETDATE())
             `;
@@ -93,7 +93,7 @@ const ReportesService = {
                 SELECT 
                     COUNT(*) as motonaves_semana,
                     SUM(ocupacionActual) as volumen_total
-                FROM TCLNodosLogisticos
+                FROM TCL_MaestroNodosLogisticos
                 WHERE tipoNodo = 'BUQUE' 
                 AND estadoOperativo = 'ZARPADO'
                 -- AND fechaModificacion >= DATEADD(day, -7, GETDATE()) 
@@ -185,7 +185,7 @@ const ReportesService = {
   // ==========================================
   async guardarReporte(data) {
     const sql = `
-            INSERT INTO TLCReportesOperativos 
+            INSERT INTO TCL_ReportesOperativos 
             (puerto, titulo, fecha_evento, descripcion, tipo_color, fecha_registro)
             VALUES 
             (:puerto, :titulo, :fecha_evento, :descripcion, :tipo_color, CONVERT(varchar, GETDATE(), 120))

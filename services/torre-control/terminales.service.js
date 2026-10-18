@@ -175,6 +175,7 @@
     Refactored for: PORTTOS Standard (Clean Service Layer) - Catálogo de Widgets (Terminales)
 */
 const { Sequelize } = require('sequelize');
+const { literalGeometria, SRID_PORTTOS } = require('../../helpers/geometria-segura.helper');
 const { sequelize } = require('../../database/connection');
 const { TerminalModel, TerminalDTO } = require('../../models/torre-control/terminal.model.js');
 const { wrapToFeatureCollection } = require('../../utils/geoJsonHelper.js');
@@ -302,8 +303,7 @@ class TerminalsService {
 
       // B. Transformar los objetos GeoJSON a literales de SQL Server
       if (dataDTO.geocerca_geo) {
-        const wkt = this._geoJsonToWkt(dataDTO.geocerca_geo);
-        dataDTO.geocerca_geo = Sequelize.literal(`geometry::STGeomFromText('${wkt}', 4326)`);
+        dataDTO.geocerca_geo = literalGeometria(Sequelize, dataDTO.geocerca_geo, SRID_PORTTOS, 'geocerca_geo');
       }
 
       return await sequelize.transaction(async (t) => {
@@ -327,8 +327,7 @@ class TerminalsService {
 
       // B. Transformamos a literales o gestionamos correctamente la ausencia del campo
       if (dataDTO.geocerca_geo) {
-        const wkt = this._geoJsonToWkt(dataDTO.geocerca_geo);
-        dataDTO.geocerca_geo = Sequelize.literal(`geometry::STGeomFromText('${wkt}', 4326)`);
+        dataDTO.geocerca_geo = literalGeometria(Sequelize, dataDTO.geocerca_geo, SRID_PORTTOS, 'geocerca_geo');
       } else if (dataDTO.geocerca_geo === null) {
         // Si el cliente envía explícitamente null, permitimos que se borre de la BD
         dataDTO.geocerca_geo = null;

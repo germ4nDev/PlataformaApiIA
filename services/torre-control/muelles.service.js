@@ -3,6 +3,7 @@
     Refactored for: PORTTOS Standard (Clean Service Layer) - Catálogo de Widgets
 */
 const { Sequelize } = require('sequelize');
+const { literalGeometria, SRID_PORTTOS } = require('../../helpers/geometria-segura.helper');
 const { sequelize } = require('../../database/connection');
 const { MuelleModel, MuelleDTO } = require('../../models/torre-control/muelle.model.js');
 const { wrapToFeatureCollection } = require('../../utils/geoJsonHelper.js');
@@ -87,7 +88,7 @@ class MuellesService {
       const dataDTO = MuelleDTO(rawData, userContext);
 
       if (dataDTO.geocerca_geo) {
-        dataDTO.geocerca_geo = Sequelize.literal(`geometry::STGeomFromText('${dataDTO.geocerca_geo}', 4326)`);
+        dataDTO.geocerca_geo = literalGeometria(Sequelize, dataDTO.geocerca_geo, SRID_PORTTOS, 'geocerca_geo');
       }
 
       return await sequelize.transaction(async (t) => {
@@ -109,7 +110,7 @@ class MuellesService {
       const dataDTO = MuelleDTO(rawData, userContext);
 
       if (dataDTO.geocerca_geo) {
-        dataDTO.geocerca_geo = Sequelize.literal(`geometry::STGeomFromText('${dataDTO.geocerca_geo}', 4326)`);
+        dataDTO.geocerca_geo = literalGeometria(Sequelize, dataDTO.geocerca_geo, SRID_PORTTOS, 'geocerca_geo');
       }
 
       return await sequelize.transaction(async (t) => {

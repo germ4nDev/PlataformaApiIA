@@ -67,7 +67,7 @@ const NaveFondeadaModel = (sequelize) => {
     instalacion_portuaria: { type: DataTypes.STRING(255) },
     usuario_cargue: { type: DataTypes.STRING(50), allowNull: false },
     fecha_cargue: { type: DataTypes.STRING(100), allowNull: false }
-  }, { tableName: 'TLCNaves_Fondeadas', schema: 'dbo', timestamps: false });
+  }, { tableName: 'TCL_NavesFondeadas', schema: 'dbo', timestamps: false });
 };
 
 module.exports = { NaveFondeadaModel, NaveFondeadaDTO, NaveFondeadaSchema };

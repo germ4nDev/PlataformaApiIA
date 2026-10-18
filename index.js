@@ -18,35 +18,56 @@ const PTLUsuarios = UsuarioModel(sequelize);
 
 // === Helpers y Servicios ===
 const { setIO } = require('./helpers/socket.helper');
+const { socketAuth, esModoEstricto } = require('./middlewares/socket-auth');
+const { registrarSalas } = require('./sockets/salas.socket');
 const SuscripcionCronService = require('./services/cron.service');
 const { iniciarVigilanteSupertransporte } = require('./controllers/torre-control/dashboard/alertas.cron');
 const simuladorGNL = require('./services/torre-control/gnl-telemetria.service');
+const AISStreamService = require('./services/torre-control/ais-stream.service');
 
 // ================================================
 // === CONFIGURACIÓN BASE DEL SERVIDOR ===
 // ================================================
 const app = express();
 const server = http.createServer(app);
+
+// Orígenes permitidos (HTTP y Socket.IO). Extra: CORS_ORIGINS=https://a.com,https://b.com
+const normalizarOrigen = (url) => (url || '').trim().replace(/\/+$/, '');
+const whitelist = [...new Set([
+  'http://localhost:4200',
+  'http://localhost:3000',
+  'https://porttos.co',
+  process.env.ANGULAR_URL_LOCAL,
+  process.env.ANGULAR_URL_LOCL, // nombre usado hoy en .env
+  process.env.ANGULAR_URL_PRUE,
+  process.env.ANGULAR_URL_PROD,
+  ...(process.env.CORS_ORIGINS || '').split(','),
+].map(normalizarOrigen).filter(Boolean))];
+
 const io = new Server(server, {
   cors: {
-    origin: process.env.ANGULAR_URL_LOCAL || "*",
+    origin: whitelist,
     methods: ["GET", "POST", "PUT", "DELETE"],
   },
   transports: ['polling', 'websocket']
 });
 
+// Autenticación JWT en el handshake + salas por puerto/módulo
+io.use(socketAuth);
+registrarSalas(io);
+console.log(`🔐 [SOCKET] Autenticación en modo ${esModoEstricto() ? 'ESTRICTO' : 'TRANSICIÓN (SOCKET_AUTH_STRICT != true)'}.`);
+
 // 🟢 Instanciamos el Socket globalmente en el helper
 setIO(io);
+
+// Compatibilidad: varios servicios hacen `const { io } = require('../../index')`.
+// Debe exportarse ANTES de requerir las rutas, que cargan esos servicios.
+// (Lo correcto a futuro es usar getIO() de helpers/socket.helper en todos.)
+module.exports.io = io;
 
 // ================================================
 // === CORS Y SEGURIDAD ===
 // ================================================
-const whitelist = [
-  'http://localhost:4200',
-  'http://localhost:3000',
-  'https://porttos.co'
-];
-
 const corsOptions = {
   origin: function (origin, callback) {
     if (whitelist.indexOf(origin) !== -1 || !origin) {
@@ -174,10 +195,19 @@ app.use('/api/gnl-telemetria', require('./routes/torre-control/gnl-telemetria.ro
 app.use('/api/bodegas', require('./routes/torre-control/bodegas.routes'));
 app.use('/api/virtual-gate', require('./routes/torre-control/virtual-gate.routes'));
 
-// ✅ INICIO DEL SIMULADOR SIN PARÁMETROS (el servicio ya usa getIO() por dentro)
-simuladorGNL.iniciarSimulador('BUENAVENTURA')
-  .then(res => console.log(res.msg))
-  .catch(err => console.error("❌ Error arrancando simulador GNL:", err.msg || err));
+// Manejador central de errores: siempre después de la última ruta (JSON mal formado, next(error), etc.)
+app.use(require('./middlewares/manejador-errores'));
+
+// Simulador GNL: activo en desarrollo; en producción solo con GNL_SIMULADOR=true
+const simuladorGnlActivo = process.env.GNL_SIMULADOR
+  ? process.env.GNL_SIMULADOR === 'true'
+  : process.env.NODE_ENV !== 'production';
+
+if (simuladorGnlActivo) {
+  simuladorGNL.iniciarSimulador('BUENAVENTURA')
+    .then(res => console.log(res.msg))
+    .catch(err => console.error("❌ Error arrancando simulador GNL:", err.msg || err));
+}
 
 // =======================================================
 // === EVENTOS SOCKET.IO ===
@@ -185,7 +215,9 @@ simuladorGNL.iniciarSimulador('BUENAVENTURA')
 io.on("connection", async (socket) => {
   console.log("Cliente conectado:", socket.id);
 
-  const codigoUsuario = socket.handshake.auth?.codigoUsuario || socket.handshake.query?.codigoUsuario;
+  // La identidad sale del JWT verificado; el codigoUsuario enviado por el cliente solo se acepta en modo transición
+  const codigoUsuario = socket.data.usuario?.codigoUsuario
+    || (esModoEstricto() ? null : (socket.handshake.auth?.codigoUsuario || socket.handshake.query?.codigoUsuario));
 
   if (codigoUsuario) {
     socket.codigoUsuario = codigoUsuario;
@@ -239,7 +271,11 @@ console.log('Servidor inicializando procesos...');
 sequelize
   .authenticate()
   .then(async () => {
-    await sequelize.sync();
+    // El esquema se gestiona con migraciones (database/migraciones). sync() solo si se pide explícitamente:
+    // con tablas renombradas + sinónimos, sync() intentaría recrear nombres viejos y tumbaría el arranque.
+    if (process.env.DB_SYNC === 'true') {
+      await sequelize.sync();
+    }
 
     // 🟢 Limpieza de estados de socket (Movido aquí para asegurar conexión a DB)
     try {
@@ -258,15 +294,15 @@ sequelize
       const cronService = new SuscripcionCronService();
       cronService.iniciarTareasProgramadas();
 
-      require('./jobs/cron.manager');
-      //initCronJobs(sequelize);
+      // Se requiere aquí (y no arriba) para que sus servicios ya encuentren `io` exportado
+      require('./jobs/cron.manager').initCronJobs();
 
-      try {
-        console.log('📡 [Boot] Encendiendo Motor de Ingesta Satelital (AIS)...');
-        // Este es el ÚNICO servicio que debe conectarse a AisStream
-        // await AISStreamService.iniciarConexion(io); // ⚠️ Comentado si no lo estás usando aún
-      } catch (aisError) {
-        console.error('❌ [Boot] Error encendiendo el radar AIS:', aisError.message);
+      // Motor AIS: proceso aislado, se enciende con AIS_ENABLED=true
+      if (process.env.AIS_ENABLED === 'true') {
+        AISStreamService.iniciarConexion(io)
+          .catch(aisError => console.error('❌ [Boot] Error encendiendo el radar AIS:', aisError.message));
+      } else {
+        console.log('⏸️ [AIS] Motor apagado (AIS_ENABLED != true).');
       }
 
       setTimeout(async () => {
@@ -284,3 +320,22 @@ sequelize
     console.error("❌ Error catastrófico en la inicialización del ecosistema QPLUS:", err.message);
     process.exit(1);
   });
+
+// =======================================================
+// === APAGADO ORDENADO ===
+// =======================================================
+let apagando = false;
+const apagar = async (senal) => {
+  if (apagando) return;
+  apagando = true;
+  console.log(`🛑 ${senal} recibido. Cerrando servicios...`);
+  try {
+    await AISStreamService.detener(); // persiste el buffer AIS pendiente
+  } catch (e) {
+    console.error('Error deteniendo AIS:', e.message);
+  }
+  server.close(() => process.exit(0));
+  setTimeout(() => process.exit(0), 5000).unref();
+};
+process.on('SIGINT', () => apagar('SIGINT'));
+process.on('SIGTERM', () => apagar('SIGTERM'));

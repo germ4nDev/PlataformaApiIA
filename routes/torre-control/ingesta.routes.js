@@ -16,7 +16,7 @@ const {
 router.post('/rndc', validarJWT, cargarRNDC);
 router.post('/maritimo', validarJWT, cargarMaritimo);
 router.post('/matriz', validarJWT, cargarMatrizOperaciones);
-router.post('/historico-supertransporte/sincronizar', sincronizarSupertransporte);
+router.post('/historico-supertransporte/sincronizar', validarJWT, sincronizarSupertransporte);
 
 router.post('/lineup/ingesta', validarJWT, cargarLineUp);
 

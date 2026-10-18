@@ -90,7 +90,7 @@ const NodoLogisticoModel = (sequelize) => {
       fechaModificacion: { type: DataTypes.STRING(100), allowNull: true }
     },
     {
-      tableName: 'T_Maestro_NodosLogisticos',
+      tableName: 'TCL_MaestroNodosLogisticos',
       schema: 'dbo',
       timestamps: false
     }

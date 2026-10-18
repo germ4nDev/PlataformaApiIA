@@ -150,7 +150,7 @@
 //   // MÉTODOS DE SOPORTE ADICIONALES
 //   // ====================================================================
 //   async _calcularKpisTerrestres(anio, mes) {
-//     const r = await db.sequelize.query(`SELECT SUM(viajesTotales) as v, SUM(CAST(kilogramos AS FLOAT)) as c, SUM(CAST(valoresPagados AS FLOAT)) as f, SUM(CAST(galones AS FLOAT)) as g FROM TLCRNDCOperacionTerrestre WHERE YEAR(fechaInicioPeriodo)=${anio} AND MONTH(fechaInicioPeriodo)=${mes}`, { type: QueryTypes.SELECT }).catch(() => [{ v: 0, c: 0, f: 0, g: 0 }]);
+//     const r = await db.sequelize.query(`SELECT SUM(viajesTotales) as v, SUM(CAST(kilogramos AS FLOAT)) as c, SUM(CAST(valoresPagados AS FLOAT)) as f, SUM(CAST(galones AS FLOAT)) as g FROM TCL_RNDCOperacionTerrestre WHERE YEAR(fechaInicioPeriodo)=${anio} AND MONTH(fechaInicioPeriodo)=${mes}`, { type: QueryTypes.SELECT }).catch(() => [{ v: 0, c: 0, f: 0, g: 0 }]);
 //     const data = r[0] || {};
 //     return {
 //       KPI_VIAJES: { titulo: "VIAJES RNDC", valor: this._formatearNumeroCompacto(data.v), colorBorde: "borde-cyan" },
@@ -176,7 +176,7 @@
 //   }
 
 //   async _calcularKpisAlertas() {
-//     const r = await db.sequelize.query(`SELECT COUNT(*) as a FROM TCLEventosViales WHERE estadoEvento = 'ACTIVO'`, { type: QueryTypes.SELECT }).catch(() => [{ a: 0 }]);
+//     const r = await db.sequelize.query(`SELECT COUNT(*) as a FROM TCL_EventosViales WHERE estadoEvento = 'ACTIVO'`, { type: QueryTypes.SELECT }).catch(() => [{ a: 0 }]);
 //     return { KPI_ALERTAS_VIALES: { titulo: "EVENTOS VIALES", valor: (r[0]?.a || 0).toString(), colorBorde: "borde-verde" } };
 //   }
 
@@ -436,7 +436,7 @@
 
 //   async obtenerPeriodoMasReciente() {
 //     try {
-//       const res = await db.sequelize.query(`SELECT TOP 1 YEAR(fechaInicioPeriodo) as anio, MONTH(fechaInicioPeriodo) as mes FROM TLCRNDCOperacionTerrestre ORDER BY fechaInicioPeriodo DESC`, { type: QueryTypes.SELECT });
+//       const res = await db.sequelize.query(`SELECT TOP 1 YEAR(fechaInicioPeriodo) as anio, MONTH(fechaInicioPeriodo) as mes FROM TCL_RNDCOperacionTerrestre ORDER BY fechaInicioPeriodo DESC`, { type: QueryTypes.SELECT });
 //       return res.length > 0 ? { anio: res[0].anio, mes: res[0].mes } : { anio: 2026, mes: 1 };
 //     } catch (e) { return { anio: 2026, mes: 1 }; }
 //   }

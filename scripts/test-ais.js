@@ -47,9 +47,9 @@ async function ejecutarPruebaAIS() {
       try {
         // Consulta UPSERT (Actualiza si existe, Inserta si es nuevo) segura para SQL Server
         const querySQL = `
-                    IF EXISTS (SELECT 1 FROM dbo.TCLAisUltimaPosicion WITH(NOLOCK) WHERE mmsi = :mmsi)
+                    IF EXISTS (SELECT 1 FROM dbo.TCL_AisUltimaPosicion WITH(NOLOCK) WHERE mmsi = :mmsi)
                     BEGIN
-                        UPDATE dbo.TCLAisUltimaPosicion
+                        UPDATE dbo.TCL_AisUltimaPosicion
                         SET 
                             latitud = :lat, longitud = :lon, 
                             velocidad = :vel, rumbo = :rumbo, destino = :destino, 
@@ -60,7 +60,7 @@ async function ejecutarPruebaAIS() {
                     END
                     ELSE
                     BEGIN
-                        INSERT INTO dbo.TCLAisUltimaPosicion 
+                        INSERT INTO dbo.TCL_AisUltimaPosicion 
                         (mmsi, nombre_motonave, latitud, longitud, velocidad, rumbo, destino, estado_inferido)
                         -- Si tienes columna espacial, agrega 'ubicacion_geo' arriba y el valor espacial abajo:
                         VALUES 

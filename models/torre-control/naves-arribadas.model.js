@@ -70,7 +70,7 @@ const NaveArribadaModel = (sequelize) => {
     instalacion_portuaria: { type: DataTypes.STRING(255) },
     usuario_cargue: { type: DataTypes.STRING(50), allowNull: false },
     fecha_cargue: { type: DataTypes.STRING(100), allowNull: false }
-  }, { tableName: 'TLCNaves_Arribadas', schema: 'dbo', timestamps: false });
+  }, { tableName: 'TCL_NavesArribadas', schema: 'dbo', timestamps: false });
 };
 
 module.exports = { NaveArribadaModel, NaveArribadaDTO, NaveArribadaSchema };

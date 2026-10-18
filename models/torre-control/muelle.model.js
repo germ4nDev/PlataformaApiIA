@@ -101,7 +101,7 @@ const MuelleModel = (sequelize) => {
     usuario_cargue: { type: DataTypes.STRING(200), allowNull: false },
     fecha_cargue: { type: DataTypes.STRING(100), allowNull: false } // 🟢 Homologado a DATE
   }, {
-    tableName: 'T_Maestro_Muelles',
+    tableName: 'TCL_MaestroMuelles',
     schema: 'dbo',
     timestamps: false
   });

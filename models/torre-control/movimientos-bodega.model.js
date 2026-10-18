@@ -44,7 +44,9 @@ const MovimientoBodegaDTO = (rawData, userContext = { codigoUsuario: 'SISTEMA_AD
   }
 
   const fechaActual = new Date().toISOString();
-  const usuarioBase = value.codigoUsuarioCreacion || userContext.codigoUsuario || 'SISTEMA_ADMIN';
+  // Auditoría: SIEMPRE del token (userContext). Corregido 2026-10-17: antes el cliente podía enviar
+  // codigoUsuarioCreacion / fechaCreacion y suplantar al autor o la fecha del registro.
+  const usuarioBase = userContext.codigoUsuario || 'SISTEMA_ADMIN';
 
   return {
     id_puerto: value.id_puerto.trim().toUpperCase(),
@@ -61,9 +63,9 @@ const MovimientoBodegaDTO = (rawData, userContext = { codigoUsuario: 'SISTEMA_AD
 
     // Auditoría QPLUS
     codigoUsuarioCreacion: usuarioBase,
-    fechaCreacion: value.fechaCreacion || fechaActual,
-    codigoUsuarioModificacion: value.codigoUsuarioModificacion || usuarioBase,
-    fechaModificacion: value.fechaModificacion || fechaActual
+    fechaCreacion: fechaActual,
+    codigoUsuarioModificacion: usuarioBase,
+    fechaModificacion: fechaActual
   };
 };
 

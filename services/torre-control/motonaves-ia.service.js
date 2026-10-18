@@ -44,7 +44,7 @@ class MotonavesIAService {
           SELECT 
               SUM(viajesTotales) as camionesEnRuta,
               SUM(kilogramos) / 1000 as toneladasEnRuta
-          FROM TLCRNDCOperacionTerrestre
+          FROM TCL_RNDCOperacionTerrestre
           WHERE municipioDestino LIKE '%BUENAVENTURA%' 
           AND anio = :anioActual
       `, {

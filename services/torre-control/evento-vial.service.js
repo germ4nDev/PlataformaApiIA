@@ -2,6 +2,7 @@
 const db = require('../../models');
 const { Op } = require('sequelize');
 
+const { cajaPuerto, MARGEN } = require('../../helpers/caja-puerto.helper');
 const EventoVial = db.EventoVial;
 const sequelize = db.sequelize;
 
@@ -65,13 +66,22 @@ class EventoVialService {
   //     throw error;
   //   }
   // }
-  async obtenerEventosActivosGeoJSON() {
+  /** @param {string} [puerto] filtro opcional: incidentes en el corredor del puerto (agregado 2026-10-18) */
+  async obtenerEventosActivosGeoJSON(puerto) {
     try {
+      const caja = await cajaPuerto(puerto, MARGEN.TERRESTRE);
+      const filtroCaja = caja ? {
+        [Op.and]: [
+          sequelize.where(sequelize.literal('ubicacion_geo.STY'), { [Op.between]: [caja.sur, caja.norte] }),
+          sequelize.where(sequelize.literal('ubicacion_geo.STX'), { [Op.between]: [caja.oeste, caja.este] })
+        ]
+      } : {};
       // 1. Consultar en BD TODOS los eventos que sigan activos
       // (Ignoramos la fecha de creación, nos importa el estado actual)
       const eventos = await EventoVial.findAll({
         where: {
-          estadoEvento: 'ACTIVO'
+          estadoEvento: 'ACTIVO',
+          ...filtroCaja
         },
         attributes: [
           'codigoEvento', 'corredorVial', 'sector', 'tipoEvento',

@@ -70,7 +70,7 @@ const NaveZarpadaModel = (sequelize) => {
     instalacion_portuaria: { type: DataTypes.STRING(255) },
     usuario_cargue: { type: DataTypes.STRING(50), allowNull: false },
     fecha_cargue: { type: DataTypes.STRING(100), allowNull: false }
-  }, { tableName: 'TLCNaves_Zarpadas', schema: 'dbo', timestamps: false });
+  }, { tableName: 'TCL_NavesZarpadas', schema: 'dbo', timestamps: false });
 };
 
 module.exports = { NaveZarpadaModel, NaveZarpadaDTO, NaveZarpadaSchema };

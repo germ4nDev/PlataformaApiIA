@@ -92,6 +92,11 @@ const ContenedorMovimientoModel = (sequelize) => {
             type: DataTypes.STRING(50),
             allowNull: false
         },
+        // Migración 008. NULL = movimiento sin puerto (se muestra en todos, como antes)
+        id_puerto: {
+            type: DataTypes.STRING(50),
+            allowNull: true
+        },
         codigoUsuarioCreacion: {
             type: DataTypes.STRING(200),
             allowNull: false

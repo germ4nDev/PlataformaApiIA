@@ -9,7 +9,9 @@ const {
   deleteFaro
 } = require("../../controllers/torre-control/faro.controller");
 
-router.get('/', getFaros);
+// Seguridad 2026-10-17: antes era público (exponía todas las geocercas y peajes sin sesión).
+// El front solo lo llama con sesión iniciada (AppComponent.loadProtectedData y el mapa).
+router.get('/', [validarJWT], getFaros);
 
 router.get('/:id', [validarJWT], getFaroById);
 

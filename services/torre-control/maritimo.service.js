@@ -1587,7 +1587,10 @@ class MaritimoService {
         ExternalIntegrationService.getTideData(lat, lon)
       ]);
 
-      const estadoDelCanal = weather && weather.wind?.speed > 15 ? 'Restringido' : 'Abierto';
+      // Corregido 2026-10-17: sin respuesta de clima se mostraba "Abierto" en verde como si fuera dato real
+      const estadoDelCanal = !weather || !weather.wind
+        ? 'Sin datos'
+        : (weather.wind.speed > 15 ? 'Restringido' : 'Abierto');
       return {
         success: true,
         data: {
@@ -1618,20 +1621,23 @@ class MaritimoService {
     // 1. Obtenemos la última fecha registrada en BD con blindaje ante fallos
     let ultimaFecha = await MaritimoRepository.getUltimoPeriodo().catch(() => null);
 
-    if (ultimaFecha && typeof ultimaFecha === 'object') {
+    // Corregido 2026-10-17: tedious entrega la fecha como Date, y un Date también es 'object';
+    // antes se "desempaquetaba" a undefined y siempre se usaba el mes actual en vez del último período RNDC.
+    if (ultimaFecha && typeof ultimaFecha === 'object' && !(ultimaFecha instanceof Date)) {
       ultimaFecha =
+        ultimaFecha.ultimaFecha ||
         ultimaFecha.fecha ||
         ultimaFecha.max_fecha ||
         ultimaFecha[Object.keys(ultimaFecha)[0]];
     }
 
-    let fecha = new Date(ultimaFecha);
-    if (isNaN(fecha.getTime())) {
-      fecha = new Date();
-    }
-
-    const anio = fecha.getFullYear();
-    const mes = fecha.getMonth() + 1;
+    const fecha = new Date(ultimaFecha);
+    const periodoValido = ultimaFecha != null && !isNaN(fecha.getTime());
+    // SQL Server devuelve el DATETIME como medianoche UTC: se leen año y mes en UTC
+    // (en hora Colombia el día 1 a las 00:00 UTC caería en el mes anterior).
+    const ahora = new Date();
+    const anio = periodoValido ? fecha.getUTCFullYear() : ahora.getFullYear();
+    const mes = periodoValido ? fecha.getUTCMonth() + 1 : ahora.getMonth() + 1;
 
     try {
       const [
@@ -1686,6 +1692,10 @@ class MaritimoService {
         MaritimoRepository.getReportesOperativos(ciudadKey).catch(() => [])
       ]);
 
+      // KPIs de buques desde el estado AIS y los avisos DIMAR (mismo origen que los widgets "en vivo").
+      // Agregado 2026-10-17: PTT_MAE_KPI_ESPERADOS / FONDEO / MUELLE no tenían llave y quedaban en 0.
+      const kpisAis = await this._calcularKpisBuquesAis(ciudadKey);
+
       // 1. Mapeo seguro para CONDICIONES_CANAL
       const c = climaRes?.data || {};
       const WDG_CONDICIONES_CANAL = {
@@ -1695,7 +1705,8 @@ class MaritimoService {
         viento: c.viento || 'N/A',
         estadoCanal: c.estadoCanal || 'Desconocido',
         pilotaje: 'Normal',
-        claseEstado: c.estadoCanal === 'Abierto' ? 'text-success' : 'text-danger'
+        claseEstado: c.estadoCanal === 'Abierto' ? 'text-success'
+          : (!c.estadoCanal || c.estadoCanal === 'Sin datos' || c.estadoCanal === 'Desconocido') ? 'text-muted' : 'text-danger'
       };
 
       // 2. Mapeo para ARRIBOS 7 DÍAS (RESUMEN_SEMANAL)
@@ -1778,6 +1789,8 @@ class MaritimoService {
         PTT_MAE_PANEL_IMPLICACIONES: implicacionesOperativas,
         PTT_MAE_PANEL_REPORTES: WDG_REPORTES_OPERATIVOS,
         PTT_MAE_PANEL_SEMANAL: kpiSemanalReal,
+        // Corregido 2026-10-17: PTT_MAE_PANEL_RESUMEN espera metricas[] y recibía la gráfica de arribos
+        PTT_MAE_PANEL_RESUMEN: kpiSemanalReal,
         PTT_MAE_PANEL_TERMINALES: nodoTerminales,
         PTT_MAE_TAB_MOTONAVES: nodoMotonaves,
         PTT_MAE_TAB_MATRIZ: matrizTerminalCarga,
@@ -1789,6 +1802,10 @@ class MaritimoService {
         PTT_MAE_KPI_RORO: kpisOp.KPI_RORO,
         PTT_MAE_KPI_BODEGAS: kpisOp.KPI_BODEGAS,
         PTT_MAE_KPI_CAMIONES_PUERTO: kpisOp.KPI_CAMIONES_PUERTO,
+        // Corregido 2026-10-17: el widget PTT_MAE_KPI_CAMIONES no tenía llave y siempre mostraba 0
+        PTT_MAE_KPI_CAMIONES: kpisOp.KPI_CAMIONES_PUERTO,
+        // Estado real desde AIS + avisos DIMAR (maritimo-vivo); sin llave si falta la migración 005
+        ...kpisAis,
         PTT_MAE_KPI_CAMIONES_VIA: kpisOp.KPI_CAMIONES_VIA,
         PTT_MAE_KPI_CAMIONES_CARGA: kpisOp.KPI_CAMIONES_CARGA,
         PTT_MAE_KPI_MOTONAVES: maritimos.KPI_MOTONAVES_ACTIVAS,
@@ -1798,6 +1815,45 @@ class MaritimoService {
       console.error('🔥 Error en obtenerResumenOperativo:', error.stack);
       throw new Error('Error al procesar el resumen integral marítimo');
     }
+  }
+
+  /**
+   * Buques esperados (avisos DIMAR con ETA en 72 h), en fondeo y en muelle (estado AIS vigente).
+   * Si falta la migración 005 o el puerto no existe en el maestro, no publica la llave y el widget
+   * conserva su comportamiento anterior.
+   */
+  async _calcularKpisBuquesAis(ciudadKey) {
+    const MaritimoVivoService = require('./maritimo-vivo.service');
+    const [resumen, llegadas] = await Promise.all([
+      MaritimoVivoService.resumen(ciudadKey, { vigenciaMin: 60, limiteCola: 1 }).catch(() => null),
+      MaritimoVivoService.llegadas(ciudadKey, { horas: 72, horasAtras: 0, limite: 500 }).catch(() => null)
+    ]);
+    const kpis = {};
+    if (llegadas) {
+      const r = llegadas.resumen;
+      kpis.PTT_MAE_KPI_ESPERADOS = {
+        titulo: 'BUQUES ESPERADOS',
+        valor: r.proximas24h + r.de24a48h + r.de48a72h,
+        subtitulo: `24h ${r.proximas24h} · 48h ${r.de24a48h} · 72h ${r.de48a72h} · avisos DIMAR`,
+        colorBorde: 'borde-cyan'
+      };
+    }
+    if (resumen) {
+      const prom = resumen.fondeo.minutosPromedio;
+      kpis.PTT_MAE_KPI_FONDEO = {
+        titulo: 'BUQUES EN FONDEO',
+        valor: resumen.fondeo.naves,
+        subtitulo: prom != null ? `Espera promedio ${Math.round((prom / 60) * 10) / 10} h · AIS` : 'En bahía de espera · AIS',
+        colorBorde: 'borde-amarillo'
+      };
+      kpis.PTT_MAE_KPI_MUELLE = {
+        titulo: 'BUQUES EN MUELLE',
+        valor: resumen.atracadas,
+        subtitulo: 'Atracados según AIS (última hora)',
+        colorBorde: 'borde-green'
+      };
+    }
+    return kpis;
   }
 
   async _calcularKpisOperativos(anio, mes, ciudadKey) {
@@ -2028,12 +2084,13 @@ class MaritimoService {
 
       return {
         motonave: b.nombreMotonave || 'DESCONOCIDO',
-        naviera: navierasMock[index % navierasMock.length],
+        // Corregido 2026-10-17: la consulta ya trae la agencia naviera; antes se rotaba una lista fija
+        naviera: b.agenciaNaviera || b.agencia || 'ND',
         terminal: b.terminal || 'ND',
         tipo: tipoBuque,
         carga: textoCarga,
         eta: formatearFecha(b.fechaETA),
-        ata: '--',
+        ata: b.fechaATA ? formatearFecha(b.fechaATA) : '--',
         estadoTexto: textoEstado,
         estadoClase: clasePildora
       };
@@ -2340,12 +2397,18 @@ class MaritimoService {
     let granel = parseFloat(data.totalGranel) || 0;
     let vehiculos = parseFloat(data.totalVehiculos) || 0;
 
-    if (motonaves === 0 && teus === 0) {
+    // DATO FICTICIO (pendiente de limpiar): sin datos de la semana se muestran cifras de referencia.
+    // Desde 2026-10-17 quedan rotuladas para que no se lean como reales.
+    const esReferencia = motonaves === 0 && teus === 0;
+    if (esReferencia) {
       motonaves = 86;
       teus = 142000;
       granel = 312000;
       vehiculos = 6840;
     }
+    const tend = (texto, clase) => (esReferencia
+      ? { tendencia: 'Referencia · sin datos de la semana', claseTendencia: 'text-muted' }
+      : { tendencia: texto, claseTendencia: clase });
 
     return {
       titulo: 'RESUMEN SEMANAL MARÍTIMO',
@@ -2353,26 +2416,22 @@ class MaritimoService {
         {
           label: 'MOTONAVES ATENDIDAS',
           valor: motonaves.toString(),
-          tendencia: '▲ 4 vs sem. anterior',
-          claseTendencia: 'text-success'
+          ...tend('▲ 4 vs sem. anterior', 'text-success')
         },
         {
           label: 'TEUS TOTALES',
           valor: this._formatearNumeroCompacto(teus),
-          tendencia: '+8.2% YoY',
-          claseTendencia: 'text-success'
+          ...tend('+8.2% YoY', 'text-success')
         },
         {
           label: 'TM GRANEL',
           valor: this._formatearNumeroCompacto(granel),
-          tendencia: '+12% YoY',
-          claseTendencia: 'text-success'
+          ...tend('+12% YoY', 'text-success')
         },
         {
           label: 'VEHÍCULOS',
           valor: vehiculos.toLocaleString('es-CO'),
-          tendencia: '▼ 3% vs sem.',
-          claseTendencia: 'text-danger'
+          ...tend('▼ 3% vs sem.', 'text-danger')
         }
       ]
     };
@@ -2380,7 +2439,7 @@ class MaritimoService {
 
   async _obtenerAnalisisTrafico(ciudadKey) {
     try {
-      const anioActual = new Date().getFullYear();
+      let anioActual = new Date().getFullYear();
       const url = 'https://www.datos.gov.co/resource/5r3g-zv5z.json';
 
       const respuesta = await axios.get(url, {
@@ -2393,6 +2452,11 @@ class MaritimoService {
 
       const datos = respuesta.data;
       if (!datos || datos.length === 0) throw new Error('API vacía');
+
+      // Corregido 2026-10-17: Supertransporte publica con rezago; con el año calendario el panel mostraba
+      // "0.0 M t" y "-100 %". Se compara el último año publicado contra el anterior.
+      const aniosConDatos = datos.map((row) => parseInt(row.a_o_vigencia || row.ano_vigencia)).filter(Boolean);
+      if (aniosConDatos.length) anioActual = Math.max(...aniosConDatos);
 
       let totalAnioActual = 0;
       let totalAnioAnterior = 0;

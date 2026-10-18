@@ -179,6 +179,7 @@ const { sequelize } = require('../../database/connection');
 const { TCLOperacionesFlujoGNL } = require('../../models');
 const { OperacionesFlujoGNLDTO } = require('../../models/torre-control/operaciones-flujo-gnl.model');
 const { getIO } = require('../../helpers/socket.helper');
+const { salaPuerto } = require('../../helpers/salas.helper');
 
 // Buffer en memoria compartido entre el simulador y el Cron Job
 global.bufferGNL = global.bufferGNL || [];
@@ -253,12 +254,30 @@ class GnlTelemetriaService {
         temperatura_celsius: temperaturaGNL,
         flujo_m3: flujoM3,
 
-        alarma_activa: esAlarma
+        alarma_activa: esAlarma,
+
+        // ---------------------------------------------------------------
+        // SIMULADO (agregado 2026-10-17). El CSV SCADA de demo solo trae presión, flujo y temperatura;
+        // los widgets GNL piden más variables y quedaban en 0. Se derivan de esas tres con reglas fijas
+        // y van marcadas con simulado:true para que el front las rotule. Reemplazar por la telemetría real.
+        // ---------------------------------------------------------------
+        simulado: true,
+        caudal_m3h: flujoM3,
+        descarga_buque: flujoM3,                                    // el brazo descarga lo que fluye
+        inyeccion: Number((flujoM3 * 0.95).toFixed(2)),             // send-out regasificado (95 %)
+        bog: Number((flujoM3 * 0.15).toFixed(3)),                   // kg/h, misma tasa que el cold path
+        volumen_almacenado: Number((62 + 8 * Math.sin(index / 300)).toFixed(1)), // % llenado de tanques
+        poder_calorifico: Number((1045 + 10 * Math.sin(index / 120)).toFixed(1)), // BTU/ft³
+        event_type: !esAlarma ? null
+          : presionPsi >= 85 ? 'surge'
+          : flujoM3 <= 0.1 ? 'blockage'
+          : 'leak'
       };
 
       // 1. Enviar al Tablero Angular (Sin tocar Base de Datos)
       // Como el helper de sockets (setIO) ya fue inicializado en index.js, aquí lo usamos.
-      getIO().emit("gnl-lectura-viva", lecturaViva);
+      // Solo a los clientes con el dashboard GNL de ese puerto abierto
+      getIO().to(salaPuerto(id_puerto, 'gnl')).emit("gnl-lectura-viva", lecturaViva);
 
       // 2. Guardar en el Buffer de Memoria para el Cold Path
       global.bufferGNL.push(lecturaViva);

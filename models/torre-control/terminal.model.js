@@ -102,7 +102,7 @@
 //     usuario_cargue: { type: DataTypes.STRING(200), allowNull: false },
 //     fecha_cargue: { type: DataTypes.STRING(100), allowNull: false } // Homologado a DATE igual que en puertos
 //   }, {
-//     tableName: 'T_Maestro_Terminales',
+//     tableName: 'TCL_MaestroTerminales',
 //     schema: 'dbo',
 //     timestamps: false
 //   });
@@ -200,7 +200,7 @@ const TerminalModel = (sequelize) => {
     usuario_cargue: { type: DataTypes.STRING(200), allowNull: false },
     fecha_cargue: { type: DataTypes.STRING(100), allowNull: false }
   }, {
-    tableName: 'T_Maestro_Terminales',
+    tableName: 'TCL_MaestroTerminales',
     schema: 'dbo',
     timestamps: false
   });

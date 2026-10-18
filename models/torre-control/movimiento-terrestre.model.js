@@ -99,7 +99,7 @@ const MovimientoTerrestreModel = (sequelize) => {
     codigoUsuarioCreacion: { type: DataTypes.STRING(200), allowNull: false },
     fechaCreacion: { type: DataTypes.STRING(100), allowNull: false }
   }, {
-    tableName: 'TLC_Movimiento_Terrestre',
+    tableName: 'TCL_MovimientoTerrestre',
     schema: 'dbo',
     timestamps: false
   });

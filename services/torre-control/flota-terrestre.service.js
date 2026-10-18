@@ -3,6 +3,7 @@
     Pattern: PORTTOS Service Pattern - Flota Terrestre (Sincronizado y Masivo)
 */
 const FlotaTerrestreRepository = require('../../repositories/torre-control/flota-terrestre.repository');
+const { cajaPuerto, cajaWkt, MARGEN } = require('../../helpers/caja-puerto.helper');
 const { io } = require('../../index');
 
 class FlotaTerrestreService {
@@ -38,8 +39,10 @@ class FlotaTerrestreService {
   //     }))
   //   };
   // }
-  async obtenerFlotaGeoJSON() {
-    const camiones = await FlotaTerrestreRepository.obtenerDatosGeograficosFlota();
+  /** @param {string} [puerto] filtro opcional: flota en el corredor de acceso al puerto (agregado 2026-10-18) */
+  async obtenerFlotaGeoJSON(puerto) {
+    const caja = await cajaPuerto(puerto, MARGEN.TERRESTRE);
+    const camiones = await FlotaTerrestreRepository.obtenerDatosGeograficosFlota(caja);
 
     return {
       type: 'FeatureCollection',
@@ -117,9 +120,10 @@ class FlotaTerrestreService {
   // ==========================================
   // 4. CAPA GEOCERCAS Y KPIS (Resuelve el error del controlador)
   // ==========================================
-  async obtenerCapaGeocercas() {
+  async obtenerCapaGeocercas(puerto) {
     if (typeof FlotaTerrestreRepository.obtenerGeocercasConKPIs === 'function') {
-      const data = await FlotaTerrestreRepository.obtenerGeocercasConKPIs();
+      const caja = await cajaPuerto(puerto, MARGEN.TERRESTRE);
+      const data = await FlotaTerrestreRepository.obtenerGeocercasConKPIs(caja ? cajaWkt(caja) : null);
       return data;
     }
     return [];

@@ -22,6 +22,9 @@ const router = Router();
 // 1. ENDPOINTS PARA SMART WIDGETS (Consolidado con shareReplay(1) en Angular)
 // =========================================================================
 // Soporta query param: GET /api/tablero-control/bodegas?puerto=BUENAVENTURA
+// Toda la ruta exige sesión (antes estaba abierta, incluso POST /maestro y POST /movimientos)
+const { validarJWT } = require('../../middlewares/validar-jwt');
+router.use(validarJWT);
 router.get('/', obtenerDashboardBodegas);
 
 // =========================================================================

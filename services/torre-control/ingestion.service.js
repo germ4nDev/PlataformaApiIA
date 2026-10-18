@@ -16,7 +16,7 @@ const IngestionService = {
   async sincronizarTodosLosPuertos() {
     try {
       const puertosActivos = await db.sequelize.query(
-        `SELECT id_puerto, url_fuente_scraping FROM T_Maestro_Puertos WHERE estado = 1`,
+        `SELECT id_puerto, url_fuente_scraping FROM TCL_MaestroPuertos WHERE estado = 1`,
         { type: db.sequelize.QueryTypes.SELECT }
       );
 
@@ -371,12 +371,12 @@ const IngestionService = {
     try {
       for (const item of nodos) {
         const sql = `
-                    IF EXISTS (SELECT 1 FROM TCLNodosLogisticos WHERE UPPER(nombreNodo) = UPPER(:nombre) AND tipoNodo = 'BUQUE')
-                        UPDATE TCLNodosLogisticos 
+                    IF EXISTS (SELECT 1 FROM TCL_MaestroNodosLogisticos WHERE UPPER(nombreNodo) = UPPER(:nombre) AND tipoNodo = 'BUQUE')
+                        UPDATE TCL_MaestroNodosLogisticos 
                         SET ocupacionActual = :ocupacion, estadoOperativo = :estado, fechaModificacion = GETDATE()
                         WHERE UPPER(nombreNodo) = UPPER(:nombre) AND tipoNodo = 'BUQUE'
                     ELSE
-                        INSERT INTO TCLNodosLogisticos 
+                        INSERT INTO TCL_MaestroNodosLogisticos 
                         (codigoNodo, nombreNodo, tipoNodo, capacidadMaxima, ocupacionActual, unidadMedida, estadoOperativo, codigoUsuarioCreacion, fechaCreacion)
                         VALUES 
                         (:codigo, :nombre, :tipo, :capacidad, :ocupacion, :unidad, :estado, 'SCRAPER_SYS', GETDATE())

@@ -58,7 +58,9 @@ const MaestroBodegaDTO = (rawData, userContext = { codigoUsuario: 'SISTEMA_ADMIN
   }
 
   const fechaActual = new Date().toISOString();
-  const usuarioBase = value.codigoUsuarioCreacion || userContext.codigoUsuario || 'SISTEMA_ADMIN';
+  // Auditoría: SIEMPRE del token (userContext). Corregido 2026-10-17: antes el cliente podía enviar
+  // codigoUsuarioCreacion / fechaCreacion y suplantar al autor o la fecha del registro.
+  const usuarioBase = userContext.codigoUsuario || 'SISTEMA_ADMIN';
 
   return {
     id_puerto: value.id_puerto.trim().toUpperCase(),
@@ -76,9 +78,9 @@ const MaestroBodegaDTO = (rawData, userContext = { codigoUsuario: 'SISTEMA_ADMIN
 
     // Auditoría QPLUS
     codigoUsuarioCreacion: usuarioBase,
-    fechaCreacion: value.fechaCreacion || fechaActual,
-    codigoUsuarioModificacion: value.codigoUsuarioModificacion || usuarioBase,
-    fechaModificacion: value.fechaModificacion || fechaActual
+    fechaCreacion: fechaActual,
+    codigoUsuarioModificacion: usuarioBase,
+    fechaModificacion: fechaActual
   };
 };
 
@@ -127,8 +129,52 @@ const MaestroBodegaModel = (sequelize) => {
   );
 };
 
+/**
+ * DTO de actualización parcial (PUT /maestro/:idBodega): solo valida y normaliza lo que llega.
+ * id_puerto, inventario y auditoría de creación NO se cambian por aquí (el inventario solo se mueve con movimientos).
+ */
+const CAMPOS_ACTUALIZABLES = ['codigo_bodega', 'nombre_bodega', 'tipo_almacenamiento', 'tipo_carga_principal',
+  'capacidad_maxima_ton', 'temperatura_c', 'humedad_relativa_pct', 'estado_operativo', 'activo'];
+
+const ActualizarBodegaSchema = Joi.object({
+  codigo_bodega: Joi.string().trim().max(30),
+  nombre_bodega: Joi.string().trim().max(120),
+  tipo_almacenamiento: Joi.string().valid('CUBIERTA', 'SILO', 'REFRIGERADA', 'COBERTIZO'),
+  tipo_carga_principal: Joi.string().trim().max(60),
+  capacidad_maxima_ton: Joi.number().positive(),
+  temperatura_c: Joi.number().min(-50).max(60).allow(null),
+  humedad_relativa_pct: Joi.number().min(0).max(100).allow(null),
+  estado_operativo: Joi.string().valid('NORMAL', 'ALTO', 'CRÍTICO', 'MANTENIMIENTO'),
+  activo: Joi.boolean(),
+}).min(1).messages({ 'object.min': 'Debe enviar al menos un campo para actualizar' });
+
+const ActualizarBodegaDTO = (rawData, userContext = { codigoUsuario: 'SISTEMA_ADMIN' }) => {
+  const { error, value } = ActualizarBodegaSchema.validate(rawData || {}, { abortEarly: false, stripUnknown: true });
+  if (error) {
+    throw {
+      type: 'ValidationError',
+      details: error.details.map((d) => ({ campo: d.context.key || d.path.join('.'), mensaje: d.message }))
+    };
+  }
+  const cambios = {};
+  for (const campo of CAMPOS_ACTUALIZABLES) if (value[campo] !== undefined) cambios[campo] = value[campo];
+  if (cambios.codigo_bodega) cambios.codigo_bodega = cambios.codigo_bodega.toUpperCase();
+  return {
+    ...cambios,
+    codigoUsuarioModificacion: userContext.codigoUsuario || 'SISTEMA_ADMIN',
+    fechaModificacion: new Date().toISOString()
+  };
+};
+
+/** Estado según ocupación; una bodega en MANTENIMIENTO conserva su estado. */
+const estadoPorOcupacion = (estadoActual, ocupacionPct) =>
+  estadoActual === 'MANTENIMIENTO' ? estadoActual : ocupacionPct >= 90 ? 'CRÍTICO' : ocupacionPct >= 75 ? 'ALTO' : 'NORMAL';
+
 module.exports = {
   MaestroBodegaModel,
   MaestroBodegaDTO,
-  MaestroBodegaSchema
+  MaestroBodegaSchema,
+  ActualizarBodegaDTO,
+  ActualizarBodegaSchema,
+  estadoPorOcupacion
 };

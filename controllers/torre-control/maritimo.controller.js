@@ -254,7 +254,10 @@ const obtenerResumenOperativo = async (req, res) => {
 
     // Blindaje: Si la sincronización falla, registramos el warning pero NO bloqueamos el dashboard
     try {
-      if (IngestionService && typeof IngestionService.sincronizarMotonaves === 'function') {
+      // La sincronización con el proveedor externo la hace la tarea programada 'motonaves'.
+      // Hacerla en cada lectura volvía lento el tablero; solo se activa explícitamente.
+      if (process.env.MARITIMO_SYNC_EN_LECTURA === 'true'
+        && IngestionService && typeof IngestionService.sincronizarMotonaves === 'function') {
         await IngestionService.sincronizarMotonaves(puerto);
       }
     } catch (syncError) {

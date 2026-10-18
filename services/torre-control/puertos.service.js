@@ -191,6 +191,7 @@
 // module.exports = PuertosService;
 
 const { Sequelize } = require('sequelize');
+const { literalGeometria, SRID_PORTTOS } = require('../../helpers/geometria-segura.helper');
 const { sequelize } = require('../../database/connection');
 const { PuertoModel, PuertoDTO } = require('../../models/torre-control/puerto.model.js');
 const { wrapToFeatureCollection } = require('../../utils/geoJsonHelper.js');
@@ -324,13 +325,11 @@ class PuertosService {
 
       // B. Transformar los objetos GeoJSON a literales de SQL Server
       if (dataDTO.ubicacion_geo) {
-        const wkt = this._geoJsonToWkt(dataDTO.ubicacion_geo);
-        dataDTO.ubicacion_geo = Sequelize.literal(`geometry::STGeomFromText('${wkt}', 4326)`);
+        dataDTO.ubicacion_geo = literalGeometria(Sequelize, dataDTO.ubicacion_geo, SRID_PORTTOS, 'ubicacion_geo');
       }
 
       if (dataDTO.geocerca_geo) {
-        const wkt = this._geoJsonToWkt(dataDTO.geocerca_geo);
-        dataDTO.geocerca_geo = Sequelize.literal(`geometry::STGeomFromText('${wkt}', 4326)`);
+        dataDTO.geocerca_geo = literalGeometria(Sequelize, dataDTO.geocerca_geo, SRID_PORTTOS, 'geocerca_geo');
       }
 
       return await sequelize.transaction(async (t) => {
@@ -354,8 +353,7 @@ class PuertosService {
 
       // B. Transformamos a literales o gestionamos correctamente la ausencia del campo
       if (dataDTO.ubicacion_geo) {
-        const wkt = this._geoJsonToWkt(dataDTO.ubicacion_geo);
-        dataDTO.ubicacion_geo = Sequelize.literal(`geometry::STGeomFromText('${wkt}', 4326)`);
+        dataDTO.ubicacion_geo = literalGeometria(Sequelize, dataDTO.ubicacion_geo, SRID_PORTTOS, 'ubicacion_geo');
       } else if (dataDTO.ubicacion_geo === null) {
         // Si el cliente envía explícitamente null, permitimos que se borre de la BD
         dataDTO.ubicacion_geo = null;
@@ -365,8 +363,7 @@ class PuertosService {
       }
 
       if (dataDTO.geocerca_geo) {
-        const wkt = this._geoJsonToWkt(dataDTO.geocerca_geo);
-        dataDTO.geocerca_geo = Sequelize.literal(`geometry::STGeomFromText('${wkt}', 4326)`);
+        dataDTO.geocerca_geo = literalGeometria(Sequelize, dataDTO.geocerca_geo, SRID_PORTTOS, 'geocerca_geo');
       } else if (dataDTO.geocerca_geo === null) {
         dataDTO.geocerca_geo = null;
       } else {

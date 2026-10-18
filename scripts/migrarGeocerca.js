@@ -9,7 +9,7 @@ async function migrarGeocercas() {
     await sequelize.authenticate();
 
     const registros = await sequelize.query(
-      "SELECT id_infraestructura, geocerca_bounding_box FROM T_Maestro_Infraestructura WHERE geocerca_bounding_box IS NOT NULL",
+      "SELECT id_infraestructura, geocerca_bounding_box FROM TCL_MaestroInfraestructura WHERE geocerca_bounding_box IS NOT NULL",
       { type: QueryTypes.SELECT }
     );
 
@@ -17,7 +17,7 @@ async function migrarGeocercas() {
     for (const reg of registros) {
       try {
         // await sequelize.query(
-        //   `UPDATE T_Maestro_Infraestructura 
+        //   `UPDATE TCL_MaestroInfraestructura 
         //              SET geocerca_geo = geometry::STGeomFromText(:wkt, 4326).MakeValid() 
         //              WHERE id_infraestructura = :id`,
         //   {
@@ -26,7 +26,7 @@ async function migrarGeocercas() {
         //   }
         // );
         await sequelize.query(
-          `UPDATE T_Maestro_Infraestructura 
+          `UPDATE TCL_MaestroInfraestructura 
      SET geocerca_geo = geocerca_bounding_box 
      WHERE id_infraestructura = :id`,
           {

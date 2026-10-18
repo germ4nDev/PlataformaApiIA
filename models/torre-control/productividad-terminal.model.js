@@ -99,7 +99,7 @@ const ProductividadTerminalesModel = (sequelize) => {
       field: 'fechaModificacion'
     }
   }, {
-    tableName: 'TCLProductividadTerminales',
+    tableName: 'TCL_ProductividadTerminales',
     schema: 'dbo',
     timestamps: false
   });

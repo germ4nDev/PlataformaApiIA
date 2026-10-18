@@ -563,6 +563,7 @@
 
 // module.exports = new SincronizacionService();
 const db = require('../models');
+const { literalPunto } = require('../helpers/geometria-segura.helper');
 const MapaGeneralRepository = require('../repositories/torre-control/mapa-general.repository');
 const ExternalIntegrationService = require('../services/torre-control/external-integration.service');
 const { EventoVial, sequelize } = require('../models/index');
@@ -625,7 +626,7 @@ class SincronizacionService {
           if (eventoParaGuardar.ubicacion_geo && eventoParaGuardar.ubicacion_geo.coordinates) {
             const [lon, lat] = eventoParaGuardar.ubicacion_geo.coordinates;
             // Bypasseamos a Sequelize y forzamos el uso de geometry::STGeomFromText
-            eventoParaGuardar.ubicacion_geo = sequelize.literal(`geometry::STGeomFromText('POINT(${lon} ${lat})', 4326)`);
+            eventoParaGuardar.ubicacion_geo = literalPunto(sequelize, lon, lat);
           }
 
           // Agregamos el objeto ya formateado a nuestro arreglo

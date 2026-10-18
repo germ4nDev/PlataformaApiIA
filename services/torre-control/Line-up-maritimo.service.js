@@ -27,7 +27,10 @@ class TLCLineUpMaritimoService {
   }
 
   // Ingesta masiva desde el archivo procesado
+  // Corregido 2026-10-17: inactivar + insertar van en UNA transacción. Antes, si el bulkCreate fallaba
+  // (un registro inválido, la BD caída a mitad), el line-up de esas terminales quedaba inactivo y el tablero vacío.
   async registrarIngestaMasiva(dtoDataArray, usuarioModificacion) {
+    return sequelize.transaction(async (transaction) => {
 
     // 1. Extraemos dinámicamente las terminales únicas que vienen en este Excel
     // Mapeamos todas las terminales y usamos Set para eliminar duplicados
@@ -48,12 +51,14 @@ class TLCLineUpMaritimoService {
           where: {
             terminal: { [Op.in]: terminalesAfectadas },
             estadoRegistro: true
-          }
+          },
+          transaction
         }
       );
     }
 
-    return await TLCLineUpMaritimo.bulkCreate(dtoDataArray);
+    return TLCLineUpMaritimo.bulkCreate(dtoDataArray, { transaction });
+    });
   }
 }
 

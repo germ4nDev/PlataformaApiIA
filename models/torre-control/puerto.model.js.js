@@ -169,7 +169,7 @@ const PuertoModel = (sequelize) => {
     usuario_cargue: { type: DataTypes.STRING(200), allowNull: true },
     fecha_cargue: { type: DataTypes.STRING(100), allowNull: true }
   }, {
-    tableName: 'T_Maestro_Puertos',
+    tableName: 'TCL_MaestroPuertos',
     timestamps: false
   });
 };

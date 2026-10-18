@@ -221,8 +221,16 @@ class ExternalIntegrationService {
     if (apiCache.has(cacheKey)) return apiCache.get(cacheKey);
 
     try {
-      // Asignamos la llave directamente para forzar la conexión
-      const apiKey = process.env.WEATHER_API_KEY || '8aae29f456a7e2737fbb1ac1970e2353';
+      // Seguridad 2026-10-17: la clave ya no va escrita en el código (estaba expuesta en el repositorio).
+      // Sin WEATHER_API_KEY en el .env el clima responde null y los paneles muestran N/A.
+      const apiKey = process.env.WEATHER_API_KEY;
+      if (!apiKey) {
+        if (!ExternalIntegrationService._avisoSinClaveClima) {
+          console.warn('⚠️ [Clima] Falta WEATHER_API_KEY en el .env: el clima del mapa y del tablero quedará en N/A');
+          ExternalIntegrationService._avisoSinClaveClima = true;
+        }
+        return null;
+      }
 
       const response = await axios.get(`https://api.openweathermap.org/data/2.5/weather`, {
         ...getHeaders(),

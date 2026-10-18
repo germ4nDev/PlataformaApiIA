@@ -87,7 +87,7 @@ const InfraestructuraModel = (sequelize) => {
     estado: { type: DataTypes.BOOLEAN, allowNull: true },
     fecha_cargue: { type: DataTypes.STRING(100), allowNull: true }
   }, {
-    tableName: 'T_Maestro_Infraestructura',
+    tableName: 'TCL_MaestroInfraestructura',
     schema: 'dbo',
     timestamps: false
   });

@@ -68,7 +68,7 @@ const InfraestructuraTanquesModel = (sequelize) => {
     codigoUsuarioModificacion: { type: DataTypes.STRING(100), allowNull: true },
     fechaModificacion: { type: DataTypes.STRING(100), allowNull: true }
   }, {
-    tableName: 'T_Infraestructura_Tanques',
+    tableName: 'TCL_MaestroTanques',
     timestamps: false
   });
 };

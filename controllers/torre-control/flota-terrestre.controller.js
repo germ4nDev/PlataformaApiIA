@@ -10,7 +10,7 @@ class FlotaTerrestreController {
   // GET: Endpoint consumido por Angular (MapaGeneralService)
   async getFlotaActiva(req, res) {
     try {
-      const geojson = await FlotaTerrestreService.obtenerFlotaGeoJSON();
+      const geojson = await FlotaTerrestreService.obtenerFlotaGeoJSON(req.query.puerto);
       return res.status(200).json(geojson);
     } catch (error) {
       console.error('Error en getFlotaActiva:', error);
@@ -21,7 +21,7 @@ class FlotaTerrestreController {
   async obtenerGeocercasKPIs(req, res) {
     try {
       // Llamamos al servicio que ya habíamos dejado listo
-      const data = await FlotaTerrestreService.obtenerCapaGeocercas();
+      const data = await FlotaTerrestreService.obtenerCapaGeocercas(req.query.puerto);
 
       // Devolvemos el array dentro de la propiedad "data" que espera Angular
       return res.status(200).json({

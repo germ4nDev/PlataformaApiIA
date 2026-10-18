@@ -5,23 +5,47 @@
 const { ContenedorMovimientoModel } = require('../../models/torre-control/contenedor-movimiento.model');
 
 const { sequelize } = require('../../database/connection');
+const { Op } = require('sequelize');
+const { esColumnaInexistente } = require('../../helpers/errores.helper');
 
-const obtenerDatosContenedores = async () => {
+/**
+ * Movimientos del puerto. Corregido 2026-10-17: antes no filtraba y todos los puertos mostraban lo mismo.
+ * Con la migración 008: los del puerto + los que no tienen puerto (datos anteriores sin clasificar).
+ * Sin la migración (columna inexistente): todos, como antes.
+ */
+const leerMovimientos = async (MovimientoModel, puerto) => {
+  const orden = [['fechaCreacion', 'DESC']];
+  try {
+    return await MovimientoModel.findAll({
+      raw: true,
+      where: { [Op.or]: [{ id_puerto: puerto }, { id_puerto: null }] },
+      order: orden
+    });
+  } catch (error) {
+    if (!esColumnaInexistente(error)) throw error;
+    return MovimientoModel.findAll({ raw: true, attributes: { exclude: ['id_puerto'] }, order: orden });
+  }
+};
+
+const texto = (v) => String(v || '').toLowerCase();
+
+const obtenerDatosContenedores = async (puerto = 'BUENAVENTURA') => {
   try {
     // Usamos directamente la instancia importada
     const MovimientoModel = ContenedorMovimientoModel(sequelize);
 
-    // 1. Consultar todos los movimientos reales de la tabla
-    const movimientosDb = await MovimientoModel.findAll({
-      raw: true,
-      order: [['fechaCreacion', 'DESC']]
-    });
+    // 1. Movimientos del puerto (ver leerMovimientos)
+    const puertoFiltro = String(puerto || 'BUENAVENTURA').trim().toUpperCase();
+    const movimientosDb = await leerMovimientos(MovimientoModel, puertoFiltro);
 
     // 2. Calcular KPIs dinámicamente basados en los registros
-    const totalCargados = movimientosDb.filter(m => m.operacion.toLowerCase().includes('retiro')).length;
-    const totalVacios = movimientosDb.filter(m => m.operacion.toLowerCase().includes('vacío') || m.operacion.toLowerCase().includes('vacio')).length;
+    // texto(): una operación o tipo en NULL ya no tumba todo el tablero
+    const esVacio = (m) => texto(m.operacion).includes('vacío') || texto(m.operacion).includes('vacio');
+    // Corregido 2026-10-17: "Retiro vacío" contaba como cargado y como vacío a la vez
+    const totalCargados = movimientosDb.filter(m => texto(m.operacion).includes('retiro') && !esVacio(m)).length;
+    const totalVacios = movimientosDb.filter(m => texto(m.operacion).includes('vacío') || texto(m.operacion).includes('vacio')).length;
     const totalDemoras = movimientosDb.filter(m => m.estado === 'DEMORA HOY' || m.estado === 'POR VENCER').length;
-    const totalReefer = movimientosDb.filter(m => m.tipo.includes('RH')).length;
+    const totalReefer = movimientosDb.filter(m => String(m.tipo || '').includes('RH')).length;
 
     const navierasConteo = {};
     movimientosDb.forEach(m => {
@@ -98,7 +122,9 @@ const obtenerDatosContenedores = async () => {
     return payload;
 
   } catch (error) {
-    throw new Error(`Error en capa de servicio al consultar movimientos de contenedores: ${error.message}`);
+    // Se propaga el error original (conserva el número de error SQL para responderError)
+    console.error('❌ [ContenedoresService] Error al consultar movimientos de contenedores:', error.message);
+    throw error;
   }
 };
 

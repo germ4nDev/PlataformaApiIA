@@ -62,7 +62,8 @@ const obtenerCapaClima = async (req, res) => {
 const obtenerCapaNaves = async (req, res) => {
   try {
     // Apuntamos al nuevo nombre del método en el servicio
-    const resultado = await mapaService.getCapaNaves();
+    // ?puerto= opcional: sin él responde como antes (todo el país)
+    const resultado = await mapaService.getCapaNaves(req.query.puerto);
 
     // Según tu servicio de Angular, naves tiene un Subject separado,
     // por lo que mandamos la 'data' directo.

@@ -17,7 +17,7 @@ class MapaGeneralRepository {
             imagen_url, 
             ubicacion_geo.STY AS lat, 
             ubicacion_geo.STX AS lon
-        FROM dbo.T_Maestro_Puertos 
+        FROM dbo.TCL_MaestroPuertos 
         WHERE estado = 1
     `;
 
@@ -46,7 +46,7 @@ class MapaGeneralRepository {
                             m.id_interno,
                             m.codigo_muelle AS nombre_muelle,
                             m.geocerca_geo.STAsText() AS muelle_wkt
-                        FROM T_Maestro_Muelles m
+                        FROM TCL_MaestroMuelles m
                         WHERE m.id_terminal = t.id_terminal
                         FOR JSON PATH
                     ) AS muelles,
@@ -60,16 +60,16 @@ class MapaGeneralRepository {
         -- Eliminamos latitud y longitud porque no existen en el esquema
         i.geocerca_geo.STAsText() AS infra_geocerca_wkt,
         i.ubicacion_geo.STAsText() AS infra_ubicacion_wkt
-    FROM T_Maestro_Infraestructura i
+    FROM TCL_MaestroInfraestructura i
     WHERE i.id_terminal = t.id_terminal
     FOR JSON PATH
 ) AS infraestructuras
 
-                FROM T_Maestro_Terminales t
+                FROM TCL_MaestroTerminales t
                 WHERE t.id_puerto = p.id_puerto
                 FOR JSON PATH
             ) AS terminales
-        FROM T_Maestro_Puertos p
+        FROM TCL_MaestroPuertos p
         WHERE p.estado = 1
         FOR JSON PATH;
     `;
@@ -89,7 +89,17 @@ class MapaGeneralRepository {
     return [];
   }
 
-  async getUltimasPosicionesNaves() {
+  /**
+   * @param {{caja?: {sur,oeste,norte,este}|null, horasVigencia?: number}} opciones
+   *   Agregado 2026-10-18: con caja (puerto del filtro) solo naves dentro de ella y con reporte AIS en las
+   *   últimas horasVigencia (24 por defecto). Sin caja responde como antes (todo el país, sin antigüedad).
+   */
+  async getUltimasPosicionesNaves({ caja = null, horasVigencia = 24 } = {}) {
+    const filtroPuerto = caja ? `
+        AND CAST(ais.latitud AS FLOAT) BETWEEN :sur AND :norte
+        AND CAST(ais.longitud AS FLOAT) BETWEEN :oeste AND :este
+        AND TRY_CONVERT(DATETIMEOFFSET, ais.fechaModificacion, 127) >= DATEADD(HOUR, :horasNeg, SYSDATETIMEOFFSET())` : '';
+    const replacements = caja ? { ...caja, horasNeg: -Math.abs(Number(horasVigencia) || 24) } : {};
     const query = `
       SELECT 
           ais.mmsi,
@@ -112,27 +122,28 @@ class MapaGeneralRepository {
           perfiles.agencia,
           perfiles.instalacion_portuaria,
           perfiles.puerto_procedencia
-      FROM TCLAisUltimaPosicion ais WITH(NOLOCK)
+      FROM TCL_AisUltimaPosicion ais WITH(NOLOCK)
       
       LEFT JOIN (
           -- Usamos estrictamente las columnas que SÍ existen en tus tablas
-          SELECT motonave, 'AVISADAS' as estado_nave, omi, bandera, eta, tipo_nave, eslora, calado, agencia, instalacion_portuaria, puerto_procedencia FROM TLCNaves_Avisadas WITH(NOLOCK)
+          SELECT motonave, 'AVISADAS' as estado_nave, omi, bandera, eta, tipo_nave, eslora, calado, agencia, instalacion_portuaria, puerto_procedencia FROM TCL_NavesAvisadas WITH(NOLOCK)
           UNION ALL
-          SELECT motonave, 'ARRIBADAS' as estado_nave, omi, bandera, eta, tipo_nave, eslora, calado, agencia, instalacion_portuaria, puerto_procedencia FROM TLCNaves_Arribadas WITH(NOLOCK)
+          SELECT motonave, 'ARRIBADAS' as estado_nave, omi, bandera, eta, tipo_nave, eslora, calado, agencia, instalacion_portuaria, puerto_procedencia FROM TCL_NavesArribadas WITH(NOLOCK)
           UNION ALL
-          SELECT motonave, 'FONDEADAS' as estado_nave, omi, bandera, NULL as eta, tipo_nave, eslora, calado, agencia, instalacion_portuaria, puerto_procedencia FROM TLCNaves_Fondeadas WITH(NOLOCK)
+          SELECT motonave, 'FONDEADAS' as estado_nave, omi, bandera, NULL as eta, tipo_nave, eslora, calado, agencia, instalacion_portuaria, puerto_procedencia FROM TCL_NavesFondeadas WITH(NOLOCK)
           UNION ALL
-          SELECT motonave, 'ZARPADAS' as estado_nave, omi, bandera, NULL as eta, tipo_nave, eslora, calado, agencia, instalacion_portuaria, puerto_procedencia FROM TLCNaves_Zarpadas WITH(NOLOCK)
+          SELECT motonave, 'ZARPADAS' as estado_nave, omi, bandera, NULL as eta, tipo_nave, eslora, calado, agencia, instalacion_portuaria, puerto_procedencia FROM TCL_NavesZarpadas WITH(NOLOCK)
       ) perfiles 
       
       -- 🔥 EL PUENTE CORRECTO: Cruzamos por nombre ignorando nulos y espacios
       ON LTRIM(RTRIM(UPPER(ISNULL(ais.nombre_motonave, '')))) = LTRIM(RTRIM(UPPER(ISNULL(perfiles.motonave, ''))))
       
       WHERE ais.latitud IS NOT NULL AND ais.longitud IS NOT NULL
+      ${filtroPuerto}
     `;
 
     try {
-      const resultados = await this.sequelize.query(query, { type: this.sequelize.QueryTypes.SELECT });
+      const resultados = await this.sequelize.query(query, { replacements, type: this.sequelize.QueryTypes.SELECT });
 
       return {
         type: 'FeatureCollection',
@@ -173,7 +184,7 @@ class MapaGeneralRepository {
   async getFlotaTerrestreActiva() {
     const query = `
         SELECT placa, estado, conductor, latitud, longitud, velocidad
-        FROM dbo.TLCFlotaTerrestre 
+        FROM dbo.TCL_FlotaTerrestre 
         WHERE estado != 'MANTENIMIENTO' 
           AND latitud IS NOT NULL 
           AND longitud IS NOT NULL
@@ -183,7 +194,7 @@ class MapaGeneralRepository {
 
   async actualizarPosicionesSimuladas() {
     const query = `
-      UPDATE dbo.TLCFlotaTerrestre 
+      UPDATE dbo.TCL_FlotaTerrestre 
       SET 
           latitud = latitud + (RAND() * 0.002 - 0.001),
           longitud = longitud + (RAND() * 0.004 - 0.002),
@@ -205,10 +216,10 @@ class MapaGeneralRepository {
                     WHEN muelle.nombre_muelle IS NOT NULL THEN 'En Muelle'
                     ELSE 'En Fondeo/Navegación'
                 END AS estado_operativo
-            FROM dbo.TLCNaves_Arribadas d
-            LEFT JOIN dbo.TCL_Homologacion_MMSI hom ON d.id_aviso = hom.id_aviso
-            LEFT JOIN dbo.TCLAisUltimaPosicion ais ON hom.mmsi = ais.mmsi
-            LEFT JOIN dbo.T_Maestro_Muelles muelle ON 
+            FROM dbo.TCL_NavesArribadas d
+            LEFT JOIN dbo.TCL_HomologacionMMSI hom ON d.id_aviso = hom.id_aviso
+            LEFT JOIN dbo.TCL_AisUltimaPosicion ais ON hom.mmsi = ais.mmsi
+            LEFT JOIN dbo.TCL_MaestroMuelles muelle ON 
                 ais.latitud IS NOT NULL AND 
                 ais.longitud IS NOT NULL AND
                 muelle.geometria.STIntersects(

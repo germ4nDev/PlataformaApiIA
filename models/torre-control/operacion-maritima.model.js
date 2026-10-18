@@ -137,7 +137,7 @@ const OperacionMaritimaModel = (sequelize) => {
       allowNull: false
     }
   }, {
-    tableName: 'TLC_Operacion_Maritima',
+    tableName: 'TCL_OperacionMaritima',
     schema: 'dbo',
     timestamps: false
   });

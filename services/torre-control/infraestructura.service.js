@@ -4,6 +4,7 @@
     Update: Unificación de campos espaciales (Point y Polygon) y GeoJSON Enveloping
 */
 const { Sequelize } = require('sequelize');
+const { literalGeometria, literalPunto } = require('../../helpers/geometria-segura.helper');
 const { sequelize } = require('../../database/connection');
 const { InfraestructuraModel, InfraestructuraDTO } = require('../../models/torre-control/infraestructura.model.js');
 const { wrapToFeatureCollection } = require('../../utils/geoJsonHelper.js');
@@ -66,13 +67,12 @@ class InfraestructuraService {
     if (geoJson.type === 'Point') {
       const [lon, lat] = geoJson.coordinates;
       // CAST es una instrucción core de SQL, 100% a prueba de fallos de driver
-      return Sequelize.literal(`CAST('POINT(${lon} ${lat})' AS geometry)`);
+      return literalPunto(Sequelize, lon, lat, 0, 'ubicacion_geo'); // SRID 0: igual que el CAST anterior
     }
 
     if (geoJson.type === 'Polygon') {
       // Formateo del array de coordenadas para WKT
-      const coordsStr = geoJson.coordinates[0].map(c => `${c[0]} ${c[1]}`).join(', ');
-      return Sequelize.literal(`CAST('POLYGON((${coordsStr}))' AS geometry)`);
+      return literalGeometria(Sequelize, geoJson, 0, 'geocerca_geo'); // SRID 0: igual que el CAST anterior
     }
 
     return null;

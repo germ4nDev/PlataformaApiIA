@@ -7,6 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const ExternalIntegrationService = require('./external-integration.service');
 const MaritimoRepository = require('../../repositories/torre-control/mapa-general.repository');
+const { cajaPuerto, MARGEN } = require('../../helpers/caja-puerto.helper');
 
 class MapaGeneralService {
   constructor(repository) {
@@ -68,17 +69,22 @@ class MapaGeneralService {
       const promesas = puertos.map(p => ExternalIntegrationService.getWeatherData(p.lat, p.lon));
       const resultados = await Promise.all(promesas);
 
+      // Corregido 2026-10-17: antes se filtraban los puertos sin clima ANTES de emparejar por índice,
+      // así que si un puerto fallaba los siguientes quedaban con el nombre y la ubicación del puerto equivocado.
       const geoJson = {
         type: 'FeatureCollection',
-        features: resultados.filter(w => w).map((w, i) => ({
-          type: 'Feature',
-          geometry: { type: 'Point', coordinates: [puertos[i].lon, puertos[i].lat] },
-          properties: {
-            zona: puertos[i].nombre,
-            temp: w.main?.temp,
-            descripcion: w.weather?.[0]?.description
-          }
-        }))
+        features: puertos
+          .map((p, i) => ({ p, w: resultados[i] }))
+          .filter(({ w }) => w)
+          .map(({ p, w }) => ({
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: [p.lon, p.lat] },
+            properties: {
+              zona: p.nombre,
+              temp: w.main?.temp,
+              descripcion: w.weather?.[0]?.description
+            }
+          }))
       };
       return { success: true, data: geoJson };
     } catch (error) {
@@ -153,9 +159,11 @@ class MapaGeneralService {
   // ==========================================
   // 5. CAPA NAVES
   // ==========================================
-  async getCapaNaves() {
+  /** @param {string} [puerto] filtro opcional del tablero (agregado 2026-10-18) */
+  async getCapaNaves(puerto) {
     try {
-      const naves = await this.repository.getUltimasPosicionesNaves();
+      const caja = await cajaPuerto(puerto, MARGEN.MARITIMO);
+      const naves = await this.repository.getUltimasPosicionesNaves({ caja });
       return { success: true, data: naves };
     } catch (error) {
       console.error('❌ [Naves] Error en Capa Naves:', error);
@@ -229,7 +237,7 @@ class MapaGeneralService {
     }));
   }
 
-  // Mapeo específico para dbo.TCLEventosViales
+  // Mapeo específico para dbo.TCL_EventosViales
   _mapearEventoVial(item) {
     return {
       codigoEvento: item.uuid || item.id_unico,
@@ -245,7 +253,7 @@ class MapaGeneralService {
     };
   }
 
-  // Mapeo específico para dbo.TCLAlertasClimaticas
+  // Mapeo específico para dbo.TCL_AlertasClimaticas
   _mapearAlertaClimatica(item) {
     return {
       codigoAlerta: item.id_alerta,
