@@ -5,6 +5,8 @@
 const { response } = require('express');
 const MuellesService = require('../../services/torre-control/muelles.service');
 
+const { responderError } = require('../../helpers/errores.helper');
+const { contextoUsuario } = require('../../helpers/controlador.helper');
 const muellesService = new MuellesService();
 
 const getMuelles = async (req, res = response) => {
@@ -16,11 +18,7 @@ const getMuelles = async (req, res = response) => {
       data: respuesta.data
     });
   } catch (error) {
-    res.status(error.statusCode || 500).json({
-      ok: false,
-      msg: error.msg || 'Error al obtener el listado de muelles. Hable con el administrador.',
-      error: error.message || error
-    });
+    return responderError(res, error, 'muelle.getMuelles');
   }
 };
 
@@ -41,16 +39,13 @@ const getMuelleById = async (req, res = response) => {
       data: respuesta.data
     });
   } catch (error) {
-    res.status(error.statusCode || 500).json({
-      ok: false,
-      msg: error.msg || 'Error al obtener el muelle'
-    });
+    return responderError(res, error, 'muelle.getMuelleById');
   }
 };
 
 const crearMuelle = async (req, res = response) => {
   try {
-    const userContext = { codigoUsuario: req.uid || 'SISTEMA_ADMIN' };
+    const userContext = contextoUsuario(req);
     const nuevoMuelle = await muellesService.crearMuelle(req.body, userContext);
 
     res.status(201).json({
@@ -59,28 +54,14 @@ const crearMuelle = async (req, res = response) => {
       data: nuevoMuelle
     });
   } catch (error) {
-    const statusCode = error.type === 'ValidationError' ? 400 : (error.statusCode || 500);
-    res.status(statusCode).json({
-      ok: false,
-      msg: error.type === 'ValidationError' ? 'Error de validación en los datos enviados' : (error.msg || 'Error al crear el muelle'),
-      detalles: error.details || error
-    });
+    return responderError(res, error, 'muelle.crearMuelle');
   }
 };
 
 const updateMuelle = async (req, res = response) => {
   try {
     const { id } = req.params;
-    const userContext = { codigoUsuario: req.uid || 'SISTEMA_ADMIN' };
-
-    // if (dataDTO.geocerca_geo) {
-    //   // Si viene una geocerca nueva, la convertimos para SQL Server
-    //   dataDTO.geocerca_geo = Sequelize.literal(`geometry::STGeomFromText('${dataDTO.geocerca_geo}', 4326)`);
-    // } else {
-    //   // 🟢 LA MAGIA AQUÍ: Si es null o no viene, borramos la propiedad.
-    //   // Así Sequelize no la incluye en el SET del UPDATE y respeta la existente en BD.
-    //   delete dataDTO.geocerca_geo;
-    // }
+    const userContext = contextoUsuario(req);
 
     console.log('actualizar muelle id', id);
     console.log('actualizar muelle', req.body);
@@ -93,12 +74,7 @@ const updateMuelle = async (req, res = response) => {
       data: muelleActualizado
     });
   } catch (error) {
-    const statusCode = error.type === 'ValidationError' ? 400 : (error.statusCode || 500);
-    res.status(statusCode).json({
-      ok: false,
-      msg: error.type === 'ValidationError' ? 'Error de validación en los datos enviados' : (error.msg || 'Error al actualizar el muelle'),
-      detalles: error.details || error
-    });
+    return responderError(res, error, 'muelle.updateMuelle');
   }
 };
 
@@ -113,10 +89,7 @@ const deleteMuelle = async (req, res = response) => {
       data: muelleEliminado
     });
   } catch (error) {
-    res.status(error.statusCode || 500).json({
-      ok: false,
-      msg: error.msg || 'Error al eliminar el muelle'
-    });
+    return responderError(res, error, 'muelle.deleteMuelle');
   }
 };
 

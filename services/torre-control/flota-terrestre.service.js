@@ -4,7 +4,7 @@
 */
 const FlotaTerrestreRepository = require('../../repositories/torre-control/flota-terrestre.repository');
 const { cajaPuerto, cajaWkt, MARGEN } = require('../../helpers/caja-puerto.helper');
-const { io } = require('../../index');
+const { emitir } = require('../../helpers/socket.helper');
 
 class FlotaTerrestreService {
 
@@ -93,10 +93,7 @@ class FlotaTerrestreService {
                 mensaje: mensaje,
                 fecha: new Date()
               };
-              const socketGlobal = io || require('../../index').io;
-              if (socketGlobal) {
-                socketGlobal.emit('alerta-terrestre', payload);
-              }
+              emitir('alerta-terrestre', payload);
             }
           }
         }

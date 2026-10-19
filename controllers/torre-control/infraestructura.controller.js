@@ -5,6 +5,8 @@
 const { response } = require('express');
 const InfraestructuraService = require('../../services/torre-control/infraestructura.service');
 
+const { responderError } = require('../../helpers/errores.helper');
+const { contextoUsuario } = require('../../helpers/controlador.helper');
 const infraestructuraService = new InfraestructuraService();
 
 const getInfraestructuras = async (req, res = response) => {
@@ -16,11 +18,7 @@ const getInfraestructuras = async (req, res = response) => {
       data: respuesta.data
     });
   } catch (error) {
-    res.status(error.statusCode || 500).json({
-      ok: false,
-      msg: error.msg || 'Error al obtener el listado de infraestructura. Hable con el administrador.',
-      error: error.message || error
-    });
+    return responderError(res, error, 'infraestructura.getInfraestructuras');
   }
 };
 
@@ -41,16 +39,13 @@ const getInfraestructuraById = async (req, res = response) => {
       data: respuesta.data
     });
   } catch (error) {
-    res.status(error.statusCode || 500).json({
-      ok: false,
-      msg: error.msg || 'Error al obtener la infraestructura'
-    });
+    return responderError(res, error, 'infraestructura.getInfraestructuraById');
   }
 };
 
 const crearInfraestructura = async (req, res = response) => {
   try {
-    const userContext = { codigoUsuario: req.uid || 'SISTEMA_ADMIN' };
+    const userContext = contextoUsuario(req);
     const nuevaInfraestructura = await infraestructuraService.crearInfraestructura(req.body, userContext);
 
     res.status(201).json({
@@ -59,19 +54,14 @@ const crearInfraestructura = async (req, res = response) => {
       data: nuevaInfraestructura
     });
   } catch (error) {
-    const statusCode = error.type === 'ValidationError' ? 400 : (error.statusCode || 500);
-    res.status(statusCode).json({
-      ok: false,
-      msg: error.type === 'ValidationError' ? 'Error de validación en los datos enviados' : (error.msg || 'Error al crear la infraestructura'),
-      detalles: error.details || error
-    });
+    return responderError(res, error, 'infraestructura.crearInfraestructura');
   }
 };
 
 const updateInfraestructura = async (req, res = response) => {
   try {
     const { id } = req.params;
-    const userContext = { codigoUsuario: req.uid || 'SISTEMA_ADMIN' };
+    const userContext = contextoUsuario(req);
     console.log('datos actualizar', req.body);
 
     const infraestructuraActualizada = await infraestructuraService.updateInfraestructura(id, req.body, userContext);
@@ -82,12 +72,7 @@ const updateInfraestructura = async (req, res = response) => {
       data: infraestructuraActualizada
     });
   } catch (error) {
-    const statusCode = error.type === 'ValidationError' ? 400 : (error.statusCode || 500);
-    res.status(statusCode).json({
-      ok: false,
-      msg: error.type === 'ValidationError' ? 'Error de validación en los datos enviados' : (error.msg || 'Error al actualizar la infraestructura'),
-      detalles: error.details || error
-    });
+    return responderError(res, error, 'infraestructura.updateInfraestructura');
   }
 };
 
@@ -102,10 +87,7 @@ const deleteInfraestructura = async (req, res = response) => {
       data: infraestructuraEliminada
     });
   } catch (error) {
-    res.status(error.statusCode || 500).json({
-      ok: false,
-      msg: error.msg || 'Error al eliminar la infraestructura'
-    });
+    return responderError(res, error, 'infraestructura.deleteInfraestructura');
   }
 };
 

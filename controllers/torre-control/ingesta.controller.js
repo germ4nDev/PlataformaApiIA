@@ -1,5 +1,6 @@
 const ingestaService = require('../../services/torre-control/ingesta.service');
 
+const { responderError } = require('../../helpers/errores.helper');
 const cargarRNDC = async (req, res) => {
   try {
     // express-fileupload guarda los archivos en req.files
@@ -17,8 +18,7 @@ const cargarRNDC = async (req, res) => {
     res.status(200).json({ ok: true, msg: 'Carga masiva RNDC exitosa', registros: resultado });
 
   } catch (error) {
-    console.error('Error en el controlador cargarRNDC:', error.message);
-    res.status(500).json({ ok: false, msg: error.message });
+    return responderError(res, error, 'ingesta.cargarRNDC');
   }
 };
 
@@ -36,8 +36,7 @@ const cargarMaritimo = async (req, res) => {
 
     res.status(200).json({ ok: true, msg: 'Carga masiva Marítima exitosa', registros: resultado });
   } catch (error) {
-    console.error('Error en cargarMaritimo:', error.message);
-    res.status(500).json({ ok: false, msg: error.message });
+    return responderError(res, error, 'ingesta.cargarMaritimo');
   }
 };
 
@@ -57,8 +56,7 @@ const cargarMatrizOperaciones = async (req, res) => {
     res.status(200).json({ ok: true, msg: 'Carga masiva de Matriz exitosa', registros: resultado });
 
   } catch (error) {
-    console.error('Error en el controlador cargarMatrizOperaciones:', error.message);
-    res.status(500).json({ ok: false, msg: error.message });
+    return responderError(res, error, 'ingesta.cargarMatrizOperaciones');
   }
 };
 
@@ -73,11 +71,7 @@ const sincronizarSupertransporte = async (req, res) => {
       data: resultado
     });
   } catch (error) {
-    console.error('[CTRL] Error sincronizando Supertransporte:', error);
-    return res.status(500).json({
-      ok: false,
-      msg: 'Falla al intentar conectar con la fuente oficial de datos.gov.co'
-    });
+    return responderError(res, error, 'ingesta.sincronizarSupertransporte');
   }
 };
 

@@ -1,5 +1,6 @@
 const MapaPortuarioService = require('../../services/torre-control/mapa-portuario.service');
 
+const { responderError } = require('../../helpers/errores.helper');
 class MapaPortuarioController {
 
   async obtenerMapaFormatoFrontend(req, res) {
@@ -13,11 +14,7 @@ class MapaPortuarioController {
       });
 
     } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: 'Error interno del servidor al cargar el mapa',
-        error: error.message
-      });
+      return responderError(res, error, 'mapa-portuario.obtenerMapaFormatoFrontend');
     }
   }
 }

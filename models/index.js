@@ -5,7 +5,7 @@
 // // 1. IMPORTAMOS LOS MODELOS
 // // ==========================================
 // // --- Módulo Torre de Control ---
-// const { PuertoModel } = require('./torre-control/puerto.model.js');
+// const { PuertoModel } = require('./torre-control/puerto.model');
 // const { TerminalModel } = require('./torre-control/terminal.model.js');
 // const { MuelleModel } = require('./torre-control/muelle.model');
 // const { EventoVialModel } = require('./torre-control/evento-vial.model.js');
@@ -103,7 +103,7 @@ const { sequelize } = require('../database/connection');
 // 1. IMPORTAMOS LOS MODELOS
 // ==========================================
 // --- Módulo Torre de Control ---
-const { PuertoModel } = require('./torre-control/puerto.model.js');
+const { PuertoModel } = require('./torre-control/puerto.model');
 const { TerminalModel } = require('./torre-control/terminal.model.js');
 const { MuelleModel } = require('./torre-control/muelle.model');
 const { EventoVialModel } = require('./torre-control/evento-vial.model.js');

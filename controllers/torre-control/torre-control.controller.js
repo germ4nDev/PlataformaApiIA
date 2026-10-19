@@ -1,11 +1,10 @@
-const db = require('../../models');
-console.log('📌 Modelos disponibles en Sequelize:', Object.keys(db));
 const { response } = require('express');
 const torreControlService = require('../../services/torre-control/torre-control.service');
 
 const ejecutarConMonitoreo = require('../../utils/monitorETL');
-const SincronizacionService = require('../../jobs/sincronizacion.service');
+const SincronizacionService = require('../../services/torre-control/sincronizacion.service');
 
+const { responderError } = require('../../helpers/errores.helper');
 const obtenerEstadoTuneles = async (req, res) => {
   try {
     const registros = await torreControlService.getBitacora()
@@ -16,12 +15,7 @@ const obtenerEstadoTuneles = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error obteniendo el estado de los túneles:', error);
-    res.status(500).json({
-      ok: false,
-      msg: 'Error interno del servidor al consultar la bitácora',
-      error: error.message
-    });
+    return responderError(res, error, 'torre-control.obtenerEstadoTuneles');
   }
 };
 
@@ -33,8 +27,7 @@ const obtenerBitacora = async (req, res) => {
       data: logs
     });
   } catch (error) {
-    console.error('Error al consultar bitácora:', error);
-    res.status(500).json({ success: false, message: 'Error interno del servidor' });
+    return responderError(res, error, 'torre-control.obtenerBitacora');
   }
 };
 
@@ -50,12 +43,7 @@ const ejecutarSincronizacionManual = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error en ejecución manual:', error);
-    res.status(500).json({
-      ok: false,
-      msg: 'Error ejecutando la sincronización manual',
-      error: error.message
-    });
+    return responderError(res, error, 'torre-control.ejecutarSincronizacionManual');
   }
 };
 

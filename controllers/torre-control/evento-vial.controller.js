@@ -1,6 +1,7 @@
 // controllers/torre-control/evento-vial.controller.js
 const EventoVialService = require('../../services/torre-control/evento-vial.service');
 
+const { responderError } = require('../../helpers/errores.helper');
 class EventoVialController {
 
   async getEventosActivos(req, res) {
@@ -12,11 +13,7 @@ class EventoVialController {
       // Entregamos directamente el objeto GeoJSON
       res.status(200).json(geojsonData);
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: 'Error al obtener la capa de incidentes viales',
-        error: error.message
-      });
+      return responderError(res, error, 'evento-vial.getEventosActivos');
     }
   }
 }

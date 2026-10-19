@@ -178,7 +178,7 @@ app.use("/api/torre-control", require("./routes/torre-control/torre-control.rout
 app.use("/api/maritimo", require("./routes/torre-control/maritimo.routes"));
 app.use('/api/widgets', require('./routes/torre-control/widget.routes'));
 app.use('/api/mapa-general', require('./routes/torre-control/mapa-general.routes'));
-app.use('/api/alertas', require('./routes/torre-control/alertaClimatica.routes'));
+app.use('/api/alertas', require('./routes/torre-control/alertas-climaticas.routes'));
 app.use('/api/puertos', require('./routes/torre-control/puertos.routes'));
 app.use('/api/terminales', require('./routes/torre-control/terminales.routes'));
 app.use('/api/muelles', require('./routes/torre-control/muelles.routes'));
@@ -186,7 +186,7 @@ app.use('/api/infraestructura', require('./routes/torre-control/infraestructura.
 app.use('/api/tipos-infraestructura', require('./routes/torre-control/tipos-infraestructura.routes'));
 app.use('/api/eventos-viales', require('./routes/torre-control/evento-vial.routes'));
 app.use('/api/flota-terrestre', require('./routes/torre-control/flota-terrestre.routes'));
-app.use('/api/motonaves', require('./routes/torre-control/motonves.routes'));
+app.use('/api/motonaves', require('./routes/torre-control/motonaves.routes'));
 app.use('/api/faros', require('./routes/torre-control/faros.routes'));
 app.use('/api/radar', require('./routes/torre-control/radar.routes'));
 app.use('/api/contenedores', require('./routes/torre-control/contenedores.routes'));

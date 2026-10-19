@@ -1,40 +1,23 @@
 /*
     Author: German Valencia
-    Service: Lógica de Negocio para Nodos de Monitoreo
+    Pattern: PORTTOS Service - Nodos de monitoreo vial
+    Description: Puntos de la red vial donde se consulta el clima. Acceso a datos en nodos-monitoreo.repository.js.
+      (El parámetro sequelizeInstance de versiones anteriores ya no se usa; se acepta por compatibilidad.)
 */
-const { NodoMonitoreoModel } = require('../../models/torre-control/nodo-monitoreo.model');
+const repositorio = require('../../repositories/torre-control/nodos-monitoreo.repository');
 
 const NodoMonitoreoService = {
-
-  crearNodo: async (dtoData, sequelizeInstance) => {
-    return await NodoMonitoreoModel(sequelizeInstance).create(dtoData);
-  },
-
-  obtenerNodosActivos: async (sequelizeInstance) => {
-    return await NodoMonitoreoModel(sequelizeInstance).findAll({
-      where: { estado: 'ACTIVO' }
-    });
-  },
-
-  obtenerTodosLosNodos: async (sequelizeInstance) => {
-    return await NodoMonitoreoModel(sequelizeInstance).findAll();
-  },
-
-  actualizarNodo: async (codigoNodo, updateData, userContext, sequelizeInstance) => {
-    const model = NodoMonitoreoModel(sequelizeInstance);
-
-    const dataAuditoria = {
-      ...updateData,
+  crearNodo: (dto) => repositorio.crear(dto),
+  obtenerNodosActivos: () => repositorio.listar({ estado: 'ACTIVO' }),
+  obtenerTodosLosNodos: () => repositorio.listar(),
+  actualizarNodo: async (codigoNodo, cambios, userContext) => {
+    const filas = await repositorio.actualizar(codigoNodo, {
+      ...cambios,
       codigoUsuarioModificacion: userContext.codigoUsuario,
-      fechaModificacion: new Date()
-    };
-
-    const [rowsUpdated] = await model.update(dataAuditoria, {
-      where: { codigoNodo: codigoNodo }
+      fechaModificacion: new Date(),
     });
-
-    return rowsUpdated > 0;
-  }
+    return filas > 0;
+  },
 };
 
 module.exports = NodoMonitoreoService;

@@ -22,6 +22,8 @@ Los scripts son autocontenidos: se pueden abrir y ejecutar directamente en SSMS.
 7. `006_capitania_dimar_puertos.sql` → (independiente) capitanía DIMAR de cada puerto para cruzar los avisos de arribo (La Guajira → PUERTO BOLIVAR, Turbo → URABÁ Y DEL DARIÉN).
 8. `007_widgets_maritimo_vivo.sql` → registra los 5 widgets "Marítimo en vivo" (endpoints `/api/maritimo/:puerto/{resumen,tiempos,ocupacion,llegadas}`) en el catálogo de la pestaña Marítimo, con los roles del widget de referencia.
 9. `008_puerto_movimientos_contenedor.sql` → (independiente) agrega `id_puerto` a `TCL_MovimientosContenedor` y lo infiere desde la ruta (terminal conocida). La pestaña Contenedores filtra por puerto; lo que quede sin puerto se sigue viendo en todos. El API funciona antes y después de correrla.
+10. `009_layout_por_defecto_desde_usuario.sql` → copia el tablero de un usuario como layout por defecto (`@ejecutar = 0` vista previa).
+11. `010_compatibilidad_110.sql` → **urgente**: sube `plataformaBD` del nivel 100 al 110 para que funcionen `TRY_CONVERT`/`TRY_CAST` (64 consultas del API). Mantiene el estimador de cardinalidad clásico. Reversa: `ALTER DATABASE plataformaBD SET COMPATIBILITY_LEVEL = 100`.
 
 Reversa de la 001: `001_reversa.sql`.
 

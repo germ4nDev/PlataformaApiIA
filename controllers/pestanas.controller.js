@@ -7,6 +7,24 @@ const PestanasService = require("../services/pestanas.service");
 
 const service = new PestanasService();
 
+const getPestanasTodas = async (req, res) => {
+  try {
+    const resultado = await service.obtenerPestanas();
+    console.log('resultado', resultado);
+    return res.status(200).json({
+      ok: true,
+      respuesta: resultado
+    });
+  } catch (error) {
+    console.error("🔥 ERROR REAL PESTANAS:", error); // 🟢 Esto revelará al culpable
+
+    if (error.type === 'ValidationError') {
+      return res.status(400).json({ ok: false, msg: "Error de validación", errores: error.details });
+    }
+    res.status(error.statusCode || 500).json({ ok: false, msg: error.msg || 'Error interno.' });
+  }
+};
+
 const getPestanas = async (req, res) => {
   try {
     const { ca, cs } = req.params;
@@ -26,11 +44,12 @@ const getPestanas = async (req, res) => {
       message: 'Pestañas cargadas exitosamente según el contexto'
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error de servidor al cargar las pestañas.',
-      error: error.toString()
-    });
+    console.error("🔥 ERROR REAL PESTANAS:", error); // 🟢 Esto revelará al culpable
+
+    if (error.type === 'ValidationError') {
+      return res.status(400).json({ ok: false, msg: "Error de validación", errores: error.details });
+    }
+    res.status(error.statusCode || 500).json({ ok: false, msg: error.msg || 'Error interno.' });
   }
 };
 
@@ -126,6 +145,7 @@ const deletePestana = async (req, res = response) => {
 
 module.exports = {
   getPestanas,
+  getPestanasTodas,
   getPestanaById,
   getPestanaByCodeAplicacion,
   createPestana,

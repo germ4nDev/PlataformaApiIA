@@ -5,6 +5,7 @@
 const { response } = require('express');
 const radarService = require('../../services/torre-control/radar.service');
 
+const { responderError } = require('../../helpers/errores.helper');
 class RadarController {
 
   async obtenerCapaRadar(req, res) {
@@ -19,14 +20,7 @@ class RadarController {
       });
 
     } catch (error) {
-      console.error("❌ Error en RadarController -> obtenerCapaRadar:", error);
-
-      // Manejo del error HTTP
-      res.status(500).json({
-        success: false,
-        message: "Error interno procesando la capa del radar",
-        error: error.message
-      });
+      return responderError(res, error, 'motonaves-radar.obtenerCapaRadar');
     }
   }
 

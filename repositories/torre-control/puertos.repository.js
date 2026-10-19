@@ -1,17 +1,14 @@
 /*
     Author: German Valencia
-    Pattern: PORTTOS Repository Pattern - Maestro de Puertos
+    Pattern: PORTTOS Repository - Maestro de puertos
+    Description: Acceso a datos del maestro (ver maestro.repository.js).
 */
-const { QueryTypes } = require('sequelize');
-const { db } = require('../../database/connection');
+const { sequelize } = require('../../database/connection');
+const { PuertoModel } = require('../../models/torre-control/puerto.model');
+const { RepositorioMaestro } = require('./maestro.repository');
 
-const PuertoRepository = {
-  async obtenerPuertosActivos() {
-    const sql = `SELECT puertoKey FROM TCL_MaestroPuertos WHERE estado = 1`;
-    return await db.sequelize.query(sql, {
-      type: db.sequelize.QueryTypes.SELECT
-    });
-  }
-};
-
-module.exports = PuertoRepository;
+module.exports = new RepositorioMaestro({
+  modelo: PuertoModel(sequelize),
+  llave: 'id_puerto',
+  geometrias: { ubicacion_geo: 'ubicacion_text', geocerca_geo: 'geocerca_text' },
+});

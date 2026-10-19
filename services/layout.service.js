@@ -338,7 +338,9 @@ class LayoutService {
       layoutEstructurado.configuracion.widgetsEstaticos = widgetsMaestros.map(w => ({
         codigoWidget: w.codigoWidget,
         x: w.pos_x,
-        y: (w.anclajeTipo === 'RELATIVO' || w.anclajeTipo === 'RELATIVO_DINAMICO') ? null : w.pos_y,
+        // Corregido 2026-10-18: antes los RELATIVO salían con y = null y el front los apilaba todos en la misma fila.
+        // El front usa y para conservar la distancia vertical respecto a la zona dinámica (terminales).
+        y: w.pos_y,
         cols: w.defaultCols || 4,
         rows: w.defaultRows || 3,
         anclaje: w.anclajeTipo || 'ABSOLUTO',

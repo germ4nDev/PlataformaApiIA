@@ -1,4 +1,5 @@
-const ProductividadService = require('../../services/torre-control/productividad.service'); // Ajusta la ruta
+
+const { responderError } = require('../../helpers/errores.helper');const ProductividadService = require('../../services/torre-control/productividad.service'); // Ajusta la ruta
 
 class ProductividadChartController {
 
@@ -18,12 +19,7 @@ class ProductividadChartController {
             });
 
         } catch (error) {
-            // console.error('Error en ProductividadController.getProductividadGrafica:', error);
-            return res.status(500).json({
-                ok: false,
-                data: null,
-                mensaje: 'Error interno al calcular la productividad de la terminal'
-            });
+          return responderError(res, error, 'productividad-chart.getProductividadGrafica');
         }
     }
 }

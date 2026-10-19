@@ -3,6 +3,8 @@
     Pattern: PORTTOS Standard - Controlador de Terminales
 */
 const { response } = require('express');
+const { responderError } = require('../../helpers/errores.helper');
+const { contextoUsuario } = require('../../helpers/controlador.helper');
 const TerminalsService = require('../../services/torre-control/terminales.service'); // Asegura que la ruta coincida
 
 const terminalesService = new TerminalsService();
@@ -16,11 +18,7 @@ const getTerminales = async (req, res = response) => {
       data: respuesta.data
     });
   } catch (error) {
-    res.status(error.statusCode || 500).json({
-      ok: false,
-      msg: error.msg || 'Error al obtener el listado de terminales. Hable con el administrador.',
-      error: error.message || error
-    });
+    return responderError(res, error, 'terminales.getTerminales');
   }
 };
 
@@ -42,16 +40,13 @@ const getTerminalById = async (req, res = response) => {
       data: respuesta.data
     });
   } catch (error) {
-    res.status(error.statusCode || 500).json({
-      ok: false,
-      msg: error.msg || 'Error al obtener la terminal'
-    });
+    return responderError(res, error, 'terminales.getTerminalById');
   }
 };
 
 const crearTerminal = async (req, res = response) => {
   try {
-    const userContext = { codigoUsuario: req.uid || 'SISTEMA_ADMIN' };
+    const userContext = contextoUsuario(req);
     const nuevaTerminal = await terminalesService.crearTerminal(req.body, userContext);
 
     res.status(201).json({
@@ -60,19 +55,14 @@ const crearTerminal = async (req, res = response) => {
       data: nuevaTerminal
     });
   } catch (error) {
-    const statusCode = error.type === 'ValidationError' ? 400 : (error.statusCode || 500);
-    res.status(statusCode).json({
-      ok: false,
-      msg: error.type === 'ValidationError' ? 'Error de validación en los datos enviados' : (error.msg || 'Error al crear la terminal'),
-      detalles: error.details || error
-    });
+    return responderError(res, error, 'terminales.crearTerminal');
   }
 };
 
 const updateTerminal = async (req, res = response) => {
   try {
     const { id } = req.params;
-    const userContext = { codigoUsuario: req.uid || 'SISTEMA_ADMIN' };
+    const userContext = contextoUsuario(req);
 
     // 🟢 La lógica de la geocerca ya se procesa al 100% en el Service
     const terminalActualizada = await terminalesService.updateTerminal(id, req.body, userContext);
@@ -83,12 +73,7 @@ const updateTerminal = async (req, res = response) => {
       data: terminalActualizada
     });
   } catch (error) {
-    const statusCode = error.type === 'ValidationError' ? 400 : (error.statusCode || 500);
-    res.status(statusCode).json({
-      ok: false,
-      msg: error.type === 'ValidationError' ? 'Error de validación en los datos enviados' : (error.msg || 'Error al actualizar la terminal'),
-      detalles: error.details || error
-    });
+    return responderError(res, error, 'terminales.updateTerminal');
   }
 };
 
@@ -103,10 +88,7 @@ const deleteTerminal = async (req, res = response) => {
       data: terminalEliminada
     });
   } catch (error) {
-    res.status(error.statusCode || 500).json({
-      ok: false,
-      msg: error.msg || 'Error al eliminar la terminal'
-    });
+    return responderError(res, error, 'terminales.deleteTerminal');
   }
 };
 

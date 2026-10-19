@@ -1,161 +1,65 @@
 /*
     Author: German Valencia
-    Refactored for: PORTTOS Standard (Clean Service Layer) - Catálogo de Widgets
+    Pattern: PORTTOS Service - Maestro de muelles
+    Description: Reglas del maestro de muelles. El acceso a datos está en muelles.repository.js.
 */
-const { Sequelize } = require('sequelize');
-const { literalGeometria, SRID_PORTTOS } = require('../../helpers/geometria-segura.helper');
-const { sequelize } = require('../../database/connection');
-const { MuelleModel, MuelleDTO } = require('../../models/torre-control/muelle.model.js');
+const { MuelleDTO } = require('../../models/torre-control/muelle.model.js');
+const repositorio = require('../../repositories/torre-control/muelles.repository');
+const { conTransaccion } = require('../../helpers/transaccion.helper');
+const { emitir } = require('../../helpers/socket.helper');
+const { crearError } = require('../../helpers/errores.helper');
+const { wktAGeoJson } = require('../../helpers/wkt.helper');
 const { wrapToFeatureCollection } = require('../../utils/geoJsonHelper.js');
-const { io } = require('../../index');
+
+const EVENTO = 'muelles-actualizados';
 
 class MuellesService {
-  constructor() {
-    this.model = MuelleModel(sequelize);
-  }
-
-  _parseWktPolygon(wkt) {
-    if (!wkt) return null;
-    const match = wkt.match(/POLYGON\s*\(\((.+)\)\)/);
-    if (!match) return null;
-
-    const coordsStr = match[1]; // "-74.95 10.95, -74.7 10.95..."
-    const coordinates = coordsStr.split(',').map(pair => {
-      return pair.trim().split(' ').map(Number);
-    });
-
-    return { type: 'Polygon', coordinates: [coordinates] };
-  }
-
-  _mapearRegistro(MuelleInstancia) {
-    const p = MuelleInstancia.get({ plain: true });
-    const polygonGeometry = this._parseWktPolygon(p.geocerca_text);
-
-    return {
-      ...p,
-      geocerca_geo: wrapToFeatureCollection(polygonGeometry),
-      geocerca_text: undefined
-    };
+  _mapearRegistro(fila) {
+    const { geocerca_text, ...muelle } = fila;
+    return { ...muelle, geocerca_geo: wrapToFeatureCollection(wktAGeoJson(geocerca_text)) };
   }
 
   async getMuelles() {
-    try {
-      const registros = await this.model.findAll({
-        attributes: {
-          include: [
-            [Sequelize.literal('geocerca_geo.STAsText()'), 'geocerca_text']
-          ]
-        }
-      });
-
-      return {
-        ok: true,
-        data: registros.map(p => this._mapearRegistro(p)),
-        statusCode: 200
-      };
-    } catch (error) {
-      console.error("🔴 Error en MuellesService (getMuelles):", error);
-      throw error;
-    }
+    const registros = await repositorio.listar();
+    return { ok: true, data: registros.map((m) => this._mapearRegistro(m)), statusCode: 200 };
   }
 
   async getMuelleById(id_interno) {
-    try {
-      const muelle = await this.model.findOne({
-        where: { id_interno: id_interno }, // 🐛 Variable corregida
-        attributes: {
-          include: [
-            [Sequelize.literal('geocerca_geo.STAsText()'), 'geocerca_text']
-          ]
-        }
-      });
-
-      if (!muelle) return { ok: false, statusCode: 404 };
-
-      return {
-        ok: true,
-        data: this._mapearRegistro(muelle),
-        statusCode: 200
-      };
-    } catch (error) {
-      console.error("🔴 Error en MuellesService (getMuelleById):", error);
-      throw error;
-    }
+    const muelle = await repositorio.obtener(id_interno);
+    if (!muelle) return { ok: false, statusCode: 404 };
+    return { ok: true, data: this._mapearRegistro(muelle), statusCode: 200 };
   }
 
   async crearMuelle(rawData, userContext = { codigoUsuario: 'SISTEMA_ADMIN' }) {
-    try {
-      const dataDTO = MuelleDTO(rawData, userContext);
-
-      if (dataDTO.geocerca_geo) {
-        dataDTO.geocerca_geo = literalGeometria(Sequelize, dataDTO.geocerca_geo, SRID_PORTTOS, 'geocerca_geo');
-      }
-
-      return await sequelize.transaction(async (t) => {
-        const nuevoMuelle = await this.model.create(dataDTO, { transaction: t });
-
-        if (typeof io !== 'undefined') {
-          io.emit('muelles-actualizados', { action: 'create', msg: `Nuevo muelle registrado: ${nuevoMuelle.codigo_muelle}` });
-        }
-        return nuevoMuelle;
-      });
-    } catch (error) {
-      console.error('🔴 Error COMPLETO en crearMuelle:', error);
-      throw error;
-    }
+    const dto = MuelleDTO(rawData, userContext);
+    const nuevo = await conTransaccion((t) => repositorio.crear(dto, { transaction: t }));
+    emitir(EVENTO, { action: 'create', msg: `Nuevo muelle registrado: ${nuevo.codigo_muelle}` });
+    return nuevo;
   }
 
   async updateMuelle(id_interno, rawData, userContext = { codigoUsuario: 'SISTEMA_ADMIN' }) {
-    try {
-      const dataDTO = MuelleDTO(rawData, userContext);
-
-      if (dataDTO.geocerca_geo) {
-        dataDTO.geocerca_geo = literalGeometria(Sequelize, dataDTO.geocerca_geo, SRID_PORTTOS, 'geocerca_geo');
+    const dto = MuelleDTO(rawData, userContext);
+    const actualizado = await conTransaccion(async (t) => {
+      if (!(await repositorio.obtener(id_interno, { transaction: t }))) {
+        throw crearError(404, 'No existe el muelle para actualizar.', 'NO_ENCONTRADO');
       }
-
-      return await sequelize.transaction(async (t) => {
-        const dbMuelle = await this.model.findOne({ where: { id_interno }, transaction: t });
-        if (!dbMuelle) throw { statusCode: 404, msg: "No existe el muelle para actualizar." };
-
-        await this.model.update(dataDTO, { where: { id_interno }, transaction: t });
-
-        const actualizado = await this.model.findOne({
-          where: { id_interno },
-          transaction: t,
-          attributes: {
-            include: [
-              [Sequelize.literal('geocerca_geo.STAsText()'), 'geocerca_text']
-            ]
-          }
-        });
-
-        if (typeof io !== 'undefined') io.emit('muelles-actualizados', { action: 'update' });
-
-        return this._mapearRegistro(actualizado);
-      });
-    } catch (error) {
-      console.error("🔴 Error en updateMuelle:", error);
-      throw error;
-    }
+      await repositorio.actualizar(id_interno, dto, { transaction: t });
+      return repositorio.obtener(id_interno, { transaction: t });
+    });
+    emitir(EVENTO, { action: 'update' });
+    return this._mapearRegistro(actualizado);
   }
 
-  async deleteMuelle(id_muelle) {
-    try {
-      return await sequelize.transaction(async (t) => {
-        const dbMuelle = await this.model.findOne({ where: { id_interno: id_muelle }, transaction: t });
-        if (!dbMuelle) throw { statusCode: 404, msg: "No existe un muelle con ese id." };
-
-        await this.model.destroy({ where: { id_interno: id_muelle }, transaction: t });
-
-        if (typeof io !== 'undefined') {
-          io.emit('muelles-actualizados', { action: 'delete', msg: `Muelle eliminado: ${dbMuelle.codigo_muelle}` });
-        }
-        return dbMuelle;
-      });
-    } catch (error) {
-      console.error(`🔴 Error en deleteMuelle (Rollback):`, error.msg || error.message);
-      throw error;
-    }
+  async deleteMuelle(id_interno) {
+    const eliminado = await conTransaccion(async (t) => {
+      const muelle = await repositorio.obtener(id_interno, { transaction: t });
+      if (!muelle) throw crearError(404, 'No existe un muelle con ese id.', 'NO_ENCONTRADO');
+      await repositorio.eliminar(id_interno, { transaction: t });
+      return muelle;
+    });
+    emitir(EVENTO, { action: 'delete', msg: `Muelle eliminado: ${eliminado.codigo_muelle}` });
+    const { geocerca_text, ...muelle } = eliminado;
+    return muelle;
   }
 }
 

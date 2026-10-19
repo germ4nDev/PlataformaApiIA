@@ -10,6 +10,7 @@ const { validarSesion } = require("../middlewares/validar-sesion");
 
 const {
   getPestanas,
+  getPestanasTodas,
   getPestanaById,
   getPestanaByCodeAplicacion,
   createPestana,
@@ -18,6 +19,8 @@ const {
 } = require("../controllers/pestanas.controller");
 
 const router = Router();
+
+router.get("/", getPestanasTodas);
 
 router.get("/:cs/:ca", getPestanas);
 

@@ -33,7 +33,7 @@
         usa AIS_PUERTOS_DEFECTO (o todos). Cuando el conjunto cambia, se reconecta con las cajas nuevas.
       - Cada nave se emite solo a la sala de su puerto, y quien entra a la sala recibe la foto actual.
 */
-const WebSocket = require('ws');
+const AisStreamAdapter = require('../../adapters/aisstream.adapter');
 const turf = require('@turf/turf');
 const wellknown = require('wellknown');
 const MaritimoRepository = require('../../repositories/torre-control/maritimo.repository');
@@ -43,7 +43,6 @@ const {
   inferirEstadoNave, normalizarNavStatus, textoNavStatus,
 } = require('../../helpers/estado-nave.helper');
 
-const URL_AISSTREAM = 'wss://stream.aisstream.io/v0/stream';
 const MAX_MMSI_POR_SUSCRIPCION = 50;  // Límite de AISStream para FiltersShipMMSI
 const MAX_AREA_GEOCERCA_GRADOS2 = 25; // Protección contra cajas gigantes (≈ 5° x 5°)
 const TAMANO_LOTE_BD = 50;
@@ -169,7 +168,7 @@ class AISStreamService {
     clearInterval(this.temporizadorEmision);
     clearInterval(this.temporizadorZonas);
     clearTimeout(this.temporizadorRecalculo);
-    try { this.ws?.close(); } catch (_) { /* sin acción */ }
+    this.ws?.cerrar();
     await this.persistirBuffer();
     console.log('🛑 [AIS] Motor detenido.');
   }
@@ -177,7 +176,7 @@ class AISStreamService {
   estado() {
     return {
       activo: this.activo,
-      conectado: this.ws?.readyState === WebSocket.OPEN,
+      conectado: Boolean(this.ws?.abierto()),
       geocercas: this.geocercas.length,
       modoRadar: this.modoRadar,
       puertosActivos: this.puertosActivos.map((p) => p.id_puerto || p.nombre),
@@ -329,9 +328,9 @@ class AISStreamService {
 
   /** Reconecta de inmediato para aplicar las cajas nuevas (más seguro que actualizar la suscripción en caliente). */
   reiniciarSuscripcion() {
-    if (!this.ws || this.ws.readyState === WebSocket.CLOSED || this.ws.readyState === WebSocket.CLOSING) return;
+    if (!this.ws || this.ws.cerrado()) return;
     this.reconectarYa = true;
-    try { this.ws.close(); } catch (_) { /* sin acción */ }
+    this.ws.cerrar();
   }
 
   /** Puerto al que pertenece la nave: el de su zona; si no, el puerto cuya caja la contiene. */
@@ -374,7 +373,7 @@ class AISStreamService {
   /** Lo invoca el scraper de SITMAR cuando cambian las naves avisadas. */
   async recargarListaBlanca() {
     await this.cargarFiltroMmsi();
-    if (this.ws?.readyState === WebSocket.OPEN) this.enviarSuscripcion();
+    if (this.ws?.abierto()) this.enviarSuscripcion();
   }
 
   /** Geocercas de muelles, terminales y puertos para ubicar cada nave. Si falla, conserva las anteriores. */
@@ -427,14 +426,7 @@ class AISStreamService {
   }
 
   enviarSuscripcion() {
-    const suscripcion = {
-      APIKey: process.env.AIS_API_KEY,
-      BoundingBoxes: this.geocercas,
-      FilterMessageTypes: ['PositionReport', 'ShipStaticData'],
-    };
-    if (this.mmsiFiltro.length > 0) suscripcion.FiltersShipMMSI = this.mmsiFiltro;
-
-    this.ws.send(JSON.stringify(suscripcion));
+    this.ws.suscribir(this.geocercas, this.mmsiFiltro);
     console.log(`📡 [AIS] Suscrito: ${this.geocercas.length} geocercas · ${this.mmsiFiltro.length || 'todas las'} naves.`);
   }
 
@@ -445,33 +437,34 @@ class AISStreamService {
     if (!this.activo) return;
 
     console.log(`📡 [AIS] Conectando a AISStream (intento #${this.intentosReconexion + 1})...`);
-    this.ws = new WebSocket(URL_AISSTREAM);
-
-    this.ws.on('open', () => {
-      this.intentosReconexion = 0;
-      this.enviarSuscripcion();
-    });
-
-    this.ws.on('message', (data) => {
-      try {
-        this.procesarTrama(JSON.parse(data));
-      } catch (_) {
-        this.metricas.descartadas++;
-      }
-    });
-
-    this.ws.on('error', (err) => console.error('❌ [AIS] Error en el WebSocket:', err.message));
-    this.ws.on('close', (codigo, razon) => {
-      if (!this.activo) return;
-      if (this.reconectarYa) {
-        this.reconectarYa = false;
+    this.ws = AisStreamAdapter.conectar({
+      alAbrir: () => {
         this.intentosReconexion = 0;
-        setTimeout(() => this.conectarWebSocket(), 500);
-        return;
-      }
-      console.warn(`⚠️ [AIS] Conexión cerrada (${codigo}${razon?.length ? ` · ${razon}` : ''}).`);
-      this.programarReconexion();
+        this.enviarSuscripcion();
+      },
+      alMensaje: (msg) => {
+        if (!msg) { this.metricas.descartadas++; return; }
+        try {
+          this.procesarTrama(msg);
+        } catch (_) {
+          this.metricas.descartadas++;
+        }
+      },
+      alError: (err) => console.error('❌ [AIS] Error en el WebSocket:', err.message),
+      alCerrar: (codigo, razon) => this.alCerrarConexion(codigo, razon),
     });
+  }
+
+  alCerrarConexion(codigo, razon) {
+    if (!this.activo) return;
+    if (this.reconectarYa) {
+      this.reconectarYa = false;
+      this.intentosReconexion = 0;
+      setTimeout(() => this.conectarWebSocket(), 500);
+      return;
+    }
+    console.warn(`⚠️ [AIS] Conexión cerrada (${codigo}${razon?.length ? ` · ${razon}` : ''}).`);
+    this.programarReconexion();
   }
 
   programarReconexion() {

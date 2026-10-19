@@ -1,26 +1,28 @@
 /*
     Author: German Valencia
-    Pattern: PORTTOS DTO Pattern - Motonaves Operación
+    Pattern: PORTTOS DTO Pattern - Operaciones Motonaves 
 */
 const Joi = require('joi');
 const { DataTypes } = require('sequelize');
+const { v4: uuidv4 } = require('uuid');
 
-// 1. EL ESCUDO: Validación estricta de la data de operación
-const MotonavesOperacionSchema = Joi.object({
-  codigoNodo: Joi.string().max(36).required(),
-  nombreNodo: Joi.string().max(150).required(),
-  tipoNodo: Joi.string().max(50).required(),
-  capacidadMaxima: Joi.number().precision(2).required(),
-  ocupacionActual: Joi.number().precision(2).required(),
-  unidadMedida: Joi.string().max(20).required(),
-  latitud: Joi.number().allow(null).optional(),
-  longitud: Joi.number().allow(null).optional(),
-  estadoOperativo: Joi.string().max(20).required() // Ej: 'OPERATIVO', 'MANTENIMIENTO'
+// 1. EL ESCUDO: Validación estricta de la data operativa entrante
+const MotonaveOperacionSchema = Joi.object({
+  codigoTerminal: Joi.string().max(50).required(), // Ej: 'TCBUEN', 'SPRBUN'
+  nombreMotonave: Joi.string().max(150).required(),
+  tipoCarga: Joi.string().max(50).required(), // 'Contenedores', 'Granel Solido', 'Carga General'
+
+  // Variables físicas y de SLA
+  caladoMetros: Joi.number().positive().precision(2).required(),
+  fechaPrimeraLinea: Joi.date().iso().required(), // Punto de partida para el SLA
+  horasLluvia: Joi.number().integer().min(0).default(0),
+  cantidadMovida: Joi.number().min(0).precision(2).required() // Toneladas o Movimientos
 });
 
 // 2. EL ENSAMBLADOR: Construcción del DTO seguro y aplicación de auditoría
-const MotonavesOperacionDTO = (rawData, userContext) => {
-  const { error, value } = MotonavesOperacionSchema.validate(rawData, { abortEarly: false, stripUnknown: true });
+const MotonaveOperacionDTO = (rawData, userContext) => {
+  // stripUnknown: true limpia basura; abortEarly: false captura todos los errores
+  const { error, value } = MotonaveOperacionSchema.validate(rawData, { abortEarly: false, stripUnknown: true });
 
   if (error) {
     throw {
@@ -30,17 +32,16 @@ const MotonavesOperacionDTO = (rawData, userContext) => {
   }
 
   return {
-    codigoNodo: value.codigoNodo.trim(),
-    nombreNodo: value.nombreNodo.trim(),
-    tipoNodo: value.tipoNodo.trim().toUpperCase(),
-    capacidadMaxima: value.capacidadMaxima,
-    ocupacionActual: value.ocupacionActual,
-    unidadMedida: value.unidadMedida.trim().toUpperCase(),
-    latitud: value.latitud || null,
-    longitud: value.longitud || null,
-    estadoOperativo: value.estadoOperativo.trim().toUpperCase(),
+    codigoOperacion: uuidv4(),
+    codigoTerminal: value.codigoTerminal.trim(),
+    nombreMotonave: value.nombreMotonave.trim().toUpperCase(), // Estandarizamos a mayúsculas
+    tipoCarga: value.tipoCarga.trim(),
+    caladoMetros: value.caladoMetros,
+    fechaPrimeraLinea: value.fechaPrimeraLinea,
+    horasLluvia: value.horasLluvia,
+    cantidadMovida: value.cantidadMovida,
 
-    // Auditoría PORTTOS
+    // Auditoría automática aplicada con el contexto del middleware (Patrón PORTTOS)
     codigoUsuarioCreacion: userContext.codigoUsuario,
     fechaCreacion: new Date(),
     codigoUsuarioModificacion: userContext.codigoUsuario,
@@ -48,84 +49,71 @@ const MotonavesOperacionDTO = (rawData, userContext) => {
   };
 };
 
-// 3. EL MAPEO: Definición de Sequelize para TCLMotonavesOperacion
-const MotonavesOperacionModel = (sequelize) => {
-  return sequelize.define('TCLMotonavesOperacion', {
-    codigoNodo: {
-      type: DataTypes.STRING(36),
+// 3. EL MAPEO: Definición estricta de Sequelize (T-SQL)
+const MotonaveOperacionModel = (sequelize) => {
+  return sequelize.define('TCL_MotonavesOperacion', {
+    codigoOperacion: {
+      type: DataTypes.STRING(36), // Exactamente 36 caracteres para UUIDv4
       primaryKey: true,
-      allowNull: false,
-      field: 'codigoNodo'
+      allowNull: false
     },
-    nombreNodo: {
-      type: DataTypes.STRING(150),
-      allowNull: false,
-      field: 'nombreNodo'
-    },
-    tipoNodo: {
+    codigoTerminal: {
       type: DataTypes.STRING(50),
+      allowNull: false
+    },
+    nombreMotonave: {
+      type: DataTypes.STRING(150),
+      allowNull: false
+    },
+    tipoCarga: {
+      type: DataTypes.STRING(50),
+      allowNull: false
+    },
+    caladoMetros: {
+      type: DataTypes.DECIMAL(5, 2),
+      allowNull: false
+    },
+    fechaPrimeraLinea: {
+      type: DataTypes.DATE,
+      allowNull: false
+    },
+    horasLluvia: {
+      type: DataTypes.INTEGER,
       allowNull: false,
-      field: 'tipoNodo'
+      defaultValue: 0
     },
-    capacidadMaxima: {
-      type: DataTypes.DECIMAL(12, 2),
+    cantidadMovida: {
+      type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
-      field: 'capacidadMaxima'
+      defaultValue: 0.00
     },
-    ocupacionActual: {
-      type: DataTypes.DECIMAL(12, 2),
-      allowNull: false,
-      field: 'ocupacionActual'
-    },
-    unidadMedida: {
-      type: DataTypes.STRING(20),
-      allowNull: false,
-      field: 'unidadMedida'
-    },
-    latitud: {
-      type: DataTypes.DECIMAL(10, 8),
-      allowNull: true,
-      field: 'latitud'
-    },
-    longitud: {
-      type: DataTypes.DECIMAL(11, 8),
-      allowNull: true,
-      field: 'longitud'
-    },
-    estadoOperativo: {
-      type: DataTypes.STRING(20),
-      allowNull: false,
-      field: 'estadoOperativo'
-    },
+
+    // Campos de Auditoría PORTTOS
     codigoUsuarioCreacion: {
       type: DataTypes.STRING(200),
-      allowNull: false,
-      field: 'codigoUsuarioCreacion'
+      allowNull: false
     },
     fechaCreacion: {
       type: DataTypes.DATE,
       allowNull: false,
-      field: 'fechaCreacion'
+      defaultValue: DataTypes.NOW
     },
     codigoUsuarioModificacion: {
       type: DataTypes.STRING(200),
-      allowNull: true,
-      field: 'codigoUsuarioModificacion'
+      allowNull: true
     },
     fechaModificacion: {
       type: DataTypes.DATE,
-      allowNull: true,
-      field: 'fechaModificacion'
+      allowNull: true
     }
   }, {
     tableName: 'TCL_MotonavesOperacion',
-    schema: 'dbo',
     timestamps: false
   });
 };
 
 module.exports = {
-  MotonavesOperacionModel,
-  MotonavesOperacionDTO,
-  MotonavesOperacionSchema
+  MotonaveOperacionModel,
+  MotonaveOperacionDTO,
+  MotonaveOperacionSchema
 };

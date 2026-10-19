@@ -4,6 +4,7 @@
 */
 const citasGateService = require('../../services/torre-control/citas-gate.service');
 
+const { responderError } = require('../../helpers/errores.helper');
 const getCitasVirtualGate = async (req, res) => {
   try {
     // El controlador solo delega la tarea al servicio
@@ -17,12 +18,7 @@ const getCitasVirtualGate = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error en getCitasVirtualGate:', error);
-    return res.status(500).json({
-      ok: false,
-      msg: 'Error interno obteniendo la cola del gate',
-      error: error.message
-    });
+    return responderError(res, error, 'citas-gate.getCitasVirtualGate');
   }
 };
 

@@ -6,17 +6,18 @@ const service = new TiposWidgetService();
 const getTiposWidget = async (req, res) => {
   try {
     const resultado = await service.obtenerTiposWidget();
-    console.log('resultado', resutlado);
-
+    console.log('resultado', resultado);
     return res.status(200).json({
       ok: true,
       respuesta: resultado
     });
   } catch (error) {
-    return res.status(error.statusCode || 500).json({
-      ok: false,
-      msg: error.msg || "Error al obtener los tipos de widgets."
-    });
+    console.error("🔥 ERROR REAL AL GUARDAR LAYOUT:", error); // 🟢 Esto revelará al culpable
+
+    if (error.type === 'ValidationError') {
+      return res.status(400).json({ ok: false, msg: "Error de validación", errores: error.details });
+    }
+    res.status(error.statusCode || 500).json({ ok: false, msg: error.msg || 'Error interno.' });
   }
 };
 

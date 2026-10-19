@@ -5,6 +5,7 @@
 const FlotaTerrestreService = require('../../services/torre-control/flota-terrestre.service');
 const { FlotaTerrestreDTOModel, FlotaTerrestreDTO } = require('../../models/torre-control/flota-terrestre.model');
 
+const { responderError } = require('../../helpers/errores.helper');
 class FlotaTerrestreController {
 
   // GET: Endpoint consumido por Angular (MapaGeneralService)
@@ -13,8 +14,7 @@ class FlotaTerrestreController {
       const geojson = await FlotaTerrestreService.obtenerFlotaGeoJSON(req.query.puerto);
       return res.status(200).json(geojson);
     } catch (error) {
-      console.error('Error en getFlotaActiva:', error);
-      return res.status(500).json({ success: false, message: 'Error obteniendo flota terrestre.' });
+      return responderError(res, error, 'flota-terrestre.getFlotaActiva');
     }
   }
 
@@ -29,11 +29,7 @@ class FlotaTerrestreController {
         data: data
       });
     } catch (error) {
-      console.error('❌ Error en controlador obtenerGeocercasKPIs:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Error al obtener los KPIs de las geocercas'
-      });
+      return responderError(res, error, 'flota-terrestre.obtenerGeocercasKPIs');
     }
   }
 
@@ -45,9 +41,7 @@ class FlotaTerrestreController {
       await FlotaTerrestreService.upsertPosicion(dtoData);
       return res.status(200).json({ success: true, message: 'Posición actualizada' });
     } catch (error) {
-      if (error.type === 'ValidationError') return res.status(400).json({ success: false, errors: error.details });
-      console.error('Error en recibirPingGPS:', error);
-      return res.status(500).json({ success: false, message: 'Error interno.' });
+      return responderError(res, error, 'flota-terrestre.recibirPingGPS');
     }
   }
 
@@ -57,8 +51,7 @@ class FlotaTerrestreController {
       const resultado = await FlotaTerrestreService.simularMovimientoFlota();
       return res.status(200).json(resultado);
     } catch (error) {
-      console.error('Error en ejecutarSimulador:', error);
-      return res.status(500).json({ success: false, message: 'Fallo en la simulación del motor vectorial.' });
+      return responderError(res, error, 'flota-terrestre.ejecutarSimulador');
     }
   }
 }

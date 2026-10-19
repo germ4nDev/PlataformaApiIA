@@ -3,8 +3,10 @@
     Pattern: PORTTOS Controller Pattern - Line Up Marítimo
 */
 const TLCLineUpMaritimoService = require('../../services/torre-control/line-up-maritimo.service');
-const { LineUpMaritimoDTO } = require('../../models/torre-control/line-up-maritimo');
+const { LineUpMaritimoDTO } = require('../../models/torre-control/line-up-maritimo.model');
 
+const { responderError } = require('../../helpers/errores.helper');
+const { contextoUsuario } = require('../../helpers/controlador.helper');
 class TLCLineUpMaritimoController {
 
     async consultarLineUp(req, res) {
@@ -22,11 +24,7 @@ class TLCLineUpMaritimoController {
             });
 
         } catch (error) {
-            // console.error('Error en TLCLineUpMaritimoController.consultarLineUp:', error);
-            return res.status(500).json({
-                success: false,
-                message: 'Error interno del servidor al consultar el Line Up.'
-            });
+          return responderError(res, error, 'line-up-maritimo.consultarLineUp');
         }
     }
 
@@ -44,9 +42,7 @@ class TLCLineUpMaritimoController {
             }
 
             // 2. Extraemos el contexto de seguridad del middleware JWT
-            const userContext = {
-                codigoUsuario: req.user ? req.user.codigoUsuario : 'SISTEMA_TC_API'
-            };
+            const userContext = contextoUsuario(req);
 
             // 3. Purificación y Ensamblaje Masivo (PORTTOS Pattern)
             // Joi verificará internamente que cada registro traiga su propia "terminal"
@@ -69,19 +65,7 @@ class TLCLineUpMaritimoController {
             });
 
         } catch (error) {
-            if (error.type === 'ValidationError') {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Error de validación de datos en una o más filas del Excel.',
-                    errors: error.details
-                });
-            }
-
-            // console.error('Error en TLCLineUpMaritimoController.cargarLineUp:', error);
-            return res.status(500).json({
-                success: false,
-                message: 'Error interno del servidor al procesar la ingesta del archivo.'
-            });
+          return responderError(res, error, 'line-up-maritimo.cargarLineUp');
         }
     }
 }

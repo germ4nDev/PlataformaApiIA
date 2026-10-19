@@ -1,6 +1,7 @@
 // ProductividadService.js (Backend Node.js)
-const { db, sequelize } = require('../../database/connection');
 
+/* Productividad intradía de REFERENCIA por puerto (valores fijos, decisión AD-04). La real viene de
+   TCL_ProductividadTerminales vía maritimo.repository (widget PTT_MAE_CHRT_PROD). */
 class ProductividadService {
   static async obtenerProductividadPorCiudad(ciudad) {
     // Normalizamos la entrada para que coincida con las llaves principales del JSON

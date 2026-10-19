@@ -1,11 +1,10 @@
 const ExcelJS = require('exceljs');
-const Anthropic = require('@anthropic-ai/sdk');
 const csv = require('csv-parser');
 const { Readable } = require('stream');
-const { io } = require('../../index');
+const { emitir } = require('../../helpers/socket.helper');
+const { conTransaccion } = require('../../helpers/transaccion.helper');
+const IngestaRepository = require('../../repositories/torre-control/ingesta.repository');
 const { v4: uuidv4 } = require('uuid');
-const { db, sequelize } = require('../../database/connection');
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const procesarExcelRNDC = async (fileBuffer, idUsuario) => {
   const usuarioIdSeguro = idUsuario || 'SISTEMA_QPLUS';
@@ -62,7 +61,7 @@ const procesarExcelRNDC = async (fileBuffer, idUsuario) => {
   };
 
   // Limpieza inicial de la tabla
-  await sequelize.query('TRUNCATE TABLE TCL_RNDCOperacionTerrestre');
+  await IngestaRepository.vaciar('TCL_RNDCOperacionTerrestre');
 
   try {
     for await (const worksheetReader of workbook) {
@@ -167,8 +166,8 @@ const procesarExcelRNDC = async (fileBuffer, idUsuario) => {
         // ------------------------------------------------------------------
         if (recordsChunk.length >= chunkSize) {
           try {
-            await sequelize.transaction(async (t) => {
-              await sequelize.getQueryInterface().bulkInsert('TCL_RNDCOperacionTerrestre', recordsChunk, { transaction: t });
+            await conTransaccion(async (t) => {
+              await IngestaRepository.insertarLote('TCL_RNDCOperacionTerrestre', recordsChunk, { transaction: t });
             });
             totalInsertados += recordsChunk.length;
             // console.log(` -> [RNDC] Lote insertado. Acumulado: ${totalInsertados}`);
@@ -183,16 +182,16 @@ const procesarExcelRNDC = async (fileBuffer, idUsuario) => {
 
     // Insertamos el remanente final
     if (recordsChunk.length > 0) {
-      await sequelize.transaction(async (t) => {
-        await sequelize.getQueryInterface().bulkInsert('TCL_RNDCOperacionTerrestre', recordsChunk, { transaction: t });
+      await conTransaccion(async (t) => {
+        await IngestaRepository.insertarLote('TCL_RNDCOperacionTerrestre', recordsChunk, { transaction: t });
       });
       totalInsertados += recordsChunk.length;
     }
 
     // console.log(`✅ [RNDC] Ingesta Masiva completada. Insertados: ${totalInsertados}. Omitidos (Basura/Totales): ${filasOmitidas}.`);
 
-    if (typeof io !== 'undefined') {
-      io.emit('tablero-actualizado', {
+    {
+      emitir('tablero-actualizado', {
         accion: 'RNDC',
         msg: `Tablero Analítica RNDC actualizado (${totalInsertados} registros)`,
         timestamp: new Date()
@@ -260,7 +259,7 @@ const procesarCsvMaritimo = async (fileBuffer, idUsuario) => {
 
         try {
           // console.log("🧹 [MARÍTIMO] Truncando tabla...");
-          await db.sequelize.query('TRUNCATE TABLE TCL_TraficoPortuarioMaritimo');
+          await IngestaRepository.vaciar('TCL_TraficoPortuarioMaritimo');
 
           // MAPEO SEGURO: Usamos las llaves normalizadas (sin espacios ni tildes)
           const records = rawData.map(row => ({
@@ -289,12 +288,12 @@ const procesarCsvMaritimo = async (fileBuffer, idUsuario) => {
           // INSERCIÓN BATCH
           for (let i = 0; i < records.length; i += chunkSize) {
             const chunk = records.slice(i, i + chunkSize);
-            await db.sequelize.getQueryInterface().bulkInsert('TCL_TraficoPortuarioMaritimo', chunk);
+            await IngestaRepository.insertarLote('TCL_TraficoPortuarioMaritimo', chunk);
             totalInsertados += chunk.length;
           }
 
-          if (typeof io !== 'undefined') {
-            io.emit('tablero-actualizado', {
+          {
+            emitir('tablero-actualizado', {
               accion: 'MARITIMO',
               msg: `Tablero Marítimo actualizado (${totalInsertados} regs)`,
               timestamp: new Date()
@@ -348,7 +347,7 @@ const procesarExcelMatriz = async (fileBuffer, idUsuario) => {
 
   try {
     // console.log("🧹 [MATRIZ] Truncando tabla...");
-    await db.sequelize.query('TRUNCATE TABLE TCL_MaestroMatrizOperaciones');
+    await IngestaRepository.vaciar('TCL_MaestroMatrizOperaciones');
 
     // Recorremos TODAS las hojas del libro
     for await (const worksheetReader of workbook) {
@@ -390,7 +389,7 @@ const procesarExcelMatriz = async (fileBuffer, idUsuario) => {
         });
 
         if (recordsChunk.length >= chunkSize) {
-          await db.sequelize.getQueryInterface().bulkInsert('TCL_MaestroMatrizOperaciones', recordsChunk);
+          await IngestaRepository.insertarLote('TCL_MaestroMatrizOperaciones', recordsChunk);
           totalInsertados += recordsChunk.length;
           // console.log(` 🚀 [MATRIZ] Lote insertado. Acumulado: ${totalInsertados}`);
           recordsChunk = [];
@@ -400,13 +399,13 @@ const procesarExcelMatriz = async (fileBuffer, idUsuario) => {
     }
 
     if (recordsChunk.length > 0) {
-      await db.sequelize.getQueryInterface().bulkInsert('TCL_MaestroMatrizOperaciones', recordsChunk);
+      await IngestaRepository.insertarLote('TCL_MaestroMatrizOperaciones', recordsChunk);
       totalInsertados += recordsChunk.length;
       console.log(` 🚀 [MATRIZ] Lote final insertado. Acumulado: ${totalInsertados}`);
     }
 
-    if (typeof io !== 'undefined') {
-      io.emit('tablero-actualizado', {
+    {
+      emitir('tablero-actualizado', {
         accion: 'MATRIZ_BODEGAS',
         msg: `Tablero Gate & Bodegas actualizado (${totalInsertados} regs)`,
         timestamp: new Date()
@@ -424,54 +423,6 @@ const procesarExcelMatriz = async (fileBuffer, idUsuario) => {
 // ============================================================================
 // 3. TÚNEL BOLETINES NLP (Nueva integración en el mismo servicio)
 // ============================================================================
-const procesarBoletinesViales = async (textoCrudoBoletin, idUsuario = 'SISTEMA_QPLUS') => {
-  try {
-    const promptSystem = `Eres un extractor de datos logísticos experto. 
-    Lee el boletín de vías y extrae los eventos. 
-    Responde estrictamente con un JSON: {"eventos": [{"corredorVial", "sector", "tipoEvento", "descripcion", "nivelSeveridad", "estado", "fechaInicio"}]}.
-    * nivelSeveridad debe ser un entero de 1 a 5 (1=leve, 5=crítico).
-    * fechaInicio debe estar en formato ISO (YYYY-MM-DDTHH:mm:ssZ).`;
-
-    const response = await anthropic.messages.create({
-      model: "claude-3-haiku-20240307",
-      max_tokens: 1000,
-      temperature: 0.1,
-      system: promptSystem,
-      messages: [{ role: "user", content: textoCrudoBoletin }]
-    });
-
-    const jsonLimpio = response.content[0].text.replace(/```json/g, '').replace(/```/g, '').trim();
-    const datosEstructurados = JSON.parse(jsonLimpio);
-
-    const records = datosEstructurados.eventos.map(ev => ({
-      codigoEvento: uuidv4(),
-      corredorVial: ev.corredorVial || 'NO ESPECIFICADO',
-      sector: ev.sector || 'NO ESPECIFICADO',
-      tipoEvento: ev.tipoEvento,
-      descripcion: ev.descripcion,
-      nivelSeveridad: parseInt(ev.nivelSeveridad) || 1,
-      estadoEvento: ev.estado || 'ACTIVO',
-      fechainicio: ev.fechaInicio ? new Date(ev.fechaInicio) : new Date(),
-      codigoUsuarioCreacion: idUsuario,
-      fechaCreacion: new Date()
-    }));
-
-    if (records.length > 0) {
-      await sequelize.getQueryInterface().bulkInsert('TCL_EventosViales', records);
-      // console.log(`✅ [BOLETINES] ${records.length} eventos registrados.`);
-    }
-
-    return records;
-
-  } catch (error) {
-    // console.error('❌ [BOLETINES] Fallo en el túnel NLP:', error);
-    throw error;
-  }
-};
-
-// ====================================================================
-// PROCESAMIENTO HISTÓRICOS SUPERTRANSPORTE (Benchmarking)
-// ====================================================================
 const procesarHistoricoSuper = async (fileBuffer, idUsuario) => {
   const usuarioIdSeguro = idUsuario || 'SISTEMA_QPLUS';
 
@@ -502,13 +453,13 @@ const procesarHistoricoSuper = async (fileBuffer, idUsuario) => {
         });
 
         if (records.length >= 500) {
-          await db.sequelize.getQueryInterface().bulkInsert('TCL_HistoricosSupertransporte', records);
+          await IngestaRepository.insertarLote('TCL_HistoricosSupertransporte', records);
           records = [];
         }
       }
     }
     if (records.length > 0) {
-      await db.sequelize.getQueryInterface().bulkInsert('TCL_HistoricosSupertransporte', records);
+      await IngestaRepository.insertarLote('TCL_HistoricosSupertransporte', records);
     }
 
     // console.log("✅ [HISTÓRICOS] Reporte Supertransporte procesado exitosamente.");

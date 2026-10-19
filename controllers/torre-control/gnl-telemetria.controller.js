@@ -1,6 +1,7 @@
 const { response } = require("express");
 const GnlTelemetriaService = require("../../services/torre-control/gnl-telemetria.service");
 
+const { responderError } = require('../../helpers/errores.helper');
 //const service = new GnlTelemetriaService();
 
 const iniciarSimulador = async (req, res = response) => {
@@ -9,7 +10,7 @@ const iniciarSimulador = async (req, res = response) => {
     const resultado = await GnlTelemetriaService.iniciarSimulador(id_puerto);
     return res.status(200).json({ ok: true, ...resultado });
   } catch (error) {
-    return res.status(error.statusCode || 500).json({ ok: false, msg: error.msg || "Error al iniciar simulador GNL." });
+    return responderError(res, error, 'gnl-telemetria.iniciarSimulador');
   }
 };
 
@@ -18,7 +19,7 @@ const detenerSimulador = async (req, res = response) => {
     const resultado = await GnlTelemetriaService.detenerSimulador();
     return res.status(200).json({ ok: true, ...resultado });
   } catch (error) {
-    return res.status(error.statusCode || 500).json({ ok: false, msg: error.msg || "Error al detener simulador." });
+    return responderError(res, error, 'gnl-telemetria.detenerSimulador');
   }
 };
 
@@ -28,7 +29,7 @@ const getHistorialFlujo = async (req, res = response) => {
     const historial = await GnlTelemetriaService.obtenerHistorialFlujo(id_puerto);
     return res.status(200).json({ ok: true, historial });
   } catch (error) {
-    return res.status(500).json({ ok: false, msg: "Error al obtener el historial de flujo GNL." });
+    return responderError(res, error, 'gnl-telemetria.getHistorialFlujo');
   }
 };
 

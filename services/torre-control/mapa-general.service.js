@@ -5,7 +5,7 @@
 */
 const fs = require('fs');
 const path = require('path');
-const ExternalIntegrationService = require('./external-integration.service');
+const ExternalIntegrationService = require('../../adapters/fuentes-externas.adapter');
 const MaritimoRepository = require('../../repositories/torre-control/mapa-general.repository');
 const { cajaPuerto, MARGEN } = require('../../helpers/caja-puerto.helper');
 
@@ -287,5 +287,12 @@ class MapaGeneralService {
     return { type: 'FeatureCollection', features: [] };
   }
 }
+
+/** Servicio con su repositorio por defecto (los controladores usan esto; las pruebas inyectan el suyo). */
+let porDefecto = null;
+MapaGeneralService.porDefecto = () => {
+  if (!porDefecto) porDefecto = new MapaGeneralService(require('../../repositories/torre-control/mapa-general.repository').porDefecto());
+  return porDefecto;
+};
 
 module.exports = MapaGeneralService;

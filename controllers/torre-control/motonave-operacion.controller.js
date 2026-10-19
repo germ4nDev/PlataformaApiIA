@@ -3,8 +3,10 @@
     Pattern: PORTTOS Controller Pattern - Operaciones Motonaves
 */
 const MotonaveOperacionService = require('../../services/torre-control/motonave-operacion.service');
-const { MotonaveOperacionDTO } = require('../../models/torre-control/motonave-operacion');
+const { MotonaveOperacionDTO } = require('../../models/torre-control/motonave-operacion.model');
 
+const { responderError } = require('../../helpers/errores.helper');
+const { contextoUsuario } = require('../../helpers/controlador.helper');
 class MotonaveOperacionController {
 
   async listarOperaciones(req, res) {
@@ -21,11 +23,7 @@ class MotonaveOperacionController {
       });
 
     } catch (error) {
-      // console.error('Error en MotonaveOperacionController.listarOperaciones:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Error interno del servidor al consultar las operaciones.'
-      });
+      return responderError(res, error, 'motonave-operacion.listarOperaciones');
     }
   }
 
@@ -36,9 +34,7 @@ class MotonaveOperacionController {
 
       // 2. Extraemos el contexto de seguridad (generalmente viene del middleware de autenticación de JWT)
       // Asumimos que tu middleware inyecta req.user con los datos del token
-      const userContext = {
-        codigoUsuario: req.user ? req.user.codigoUsuario : 'SISTEMA_TC_API'
-      };
+      const userContext = contextoUsuario(req);
 
       // 3. Purificación y Ensamblaje: El DTO valida con Joi, genera el UUID y aplica la auditoría
       const dtoData = MotonaveOperacionDTO(rawData, userContext);
@@ -54,21 +50,7 @@ class MotonaveOperacionController {
       });
 
     } catch (error) {
-      // Manejo estandarizado de errores (El escudo Joi)
-      if (error.type === 'ValidationError') {
-        return res.status(400).json({
-          success: false,
-          message: 'Error de validación en los datos enviados.',
-          errors: error.details
-        });
-      }
-
-      // Manejo de errores de base de datos o servidor
-      // console.error('Error en MotonaveOperacionController.crearOperacion:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Error interno del servidor al intentar registrar la operación.'
-      });
+      return responderError(res, error, 'motonave-operacion.crearOperacion');
     }
   }
 
@@ -85,21 +67,7 @@ class MotonaveOperacionController {
       });
 
     } catch (error) {
-      // 3. Manejo de errores controlados (Fallas del DTO/Joi)
-      if (error.type === 'ValidationError') {
-        return res.status(400).json({
-          success: false,
-          message: 'Datos de vinculación inválidos o incompletos',
-          errors: error.details
-        });
-      }
-
-      // 4. Fallas críticas (Caída de BD, etc.)
-      console.error('❌ [MotonavesController] Error crítico al vincular motonave:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Error interno al intentar procesar la vinculación en el servidor.'
-      });
+      return responderError(res, error, 'motonave-operacion.vincularMotonave');
     }
   }
 }

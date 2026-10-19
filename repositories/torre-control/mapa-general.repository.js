@@ -248,4 +248,11 @@ class MapaGeneralRepository {
   }
 }
 
+/** Instancia con la conexión de la aplicación (los servicios la piden aquí, no a la base). */
+let porDefecto = null;
+MapaGeneralRepository.porDefecto = () => {
+  if (!porDefecto) porDefecto = new MapaGeneralRepository(require('../../database/connection').sequelize);
+  return porDefecto;
+};
+
 module.exports = MapaGeneralRepository;

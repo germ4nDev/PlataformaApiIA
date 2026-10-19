@@ -4,6 +4,7 @@
 */
 const LayoutService = require('../../services/torre-control/layout.service');
 
+const { responderError } = require('../../helpers/errores.helper');
 const obtenerTablero = async (req, res) => {
   try {
     const { codigo_usuario } = req.params;
@@ -16,8 +17,7 @@ const obtenerTablero = async (req, res) => {
     return res.status(200).json(resultado);
 
   } catch (error) {
-    console.error("❌ [LAYOUT-CONTROLLER]:", error);
-    return res.status(500).json({ success: false, message: error.message });
+    return responderError(res, error, 'layout.obtenerTablero');
   }
 };
 
@@ -39,8 +39,7 @@ const obtenerTableroUsuario = async (req, res) => {
     return res.status(200).json(resultado);
 
   } catch (error) {
-    console.error("❌ [LAYOUT-CONTROLLER]:", error);
-    return res.status(500).json({ success: false, message: error.message });
+    return responderError(res, error, 'layout.obtenerTableroUsuario');
   }
 };
 
@@ -62,11 +61,7 @@ const guardarTablero = async (req, res) => {
     return res.status(200).json(resultado);
 
   } catch (error) {
-    // console.error("❌ [LAYOUT-CONTROLLER]:", error);
-    return res.status(500).json({
-      success: false,
-      message: error.message
-    });
+    return responderError(res, error, 'layout.guardarTablero');
   }
 };
 

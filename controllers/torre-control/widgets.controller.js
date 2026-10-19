@@ -5,6 +5,8 @@
 const { response } = require('express');
 const WidgetService = require('../../services/torre-control/widget.service');
 
+const { responderError } = require('../../helpers/errores.helper');
+const { contextoUsuario } = require('../../helpers/controlador.helper');
 // Instanciamos el servicio
 const widgetService = new WidgetService();
 
@@ -18,11 +20,7 @@ const getWidgets = async (req, res = response) => {
       statusCode: 200
     });
   } catch (error) {
-    res.status(error.statusCode || 500).json({
-      ok: false,
-      msg: error.msg || 'Hable con el administrador',
-      error: error.message || error
-    });
+    return responderError(res, error, 'widgets.getWidgets');
   }
 };
 
@@ -36,17 +34,14 @@ const getWidgetByCode = async (req, res = response) => {
       data: widget
     });
   } catch (error) {
-    res.status(error.statusCode || 500).json({
-      ok: false,
-      msg: error.msg || 'Error al obtener el widget'
-    });
+    return responderError(res, error, 'widgets.getWidgetByCode');
   }
 };
 
 const crearWidget = async (req, res = response) => {
   try {
     // Aquí puedes inyectar el usuario logueado si usas un middleware de JWT (ej. req.usuario.codigo)
-    const userContext = { codigoUsuario: req.uid || 'SISTEMA_ADMIN' };
+    const userContext = contextoUsuario(req);
 
     const nuevoWidget = await widgetService.crearWidget(req.body, userContext);
 
@@ -56,20 +51,14 @@ const crearWidget = async (req, res = response) => {
       data: nuevoWidget
     });
   } catch (error) {
-    // Si es un error de validación de Joi (DTO), mandamos un 400 Bad Request
-    const statusCode = error.type === 'ValidationError' ? 400 : (error.statusCode || 500);
-    res.status(statusCode).json({
-      ok: false,
-      msg: error.msg || 'Error al crear el widget',
-      detalles: error.details || error
-    });
+    return responderError(res, error, 'widgets.crearWidget');
   }
 };
 
 const updateWidget = async (req, res = response) => {
   try {
     const { codigo_widget } = req.params;
-    const userContext = { codigoUsuario: req.uid || 'SISTEMA_ADMIN' };
+    const userContext = contextoUsuario(req);
 
     const widgetActualizado = await widgetService.updateWidget(codigo_widget, req.body, userContext);
 
@@ -79,12 +68,7 @@ const updateWidget = async (req, res = response) => {
       data: widgetActualizado
     });
   } catch (error) {
-    const statusCode = error.type === 'ValidationError' ? 400 : (error.statusCode || 500);
-    res.status(statusCode).json({
-      ok: false,
-      msg: error.msg || 'Error al actualizar el widget',
-      detalles: error.details || error
-    });
+    return responderError(res, error, 'widgets.updateWidget');
   }
 };
 
@@ -99,10 +83,7 @@ const deleteWidget = async (req, res = response) => {
       data: widgetEliminado
     });
   } catch (error) {
-    res.status(error.statusCode || 500).json({
-      ok: false,
-      msg: error.msg || 'Error al eliminar el widget'
-    });
+    return responderError(res, error, 'widgets.deleteWidget');
   }
 };
 

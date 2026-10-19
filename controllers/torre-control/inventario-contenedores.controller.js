@@ -5,6 +5,7 @@
 const { response } = require("express");
 const InventarioContenedoresService = require("../../services/torre-control/inventario-contenedores.service");
 
+const { responderError } = require('../../helpers/errores.helper');
 const service = new InventarioContenedoresService();
 
 const getInventarios = async (req, res = response) => {
@@ -12,10 +13,7 @@ const getInventarios = async (req, res = response) => {
     const inventarios = await service.getInventarios();
     return res.status(200).json({ ok: true, inventarios });
   } catch (error) {
-    return res.status(error.statusCode || 500).json({
-      ok: false,
-      msg: error.msg || "Error interno al obtener el inventario de contenedores."
-    });
+    return responderError(res, error, 'inventario-contenedores.getInventarios');
   }
 };
 
@@ -25,10 +23,7 @@ const getInventarioById = async (req, res = response) => {
     const inventario = await service.getInventarioById(id);
     return res.status(200).json({ ok: true, inventario });
   } catch (error) {
-    return res.status(error.statusCode || 404).json({
-      ok: false,
-      msg: error.msg || "Error al obtener el contenedor solicitado."
-    });
+    return responderError(res, error, 'inventario-contenedores.getInventarioById');
   }
 };
 
@@ -40,11 +35,7 @@ const createInventario = async (req, res = response) => {
 
     return res.status(201).json({ ok: true, inventario });
   } catch (error) {
-    return res.status(error.statusCode || 400).json({
-      ok: false,
-      msg: error.msg || "Error al registrar el contenedor.",
-      contenedor: error.contenedor || null
-    });
+    return responderError(res, error, 'inventario-contenedores.createInventario');
   }
 };
 
@@ -68,13 +59,7 @@ const uploadMasivoInventario = async (req, res = response) => {
     });
 
   } catch (error) {
-    console.error('❌ Error en el cargue masivo de contenedores:', error);
-    return res.status(error.statusCode || 500).json({
-      ok: false,
-      msg: error.msg || 'Error interno procesando el archivo masivo.',
-      errores: error.errores,
-      detalle: error.detalle || error.message
-    });
+    return responderError(res, error, 'inventario-contenedores.uploadMasivoInventario');
   }
 };
 
@@ -86,10 +71,7 @@ const updateInventario = async (req, res = response) => {
     const inventario = await service.updateInventario(id, dataDTO);
     return res.status(200).json({ ok: true, inventario });
   } catch (error) {
-    return res.status(error.statusCode || 400).json({
-      ok: false,
-      msg: error.msg || "Error al actualizar el contenedor."
-    });
+    return responderError(res, error, 'inventario-contenedores.updateInventario');
   }
 };
 
@@ -103,10 +85,7 @@ const deleteInventario = async (req, res = response) => {
       msg: "Contenedor eliminado/retirado correctamente del inventario."
     });
   } catch (error) {
-    return res.status(error.statusCode || 400).json({
-      ok: false,
-      msg: error.msg || "Error al eliminar el contenedor."
-    });
+    return responderError(res, error, 'inventario-contenedores.deleteInventario');
   }
 };
 

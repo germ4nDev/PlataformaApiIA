@@ -2,21 +2,20 @@
     Author: German Valencia
     Service: Ingesta Climática Automatizada (Nacional y Dinámica)
 */
-const axios = require('axios');
+const { climaActual } = require('../../adapters/open-meteo.adapter');
 const { AlertaClimaticaDTO } = require('../../models/torre-control/alerta-climatica.model');
-const AlertaClimaticaService = require('./../../services/torre-control/alertaClimatica.service');
+const AlertaClimaticaService = require('./../../services/torre-control/alertas-climaticas.service');
 const NodoMonitoreoService = require('./../../services/torre-control/nodo-monitoreo.service');
 
 // Contexto único de auditoría para el proceso en segundo plano
 const SYSTEM_CONTEXT = { codigoUsuario: 'SYSTEM_CRON_IDEAM' };
-const WEATHER_API_URL = 'https://api.open-meteo.com/v1/forecast';
 
 const ClimateIngestionService = {
 
   ejecutarIngesta: async (sequelizeInstance) => {
     try {
       // 1. EXTRACT: Consultar los puntos logísticos estratégicos activos en Base de Datos
-      const nodosActivos = await NodoMonitoreoService.obtenerNodosActivos(sequelizeInstance);
+      const nodosActivos = await NodoMonitoreoService.obtenerNodosActivos();
 
       if (!nodosActivos || nodosActivos.length === 0) {
         console.log('[ETL WARNING] No hay nodos de monitoreo configurados en la base de datos.');
@@ -27,7 +26,7 @@ const ClimateIngestionService = {
       for (const nodo of nodosActivos) {
         try {
           // Fetch de métricas reales para las coordenadas específicas del nodo
-          const métricasClima = await consultarAPIClimatica(nodo.latitud, nodo.longitud);
+          const métricasClima = await climaActual(nodo.latitud, nodo.longitud);
 
           if (!métricasClima) continue; // Si falla la API para este nodo, avanza al siguiente
 
@@ -52,7 +51,7 @@ const ClimateIngestionService = {
           const dataValidada = AlertaClimaticaDTO(rawAlerta, SYSTEM_CONTEXT);
 
           // Persistencia asíncrona controlada en el modelo relacional
-          await AlertaClimaticaService.persistirAlerta(dataValidada, sequelizeInstance);
+          await AlertaClimaticaService.persistirAlerta(dataValidada);
         } catch (err) {
           // Aislamiento de errores: Una falla en un nodo no destruye la ejecución de los demás
           console.error(`[ETL ERROR] Error procesando el nodo ${nodo.nombreSector}:`, err.details || err.message);
@@ -63,35 +62,6 @@ const ClimateIngestionService = {
     }
   }
 };
-
-/**
- * Realiza la petición HTTP asíncrona hacia el proveedor satelital global
- */
-async function consultarAPIClimatica(latitud, longitud) {
-  try {
-    const response = await axios.get(WEATHER_API_URL, {
-      params: {
-        latitude: latitud,
-        longitude: longitud,
-        current: 'precipitation,wind_speed_10m,visibility',
-        timezone: 'auto'
-      },
-      timeout: 5000 // Tiempo de espera máximo de 5 segundos para evitar colgar el proceso
-    });
-
-    const currentData = response.data?.current;
-    if (!currentData) return null;
-
-    return {
-      precipitation: currentData.precipitation || 0,        // mm
-      windSpeed: currentData.wind_speed_10m || 0,           // km/h
-      visibility: currentData.visibility ? Math.round(currentData.visibility) : 10000 // metros
-    };
-  } catch (error) {
-    console.error(`[API WEATHER ERROR] No se pudo obtener clima para coord [${latitud}, ${longitud}]:`, error.message);
-    return null;
-  }
-}
 
 /**
  * Matriz de reglas de negocio para la Torre de Control Logística

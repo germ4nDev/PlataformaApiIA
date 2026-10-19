@@ -5,6 +5,8 @@
 const { response } = require('express');
 const TiposInfraestructura = require('../../services/torre-control/tipos-infraestructura.service');
 
+const { responderError } = require('../../helpers/errores.helper');
+const { contextoUsuario } = require('../../helpers/controlador.helper');
 // Instanciamos el servicio
 const TiposInfraestructuraService = new TiposInfraestructura();
 
@@ -18,11 +20,7 @@ const getTipoInfraestructuraes = async (req, res = response) => {
       statusCode: 200
     });
   } catch (error) {
-    res.status(error.statusCode || 500).json({
-      ok: false,
-      msg: error.msg || 'Hable con el administrador',
-      error: error.message || error
-    });
+    return responderError(res, error, 'tipos-infraestructura.getTipoInfraestructuraes');
   }
 };
 
@@ -36,17 +34,14 @@ const getTipoInfraestructuraById = async (req, res = response) => {
       data: tipoInfreaestructura
     });
   } catch (error) {
-    res.status(error.statusCode || 500).json({
-      ok: false,
-      msg: error.msg || 'Error al obtener el tipoInfreaestructura'
-    });
+    return responderError(res, error, 'tipos-infraestructura.getTipoInfraestructuraById');
   }
 };
 
 const crearTipoInfraestructura = async (req, res = response) => {
   try {
     // Aquí puedes inyectar el usuario logueado si usas un middleware de JWT (ej. req.usuario.codigo)
-    const userContext = { codigoUsuario: req.uid || 'SISTEMA_ADMIN' };
+    const userContext = contextoUsuario(req);
 
     const nuevoInfraestructura = await TiposInfraestructuraService.crearTipoInfraestructura(req.body, userContext);
 
@@ -56,20 +51,14 @@ const crearTipoInfraestructura = async (req, res = response) => {
       data: nuevoInfraestructura
     });
   } catch (error) {
-    // Si es un error de validación de Joi (DTO), mandamos un 400 Bad Request
-    const statusCode = error.type === 'ValidationError' ? 400 : (error.statusCode || 500);
-    res.status(statusCode).json({
-      ok: false,
-      msg: error.msg || 'Error al crear el tipoInfreaestructura',
-      detalles: error.details || error
-    });
+    return responderError(res, error, 'tipos-infraestructura.crearTipoInfraestructura');
   }
 };
 
 const updateTipoInfraestructura = async (req, res = response) => {
   try {
     const { id } = req.params;
-    const userContext = { codigoUsuario: req.uid || 'SISTEMA_ADMIN' };
+    const userContext = contextoUsuario(req);
     console.log('id', id);
     console.log('req.body', req.body);
 
@@ -81,12 +70,7 @@ const updateTipoInfraestructura = async (req, res = response) => {
       data: tipoInfreaestructuraActualizado
     });
   } catch (error) {
-    const statusCode = error.type === 'ValidationError' ? 400 : (error.statusCode || 500);
-    res.status(statusCode).json({
-      ok: false,
-      msg: error.msg || 'Error al actualizar el tipoInfreaestructura',
-      detalles: error.details || error
-    });
+    return responderError(res, error, 'tipos-infraestructura.updateTipoInfraestructura');
   }
 };
 
@@ -101,10 +85,7 @@ const deleteTipoInfraestructura = async (req, res = response) => {
       data: tipoInfreaestructuraEliminado
     });
   } catch (error) {
-    res.status(error.statusCode || 500).json({
-      ok: false,
-      msg: error.msg || 'Error al eliminar el tipoInfreaestructura'
-    });
+    return responderError(res, error, 'tipos-infraestructura.deleteTipoInfraestructura');
   }
 };
 

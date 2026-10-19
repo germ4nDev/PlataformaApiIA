@@ -1,96 +1,56 @@
 /*
     Author: German Valencia
-    Refactored for: QPLUS Architecture, Security & Transactional Integrity
+    Pattern: PORTTOS Service - Inventario de contenedores en patio
+    Description: Ingreso, cargue masivo (Excel), reubicación y retiro de contenedores.
+      Un contenedor no puede estar dos veces EN_PATIO. Acceso a datos en inventario-contenedores.repository.js.
 */
-const { sequelize } = require('../../database/connection');
-const { InventarioContenedoresModel, InventarioContenedoresDTO } = require('../../models/torre-control/inventario-contenedores.model');
-const { getIO } = require('../../helpers/socket.helper');
-const xlsx = require('xlsx');
 const crypto = require('crypto');
+const xlsx = require('xlsx');
+const { InventarioContenedoresDTO } = require('../../models/torre-control/inventario-contenedores.model');
+const repositorio = require('../../repositories/torre-control/inventario-contenedores.repository');
+const { conTransaccion } = require('../../helpers/transaccion.helper');
+const { emitir } = require('../../helpers/socket.helper');
+const { crearError } = require('../../helpers/errores.helper');
+
+const EVENTO = 'inventario-actualizado';
 
 class InventarioContenedoresService {
-  constructor() {
-    this.model = InventarioContenedoresModel(sequelize);
-  }
-
   async getInventarios(filtros = {}) {
-    try {
-      // Usualmente los tableros solo necesitan los que están en patio. 
-      // Se puede sobreescribir mediante los 'filtros' desde el controlador.
-      return await this.model.findAll({
-        where: filtros
-      });
-    } catch (error) {
-      console.error("Error en InventarioContenedoresService:", error);
-      throw error;
-    }
+    return repositorio.listar({ where: filtros });
   }
 
   async getInventarioById(id_inventario) {
-    const contenedor = await this.model.findOne({
-      where: { id_inventario }
-    });
-
-    if (!contenedor) {
-      throw { statusCode: 404, msg: "No existe el contenedor solicitado." };
-    }
-
+    const contenedor = await repositorio.obtener(id_inventario);
+    if (!contenedor) throw crearError(404, 'No existe el contenedor solicitado.', 'NO_ENCONTRADO');
     return contenedor;
   }
 
   async createInventario(rawData) {
-    // 1. Sanitización y Validación QPLUS DTO
-    if (!rawData.id_inventario) rawData.id_inventario = crypto.randomUUID();
-    const dataDTO = InventarioContenedoresDTO(rawData);
-
-    return await sequelize.transaction(async (t) => {
-      // 2. Validación de Negocio: No puede haber el mismo contenedor físico 
-      // figurando como "EN_PATIO" dos veces simultáneamente.
-      const existeEnPatio = await this.model.findOne({
-        where: {
-          sigla_numero: dataDTO.sigla_numero,
-          estado_operativo: 'EN_PATIO'
-        },
-        transaction: t
-      });
-
-      if (existeEnPatio) {
-        throw {
-          statusCode: 400,
-          msg: `El contenedor ${dataDTO.sigla_numero} ya se encuentra registrado físicamente en patio.`,
-          contenedor: existeEnPatio
-        };
+    const dto = InventarioContenedoresDTO({ ...rawData, id_inventario: rawData.id_inventario || crypto.randomUUID() });
+    const creado = await conTransaccion(async (t) => {
+      const enPatio = await repositorio.buscarUno({ sigla_numero: dto.sigla_numero, estado_operativo: 'EN_PATIO' }, { transaction: t });
+      if (enPatio) {
+        throw crearError(400, `El contenedor ${dto.sigla_numero} ya se encuentra registrado físicamente en patio.`, 'YA_EN_PATIO', { contenedor: enPatio });
       }
-
-      // 3. Persistencia
-      const contenedorDB = await this.model.create(dataDTO, { transaction: t });
-
-      // 4. Emisión en Tiempo Real (Socket.io) para recargar los gráficos del tablero
-      getIO().emit("inventario-actualizado", {
-        action: "create",
-        msg: `Nuevo ingreso: ${contenedorDB.sigla_numero} (${contenedorDB.naviera})`,
-        id_puerto: contenedorDB.id_puerto
-      });
-
-      return contenedorDB;
+      return repositorio.crear(dto, { transaction: t });
     });
+    emitir(EVENTO, { action: 'create', msg: `Nuevo ingreso: ${creado.sigla_numero} (${creado.naviera})`, id_puerto: creado.id_puerto });
+    return creado;
   }
 
   async cargueMasivoExcel(fileBuffer, usuarioCreador) {
-    const workbook = xlsx.read(fileBuffer, { type: 'buffer' });
-    const sheetName = workbook.SheetNames[0];
-    const rawDataArray = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
-
-    if (!rawDataArray || rawDataArray.length === 0) {
-      throw { statusCode: 400, msg: 'El archivo Excel de contenedores está vacío o inválido.' };
+    const libro = xlsx.read(fileBuffer, { type: 'buffer' });
+    const filas = xlsx.utils.sheet_to_json(libro.Sheets[libro.SheetNames[0]]);
+    if (!filas || filas.length === 0) {
+      throw crearError(400, 'El archivo Excel de contenedores está vacío o inválido.', 'ARCHIVO_VACIO');
     }
 
-    const contenedoresLimpios = [];
-    const erroresValidacion = [];
-
-    rawDataArray.forEach((fila, index) => {
+    const ahora = new Date().toISOString();
+    const limpios = [];
+    const errores = [];
+    filas.forEach((fila, index) => {
       try {
-        const rawContenedor = {
+        limpios.push(InventarioContenedoresDTO({
           id_inventario: fila.id_inventario || crypto.randomUUID(),
           id_puerto: fila.id_puerto || 'BUENAVENTURA',
           sigla_numero: fila.sigla_numero,
@@ -106,101 +66,50 @@ class InventarioContenedoresService {
           es_reefer: fila.es_reefer === 'SI' || fila.es_reefer === true,
           temp_requerida_celsius: fila.temp_requerida_celsius || null,
           codigo_imo: fila.codigo_imo || null,
-          fecha_ingreso: fila.fecha_ingreso || new Date().toISOString(),
+          fecha_ingreso: fila.fecha_ingreso || ahora,
           fecha_limite_freetime: fila.fecha_limite_freetime || null,
           estado_operativo: fila.estado_operativo || 'EN_PATIO',
           codigoUsuarioCreacion: usuarioCreador,
-          fechaCreacion: new Date().toISOString(),
+          fechaCreacion: ahora,
           codigoUsuarioModificacion: usuarioCreador,
-          fechaModificacion: new Date().toISOString()
-        };
-
-        const contenedorDTO = InventarioContenedoresDTO(rawContenedor);
-        contenedoresLimpios.push(contenedorDTO);
+          fechaModificacion: ahora,
+        }));
       } catch (error) {
-        erroresValidacion.push({ filaExcel: index + 2, detalles: error.details || error });
+        errores.push({ filaExcel: index + 2, detalles: error.details || error });
       }
     });
+    if (errores.length) throw crearError(400, 'Errores de validación en el archivo Excel.', 'VALIDACION', errores);
 
-    if (erroresValidacion.length > 0) {
-      throw { statusCode: 400, msg: 'Errores de validación en el archivo Excel.', errores: erroresValidacion };
+    let resultado;
+    try {
+      resultado = await conTransaccion((t) => repositorio.crearVarios(limpios, { transaction: t }));
+    } catch (error) {
+      throw crearError(409, 'Error de integridad en BD al importar contenedores.', 'INTEGRIDAD', { detalle: error.message });
     }
-
-    // 2. Ejecutar inserción masiva transaccional
-    const resultado = await sequelize.transaction(async (t) => {
-      try {
-        return await this.model.bulkCreate(contenedoresLimpios, { transaction: t });
-      } catch (dbError) {
-        throw { statusCode: 409, msg: 'Error de integridad en BD al importar contenedores.', detalle: dbError.message };
-      }
-    });
-
-    // 3. Emitir el evento de actualización global al tablero
-    getIO().emit('inventario-actualizado', {
-      action: "update_masivo",
-      msg: 'Cargue masivo de contenedores completado. Recalculando patios...'
-    });
-
+    emitir(EVENTO, { action: 'update_masivo', msg: 'Cargue masivo de contenedores completado. Recalculando patios...' });
     return resultado;
   }
 
   async updateInventario(id_inventario, rawData) {
-    const dataDTO = InventarioContenedoresDTO(rawData);
-
-    return await sequelize.transaction(async (t) => {
-      const contenedorDB = await this.model.findOne({
-        where: { id_inventario },
-        transaction: t
-      });
-
-      if (!contenedorDB) {
-        throw { statusCode: 404, msg: "No existe el contenedor con ese ID para actualizar." };
+    const dto = InventarioContenedoresDTO(rawData);
+    const actualizado = await conTransaccion(async (t) => {
+      if (!(await repositorio.obtener(id_inventario, { transaction: t }))) {
+        throw crearError(404, 'No existe el contenedor con ese ID para actualizar.', 'NO_ENCONTRADO');
       }
-
-      await this.model.update(dataDTO, {
-        where: { id_inventario },
-        transaction: t
-      });
-
-      const contenedorActualizado = await this.model.findOne({
-        where: { id_inventario },
-        transaction: t
-      });
-
-      getIO().emit("inventario-actualizado", {
-        action: "update",
-        msg: `Contenedor reubicado/actualizado: ${contenedorActualizado.sigla_numero}`
-      });
-
-      return contenedorActualizado;
+      return repositorio.actualizar(id_inventario, dto, { transaction: t });
     });
+    emitir(EVENTO, { action: 'update', msg: `Contenedor reubicado/actualizado: ${actualizado.sigla_numero}` });
+    return actualizado;
   }
 
   async deleteInventario(id_inventario) {
-    return await sequelize.transaction(async (t) => {
-      const contenedorDB = await this.model.findOne({
-        where: { id_inventario },
-        transaction: t
-      });
-
-      if (!contenedorDB) {
-        throw { statusCode: 404, msg: "No existe el contenedor con ese ID para eliminar." };
-      }
-
-      const sigla = contenedorDB.sigla_numero;
-
-      const resultado = await this.model.destroy({
-        where: { id_inventario },
-        transaction: t
-      });
-
-      getIO().emit("inventario-actualizado", {
-        action: "delete",
-        msg: `Contenedor eliminado del registro: ${sigla}`
-      });
-
-      return resultado;
+    const { sigla, resultado } = await conTransaccion(async (t) => {
+      const contenedor = await repositorio.obtener(id_inventario, { transaction: t });
+      if (!contenedor) throw crearError(404, 'No existe el contenedor con ese ID para eliminar.', 'NO_ENCONTRADO');
+      return { sigla: contenedor.sigla_numero, resultado: await repositorio.eliminar(id_inventario, { transaction: t }) };
     });
+    emitir(EVENTO, { action: 'delete', msg: `Contenedor eliminado del registro: ${sigla}` });
+    return resultado;
   }
 }
 

@@ -11,13 +11,11 @@
     Cada job pasa por utils/monitorETL: candado anti-solapamiento, timeout, bitácora y aviso por socket.
 */
 const cron = require('node-cron');
-const { sequelize } = require('../database/connection');
 
-const MaritimoRepository = require('../repositories/torre-control/maritimo.repository');
+const HomologacionMmsiService = require('../services/torre-control/homologacion-mmsi.service');
 const ClimateIngestionService = require('../services/torre-control/climate-ingestion.service');
-const IngestionService = require('../services/torre-control/ingestion.service');
 const ReportesService = require('../services/torre-control/reportes.service');
-const SincronizacionService = require('./sincronizacion.service');
+const SincronizacionService = require('../services/torre-control/sincronizacion.service');
 const flotaTerrestreService = require('../services/torre-control/flota-terrestre.service');
 const gnlService = require('../services/torre-control/gnl-telemetria.service');
 const ejecutarConMonitoreo = require('../utils/monitorETL');
@@ -25,22 +23,6 @@ const ejecutarConMonitoreo = require('../utils/monitorETL');
 const MINUTO = 60 * 1000;
 const esProduccion = process.env.NODE_ENV === 'production';
 
-async function homologarNavesPendientes() {
-  const pendientes = await MaritimoRepository.getNavesSinHomologar();
-  let homologadas = 0;
-
-  for (const nave of pendientes) {
-    const [ref] = await sequelize.query(
-      'SELECT TOP 1 mmsi FROM dbo.TCL_Referencia_OMI_MMSI WHERE omi = :omi',
-      { replacements: { omi: nave.omi }, type: sequelize.QueryTypes.SELECT }
-    );
-    if (ref?.mmsi) {
-      await MaritimoRepository.registrarHomologacion(nave.id_aviso, ref.mmsi);
-      homologadas++;
-    }
-  }
-  return { insertados: homologadas };
-}
 
 /**
  * Catálogo de jobs. `activo` es el valor por defecto; se sobreescribe con CRON_JOBS_ON / CRON_JOBS_OFF.
@@ -49,18 +31,16 @@ const JOBS = [
   {
     clave: 'clima-etl', nombre: '🔄 ETL Nacional de Clima', horario: '*/15 * * * *',
     activo: true, timeoutMs: 10 * MINUTO,
-    tarea: () => ClimateIngestionService.ejecutarIngesta(sequelize),
+    tarea: () => ClimateIngestionService.ejecutarIngesta(),
   },
   {
     clave: 'alertas-climaticas', nombre: '🔄 Sincronización de alertas climáticas', horario: '7-59/15 * * * *',
     activo: true, timeoutMs: 10 * MINUTO,
     tarea: () => SincronizacionService.sincronizarAlertasClimaticas(),
   },
-  {
-    clave: 'motonaves', nombre: '🔄 Escaneo de motonaves', horario: '*/30 * * * *',
-    activo: true, timeoutMs: 20 * MINUTO,
-    tarea: () => IngestionService.sincronizarMotonavesColombia(),
-  },
+  // 'motonaves' (VesselFinder) se retiró el 2026-10-18: usaba la clave de AISStream contra otro proveedor y
+  // escribía con un modelo inexistente, así que fallaba en cada ejecución. Las posiciones AIS las mantiene
+  // el motor AIS (services/torre-control/ais-stream.service.js).
   {
     clave: 'eventos-viales', nombre: '🔄 Eventos viales TomTom', horario: '*/10 * * * *',
     activo: true, timeoutMs: 5 * MINUTO,
@@ -96,7 +76,7 @@ const JOBS = [
     // Requerido por AIS: alimenta el MMSI de las naves. Apagado hasta validarlo en BD.
     clave: 'homologacion-mmsi', nombre: '🔄 Homologación de naves (OMI → MMSI)', horario: '0 * * * *',
     activo: false, timeoutMs: 10 * MINUTO,
-    tarea: homologarNavesPendientes,
+    tarea: () => HomologacionMmsiService.homologarPendientes(),
   },
 ];
 

@@ -6,6 +6,8 @@
 const { response } = require('express');
 const PuertosService = require('../../services/torre-control/puertos.service');
 
+const { responderError } = require('../../helpers/errores.helper');
+const { contextoUsuario } = require('../../helpers/controlador.helper');
 // Instanciamos el servicio
 const puertosService = new PuertosService();
 
@@ -19,11 +21,7 @@ const getPuertos = async (req, res = response) => {
       data: respuesta.data
     });
   } catch (error) {
-    res.status(error.statusCode || 500).json({
-      ok: false,
-      msg: error.msg || 'Error al obtener el listado de puertos. Hable con el administrador',
-      error: error.message || error
-    });
+    return responderError(res, error, 'puertos.getPuertos');
   }
 };
 
@@ -45,16 +43,13 @@ const getPuertoById = async (req, res = response) => {
       data: respuesta.data
     });
   } catch (error) {
-    res.status(error.statusCode || 500).json({
-      ok: false,
-      msg: error.msg || 'Error al obtener el puerto'
-    });
+    return responderError(res, error, 'puertos.getPuertoById');
   }
 };
 
 const crearPuerto = async (req, res = response) => {
   try {
-    const userContext = { codigoUsuario: req.uid || 'SISTEMA_ADMIN' };
+    const userContext = contextoUsuario(req);
 
     const nuevoPuerto = await puertosService.crearPuerto(req.body, userContext);
 
@@ -64,20 +59,14 @@ const crearPuerto = async (req, res = response) => {
       data: nuevoPuerto
     });
   } catch (error) {
-    // 🟢 MAGIA PORTTOS: Atrapa el error de Joi (DTO) e informa a Angular exactamente qué falló
-    const statusCode = error.type === 'ValidationError' ? 400 : (error.statusCode || 500);
-    res.status(statusCode).json({
-      ok: false,
-      msg: error.type === 'ValidationError' ? 'Error de validación en los datos enviados' : (error.msg || 'Error al crear el puerto'),
-      detalles: error.details || error
-    });
+    return responderError(res, error, 'puertos.crearPuerto');
   }
 };
 
 const updatePuerto = async (req, res = response) => {
   try {
     const { id } = req.params;
-    const userContext = { codigoUsuario: req.uid || 'SISTEMA_ADMIN' };
+    const userContext = contextoUsuario(req);
     console.log('controlador', req.body);
 
     const puertoActualizado = await puertosService.updatePuerto(id, req.body, userContext);
@@ -88,12 +77,7 @@ const updatePuerto = async (req, res = response) => {
       data: puertoActualizado
     });
   } catch (error) {
-    const statusCode = error.type === 'ValidationError' ? 400 : (error.statusCode || 500);
-    res.status(statusCode).json({
-      ok: false,
-      msg: error.type === 'ValidationError' ? 'Error de validación en los datos enviados' : (error.msg || 'Error al actualizar el puerto'),
-      detalles: error.details || error
-    });
+    return responderError(res, error, 'puertos.updatePuerto');
   }
 };
 
@@ -108,10 +92,7 @@ const deletePuerto = async (req, res = response) => {
       data: puertoEliminado
     });
   } catch (error) {
-    res.status(error.statusCode || 500).json({
-      ok: false,
-      msg: error.msg || 'Error al eliminar el puerto'
-    });
+    return responderError(res, error, 'puertos.deletePuerto');
   }
 };
 

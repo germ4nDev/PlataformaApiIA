@@ -6,7 +6,6 @@ const { obtenerMapaFormatoFrontend } = require('../../controllers/torre-control/
 const { obtenerClimaPuerto, obtenerClimaPuertoRuta } = require('../../controllers/torre-control/clima.controller');
 const { obtenerReportes, crearReporteOperativo } = require('../../controllers/torre-control/reportes.controller');
 const { getProductividadGrafica } = require('../../controllers/torre-control/productividad-chart.controller');
-const { navesController } = require('../../controllers/torre-control/naves-avisadas.controller');
 
 const router = Router();
 

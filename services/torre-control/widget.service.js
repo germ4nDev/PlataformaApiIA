@@ -1,142 +1,56 @@
 /*
     Author: German Valencia
-    Refactored for: PORTTOS Standard (Clean Service Layer) - Catálogo de Widgets
+    Pattern: PORTTOS Service - Catálogo heredado de widgets
+    Description: CRUD de TLCCatalogo_Widgets (rutas /api/widgets de torre-control).
+      Acceso a datos en catalogo-widgets.repository.js.
 */
-const { sequelize } = require('../../database/connection');
-const { CatalogoWidgetModel, CatalogoWidgetDTO } = require('../../models/torre-control/catalogo-widgets.model');
-const { io } = require('../../index');
+const { CatalogoWidgetDTO } = require('../../models/torre-control/catalogo-widgets.model');
+const repositorio = require('../../repositories/torre-control/catalogo-widgets.repository');
+const { conTransaccion } = require('../../helpers/transaccion.helper');
+const { emitir } = require('../../helpers/socket.helper');
+const { crearError } = require('../../helpers/errores.helper');
+
+const EVENTO = 'widgets-actualizados';
 
 class WidgetService {
-  constructor() {
-    this.model = CatalogoWidgetModel(sequelize);
-  }
-
-  // Permite buscar todos o filtrar (ej. solo los activos para el Lobby)
   async getWidgets() {
-    try {
-      // Obtenemos los datos limpios
-      const resultados = await this.model.findAll({ raw: true });
-      return {
-        ok: true,
-        data: resultados,
-        statusCode: 200
-      };
-    } catch (error) {
-      console.error("🔴 Error en WidgetService (getWidgets):", error);
-      throw error;
-    }
+    return { ok: true, data: await repositorio.listar(), statusCode: 200 };
   }
 
   async getWidgetByCode(codigo_widget) {
-    try {
-      const registro = await this.model.findOne({ where: { codigo_widget } });
-      if (!registro) throw { statusCode: 404, msg: "No existe el widget solicitado en el catálogo." };
-      return registro;
-    } catch (error) {
-      console.error("🔴 Error en WidgetService (getWidgetByCode):", error);
-      throw error;
-    }
+    const registro = await repositorio.obtener(codigo_widget);
+    if (!registro) throw crearError(404, 'No existe el widget solicitado en el catálogo.', 'NO_ENCONTRADO');
+    return registro;
   }
 
   async crearWidget(rawData, userContext = { codigoUsuario: 'SISTEMA_ADMIN' }) {
-    try {
-      // 1. Saneamiento y Validación (Escudo PORTTOS)
-      const dataDTO = CatalogoWidgetDTO(rawData, userContext);
-
-      return await sequelize.transaction(async (t) => {
-        const nuevoWidget = await this.model.create(dataDTO, { transaction: t });
-        console.log('✅ Widget creado en BD:', nuevoWidget.toJSON());
-
-        // 3. Reactividad
-        if (typeof io !== 'undefined') {
-          io.emit('widgets-actualizados', {
-            action: 'create',
-            msg: `Nuevo widget registrado: ${nuevoWidget.nombre}`
-          });
-        }
-
-        return nuevoWidget;
-      });
-
-    } catch (error) {
-      console.error('🔴 Error COMPLETO en crearWidget:', error);
-      throw error;
-    }
+    const dto = CatalogoWidgetDTO(rawData, userContext);
+    const nuevo = await conTransaccion((t) => repositorio.crear(dto, { transaction: t }));
+    emitir(EVENTO, { action: 'create', msg: `Nuevo widget registrado: ${nuevo.nombre}` });
+    return nuevo;
   }
 
   async updateWidget(codigo_widget, rawData, userContext = { codigoUsuario: 'SISTEMA_ADMIN' }) {
-    try {
-      const dataDTO = CatalogoWidgetDTO(rawData, userContext);
-
-      return await sequelize.transaction(async (t) => {
-        const dbWidget = await this.model.findOne({
-          where: { codigo_widget },
-          transaction: t
-        });
-
-        if (!dbWidget) {
-          throw { statusCode: 404, msg: "No existe el widget para actualizar." };
-        }
-
-        await this.model.update(dataDTO, {
-          where: { codigo_widget },
-          transaction: t
-        });
-
-        const actualizado = await this.model.findOne({
-          where: { codigo_widget },
-          transaction: t
-        });
-
-        if (typeof io !== 'undefined') {
-          io.emit('widgets-actualizados', {
-            action: 'update',
-            msg: `Widget actualizado: ${actualizado.nombre}`
-          });
-        }
-
-        return actualizado;
-      });
-
-    } catch (error) {
-      console.error(`🔴 Error en updateWidget:`, error.msg || error.message);
-      throw error;
-    }
+    const dto = CatalogoWidgetDTO(rawData, userContext);
+    const actualizado = await conTransaccion(async (t) => {
+      if (!(await repositorio.obtener(codigo_widget, { transaction: t }))) {
+        throw crearError(404, 'No existe el widget para actualizar.', 'NO_ENCONTRADO');
+      }
+      return repositorio.actualizar(codigo_widget, dto, { transaction: t });
+    });
+    emitir(EVENTO, { action: 'update', msg: `Widget actualizado: ${actualizado.nombre}` });
+    return actualizado;
   }
 
   async deleteWidget(codigo_widget) {
-    try {
-      return await sequelize.transaction(async (t) => {
-        const dbWidget = await this.model.findOne({
-          where: { codigo_widget },
-          transaction: t
-        });
-
-        if (!dbWidget) {
-          throw { statusCode: 404, msg: "No existe un widget con ese código." };
-        }
-
-        await this.model.destroy({
-          where: { codigo_widget },
-          transaction: t
-        });
-
-        if (typeof io !== 'undefined') {
-          io.emit('widgets-actualizados', {
-            action: 'delete',
-            msg: `Widget eliminado del catálogo: ${dbWidget.nombre}`
-          });
-        } else {
-          console.warn('⚠️ Objeto IO no definido. Se eliminó en BD pero no se notificó por socket.');
-        }
-
-        return dbWidget;
-      });
-
-    } catch (error) {
-      console.error(`🔴 Error en deleteWidget (Rollback):`, error.msg || error.message);
-      throw error;
-    }
+    const eliminado = await conTransaccion(async (t) => {
+      const widget = await repositorio.obtener(codigo_widget, { transaction: t });
+      if (!widget) throw crearError(404, 'No existe un widget con ese código.', 'NO_ENCONTRADO');
+      await repositorio.eliminar(codigo_widget, { transaction: t });
+      return widget;
+    });
+    emitir(EVENTO, { action: 'delete', msg: `Widget eliminado del catálogo: ${eliminado.nombre}` });
+    return eliminado;
   }
 }
 
