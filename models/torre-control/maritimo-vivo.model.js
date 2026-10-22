@@ -23,10 +23,21 @@ const TiemposQuerySchema = Joi.object({
 
 const OcupacionQuerySchema = Joi.object({ vigenciaMin });
 
+const EmbudoQuerySchema = Joi.object({
+  vigenciaMin,
+  horas: Joi.number().integer().min(1).max(240).default(72),
+  diasReferencia: Joi.number().integer().min(1).max(90).default(7),
+});
+
+const EstadoMuellesQuerySchema = Joi.object({
+  vigenciaMin,
+  horasReserva: Joi.number().integer().min(1).max(72).default(24),
+});
+
 const LlegadasQuerySchema = Joi.object({
   horas: Joi.number().integer().min(1).max(240).default(72),
   horasAtras: Joi.number().integer().min(0).max(72).default(12),
   limite: Joi.number().integer().min(1).max(500).default(200),
 });
 
-module.exports = { PuertoParamSchema, ResumenQuerySchema, TiemposQuerySchema, OcupacionQuerySchema, LlegadasQuerySchema };
+module.exports = { PuertoParamSchema, ResumenQuerySchema, TiemposQuerySchema, OcupacionQuerySchema, EstadoMuellesQuerySchema, EmbudoQuerySchema, LlegadasQuerySchema };

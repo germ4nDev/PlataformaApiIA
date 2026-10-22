@@ -129,7 +129,7 @@ app.use('/api/tipos-widget', require('./routes/tipos-widget.routes'));
 app.use('/api/tipos-pestana', require('./routes/tipos-pestana.routes'));
 
 // APLICACIONES
-app.use("/api/aplicaciones", require("./routes/aplicaciones"));
+app.use("/api/aplicaciones", require("./routes/aplicaciones.routes"));
 app.use("/api/versiones", require("./routes/versiones-ap.routes"));
 app.use("/api/paquetes", require("./routes/paquetes.routes"));
 app.use("/api/items-paquete", require("./routes/items-paquete"));
@@ -185,6 +185,10 @@ app.use('/api/muelles', require('./routes/torre-control/muelles.routes'));
 app.use('/api/infraestructura', require('./routes/torre-control/infraestructura.routes'));
 app.use('/api/tipos-infraestructura', require('./routes/torre-control/tipos-infraestructura.routes'));
 app.use('/api/eventos-viales', require('./routes/torre-control/evento-vial.routes'));
+app.use('/api/alertas-mapa', require('./routes/torre-control/alertas-mapa.routes'));
+app.use('/api/recorrido-mapa', require('./routes/torre-control/recorrido-mapa.routes'));
+app.use('/api/tableros', require('./routes/torre-control/tableros-pestanas.routes'));
+app.use('/api/ingesta-operacion', require('./routes/torre-control/ingesta-operacion.routes'));
 app.use('/api/flota-terrestre', require('./routes/torre-control/flota-terrestre.routes'));
 app.use('/api/motonaves', require('./routes/torre-control/motonaves.routes'));
 app.use('/api/faros', require('./routes/torre-control/faros.routes'));
@@ -299,6 +303,8 @@ sequelize
 
       // Motor AIS: proceso aislado, se enciende con AIS_ENABLED=true
       if (process.env.AIS_ENABLED === 'true') {
+        // Alertas del mapa (atraque, zarpe, nave en zona de faro) a partir de cada ciclo del radar
+        AISStreamService.alCambios((naves, eventos) => require('./services/torre-control/alertas-mapa.service').evaluarAis(naves, eventos));
         AISStreamService.iniciarConexion(io)
           .catch(aisError => console.error('❌ [Boot] Error encendiendo el radar AIS:', aisError.message));
       } else {

@@ -38,6 +38,8 @@ const MaritimoVivo = require('../../controllers/torre-control/maritimo-vivo.cont
 router.get('/:puerto/resumen', MaritimoVivo.obtenerResumenVivo);
 router.get('/:puerto/tiempos', MaritimoVivo.obtenerTiemposVivo);
 router.get('/:puerto/ocupacion', MaritimoVivo.obtenerOcupacionVivo);
+router.get('/:puerto/muelles-estado', MaritimoVivo.obtenerEstadoMuellesVivo);
+router.get('/:puerto/embudo', MaritimoVivo.obtenerEmbudoVivo);
 router.get('/:puerto/llegadas', MaritimoVivo.obtenerLlegadasVivo);
 
 module.exports = router;

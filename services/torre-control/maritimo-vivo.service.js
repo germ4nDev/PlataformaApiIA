@@ -8,6 +8,9 @@ const { ESTADOS_NAVE } = require('../../helpers/estado-nave.helper');
 const { normalizarPuerto } = require('../../helpers/salas.helper');
 const { noEncontrado } = require('../../helpers/errores.helper');
 const repositorioPorDefecto = require('../../repositories/torre-control/maritimo-vivo.repository');
+const { armarEstadoMuelles } = require('../../utils/estado-muelles');
+const { armarEmbudo } = require('../../utils/embudo-llegada');
+const { wktAGeoJson } = require('../../helpers/wkt.helper');
 
 const LISTA_ESTADOS = Object.values(ESTADOS_NAVE);
 const ESTADOS_CRITICOS = ['VARADO', 'SIN GOBIERNO', 'EMERGENCIA'];
@@ -206,7 +209,10 @@ class MaritimoVivoService {
   }
 
   async tiempos(clave, { dias }, ahora = new Date()) {
-    const puerto = await this._puerto(clave);
+    return this._tiemposDe(await this._puerto(clave), dias, ahora);
+  }
+
+  async _tiemposDe(puerto, dias, ahora = new Date()) {
     const desde = new Date(ahora.getTime() - dias * 86400000).toISOString();
     const [fondeos, estadias] = await Promise.all([
       this.repositorio.eventosFondeo(puerto.idPuerto, desde),
@@ -224,8 +230,42 @@ class MaritimoVivoService {
     return armarOcupacion(puerto, muelles, naves);
   }
 
-  async llegadas(clave, { horas, horasAtras, limite }) {
+  /**
+   * Embudo de llegada del puerto: avisadas (DIMAR) → aproximación → fondeadas → maniobra → atracadas, con la
+   * espera habitual de los últimos diasReferencia días (p90 de fondeo y estadía) para marcar el cuello de botella.
+   * Cada fuente puede faltar (sin AIS, sin avisos, sin migración 005): el embudo sale con lo que haya.
+   */
+  async embudo(clave, { horas, vigenciaMin, diasReferencia }, ahora = new Date()) {
     const puerto = await this._puerto(clave);
+    const [navesAis, llegadas, tiempos] = await Promise.all([
+      this.repositorio.navesEnPuerto(puerto.idPuerto, vigenciaMin).catch(() => null),
+      this._llegadasDe(puerto, { horas, horasAtras: 12, limite: 200 }).catch(() => null),
+      this._tiemposDe(puerto, diasReferencia, ahora).catch(() => null),
+    ]);
+    return armarEmbudo({ puerto, navesAis, llegadas, tiempos, horas, ahora });
+  }
+
+  /**
+   * Estado de cada muelle para el mapa (GeoJSON): mantenimiento, ocupado (AIS y/o line-up), reservado
+   * (atraque programado en las próximas horasReserva) o libre. Sin migración 005 el AIS cuenta como "sin datos"
+   * y el estado sale solo del line-up.
+   */
+  async estadoMuelles(clave, { vigenciaMin, horasReserva }, ahora = new Date()) {
+    const puerto = await this._puerto(clave);
+    const [muelles, naves, lineUp] = await Promise.all([
+      this.repositorio.muellesConGeometria(puerto.idPuerto),
+      this.repositorio.navesAtracadas(puerto.idPuerto, vigenciaMin).catch(() => null),
+      this.repositorio.lineUpDelPuerto(puerto, horasReserva).catch(() => []),
+    ]);
+    const conGeometria = muelles.map((m) => ({ ...m, enMantenimiento: Boolean(m.enMantenimiento), geometria: wktAGeoJson(m.wkt) }));
+    return { puerto, ...armarEstadoMuelles({ muelles: conGeometria, navesAis: naves, lineUp, horasReserva, ahora }) };
+  }
+
+  async llegadas(clave, { horas, horasAtras, limite }) {
+    return this._llegadasDe(await this._puerto(clave), { horas, horasAtras, limite });
+  }
+
+  async _llegadasDe(puerto, { horas, horasAtras, limite }) {
     const avisos = await this.repositorio.avisosLlegada(puerto, horasAtras, horas, limite);
     return armarLlegadas(puerto, avisos, horas);
   }

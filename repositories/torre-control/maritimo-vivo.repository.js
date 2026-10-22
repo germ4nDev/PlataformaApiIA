@@ -8,6 +8,7 @@
       por eso los desplazamientos negativos se pasan ya negados: vigenciaNeg, horasAtrasNeg).
 */
 const { QueryTypes } = require('sequelize');
+const { FECHA_LINEUP } = require('./maritimo.repository');
 const { db } = require('../../database/connection');
 const { esColumnaInexistente, esTablaInexistente, migracionPendiente } = require('../../helpers/errores.helper');
 
@@ -122,6 +123,56 @@ class MaritimoVivoRepository {
       WHERE t.id_puerto = :idPuerto AND (t.estado = 1 OR t.estado IS NULL)
       ORDER BY t.nombre, m.codigo_muelle`, { idPuerto });
     return filas.map((f) => ({ ...f, enMantenimiento: Boolean(f.enMantenimiento) }));
+  }
+
+  /** Naves con reporte AIS vigente en la zona del puerto, con su estado y posición (embudo de llegada). */
+  navesEnPuerto(idPuerto, vigenciaMin) {
+    return this._select(`
+      SELECT CAST(mmsi AS NVARCHAR(20)) AS mmsi, nombre_motonave AS nombre, estado_inferido AS estado,
+             CAST(latitud AS FLOAT) AS latitud, CAST(longitud AS FLOAT) AS longitud, CAST(velocidad AS FLOAT) AS velocidad,
+             id_terminal AS idTerminal, codigo_muelle AS codigoMuelle, ${MINUTOS_EN_ESTADO} AS minutos
+      FROM dbo.TCL_AisUltimaPosicion
+      WHERE id_puerto = :idPuerto AND ${VIGENTE}`, { idPuerto, vigenciaNeg: -vigenciaMin });
+  }
+
+  /** Muelles del puerto con su polígono (WKT) para el mapa de estado de muelles. */
+  muellesConGeometria(idPuerto) {
+    return this._select(`
+      SELECT m.id_interno AS idInterno, m.codigo_muelle AS codigoMuelle, m.id_terminal AS idTerminal, t.nombre AS terminal,
+             m.especialidad, CAST(m.calado_metros AS FLOAT) AS caladoMetros,
+             CAST(ISNULL(m.estado_mantenimiento, 0) AS BIT) AS enMantenimiento,
+             m.geocerca_geo.STAsText() AS wkt
+      FROM dbo.TCL_MaestroMuelles m
+      INNER JOIN dbo.TCL_MaestroTerminales t ON t.id_terminal = m.id_terminal
+      WHERE t.id_puerto = :idPuerto AND (t.estado = 1 OR t.estado IS NULL)
+      ORDER BY t.nombre, m.codigo_muelle`, { idPuerto });
+  }
+
+  /**
+   * Line-up vigente del puerto: barcos atracados ahora (por estado, igual que el resumen de terminales)
+   * y atraques programados en las próximas :horas. Fechas del line-up en formatos mixtos → FECHA_LINEUP.
+   */
+  lineUpDelPuerto(puerto, horas) {
+    const f = (c) => FECHA_LINEUP(c);
+    return this._select(`
+      SELECT L.terminal AS terminal, L.muelle AS muelle, L.motonave AS motonave,
+             TRY_CAST(L.eslora AS FLOAT) AS eslora, L.posicion AS posicion, L.trabajoOperacion AS trabajo,
+             L.fechaAtraque AS fechaAtraque, L.fechaZarpe AS fechaZarpe,
+             CASE WHEN ${f('L.fechaAtraque')} <= GETDATE()
+                    OR (NULLIF(LTRIM(RTRIM(L.fechaAtraque)), '') IS NULL
+                        AND (UPPER(L.posicion) LIKE '%ATRAC%' OR UPPER(L.trabajoOperacion) LIKE '%CARGA%'))
+                  THEN 1 ELSE 0 END AS atracada,
+             DATEDIFF(MINUTE, GETDATE(), ${f('L.fechaAtraque')}) AS minutosParaAtraque
+      FROM dbo.TCL_LineUpMaritimo L
+      WHERE (UPPER(L.puerto) LIKE UPPER(:puertoNombre) OR UPPER(L.puerto) LIKE UPPER(:puertoId))
+        AND COALESCE(L.estadoRegistro, 1) = 1
+        AND NULLIF(LTRIM(RTRIM(L.muelle)), '') IS NOT NULL
+        AND (NULLIF(LTRIM(RTRIM(L.fechaZarpe)), '') IS NULL OR ${f('L.fechaZarpe')} > GETDATE())
+        AND (
+              ${f('L.fechaAtraque')} <= DATEADD(HOUR, :horas, GETDATE())
+           OR (NULLIF(LTRIM(RTRIM(L.fechaAtraque)), '') IS NULL
+               AND (UPPER(L.posicion) LIKE '%ATRAC%' OR UPPER(L.trabajoOperacion) LIKE '%CARGA%'))
+        )`, { puertoNombre: `%${(puerto.nombre || '').trim()}%`, puertoId: `%${(puerto.idPuerto || '').trim()}%`, horas });
   }
 
   navesAtracadas(idPuerto, vigenciaMin) {

@@ -16,8 +16,12 @@ const HomologacionMmsiService = require('../services/torre-control/homologacion-
 const ClimateIngestionService = require('../services/torre-control/climate-ingestion.service');
 const ReportesService = require('../services/torre-control/reportes.service');
 const SincronizacionService = require('../services/torre-control/sincronizacion.service');
-const flotaTerrestreService = require('../services/torre-control/flota-terrestre.service');
 const gnlService = require('../services/torre-control/gnl-telemetria.service');
+const AlertasMapaService = require('../services/torre-control/alertas-mapa.service');
+const RecorridoMapaService = require('../services/torre-control/recorrido-mapa.service');
+const SimuladorFlotaService = require('../services/torre-control/simulador-flota.service');
+const SimuladorOperacionService = require('../services/torre-control/simulador-operacion.service');
+const NoticiasService = require('../services/torre-control/noticias.service');
 const ejecutarConMonitoreo = require('../utils/monitorETL');
 
 const MINUTO = 60 * 1000;
@@ -67,11 +71,62 @@ const JOBS = [
     tarea: async () => { await gnlService.consolidarTelemetria(); return 0; },
   },
   {
-    // Simulador: apagado en producción por defecto.
-    clave: 'simulador-flota', nombre: '🔄 Simulación de movimiento de flota', horario: '*/50 * * * * *',
-    activo: !esProduccion, timeoutMs: 45 * 1000,
-    tarea: () => flotaTerrestreService.simularMovimientoFlota(),
+    // Alertas del mapa por puerto: ocupación de muelles y naves fondeadas mucho tiempo (umbrales en TCL_ConfigAlertas).
+    clave: 'alertas-puertos', nombre: '🔔 Alertas del mapa por puerto', horario: '*/2 * * * *',
+    activo: true, timeoutMs: 90 * 1000,
+    tarea: () => AlertasMapaService.evaluarPuertos(),
   },
+  {
+    // Retención de la bitácora de alertas (TCL_AlertasMapa): 30 días.
+    clave: 'alertas-limpieza', nombre: '🧹 Limpieza de alertas del mapa', horario: '15 3 * * *',
+    activo: true, timeoutMs: 5 * MINUTO,
+    tarea: () => AlertasMapaService.limpiar(),
+  },
+  {
+    // Modo reproducir del mapa: una muestra por minuto de las naves y camiones que cambiaron (TCL_RecorridoMapa).
+    clave: 'recorrido-muestreo', nombre: '🎞️ Muestreo del recorrido del mapa', horario: '* * * * *',
+    activo: true, timeoutMs: 50 * 1000, soloFallos: true,
+    tarea: () => RecorridoMapaService.muestrear(),
+  },
+  {
+    // Retención del recorrido: RECORRIDO_RETENCION_DIAS (3 por defecto).
+    clave: 'recorrido-limpieza', nombre: '🧹 Limpieza del recorrido del mapa', horario: '45 3 * * *',
+    activo: true, timeoutMs: 10 * MINUTO,
+    tarea: () => RecorridoMapaService.limpiar(),
+  },
+  {
+    // Noticias del sector (Google News RSS y, con GNEWS_API_KEY, GNews) → TCL_Noticias.
+    clave: 'noticias', nombre: '📰 Noticias del sector', horario: '5,35 * * * *',
+    activo: true, timeoutMs: 3 * MINUTO,
+    tarea: () => NoticiasService.sincronizarNoticias(),
+  },
+  {
+    // TRM de datos.gov.co → TCL_IndicadoresMercado.
+    clave: 'indicadores-mercado', nombre: '💱 TRM del día', horario: '20 */6 * * *',
+    activo: true, timeoutMs: MINUTO,
+    tarea: () => NoticiasService.sincronizarTrm(),
+  },
+  {
+    // Retención: noticias 60 días; avance de operación y fotos de capacidad 30 días.
+    clave: 'tableros-limpieza', nombre: '🧹 Limpieza de noticias y operación', horario: '55 3 * * *',
+    activo: true, timeoutMs: 10 * MINUTO,
+    tarea: async () => { await NoticiasService.limpiar(); await SimuladorOperacionService.limpiar(); return 0; },
+  },
+  {
+    // Operación simulada de granel, Ro-Ro, vehículos, carga suelta y capacidad mientras no llegue la ingesta real
+    // (SIMULADOR_OPERACION_PUERTOS, por defecto BUENAVENTURA). Apagado en producción por defecto.
+    clave: 'simulador-operacion', nombre: '🔄 Simulación de operación portuaria', horario: '*/5 * * * *',
+    activo: !esProduccion, timeoutMs: 4 * MINUTO, soloFallos: true,
+    tarea: () => SimuladorOperacionService.ciclo(),
+  },
+  {
+    // Simulador de flota (utils/simulador-flota.js): cada 10 s, por distancia, con peajes, cola, cargue y regreso.
+    // Apagado en producción por defecto.
+    clave: 'simulador-flota', nombre: '🔄 Simulación de movimiento de flota', horario: '*/10 * * * * *',
+    activo: !esProduccion, timeoutMs: 30 * 1000, soloFallos: true,
+    tarea: () => SimuladorFlotaService.ciclo(),
+  },
+
   {
     // Requerido por AIS: alimenta el MMSI de las naves. Apagado hasta validarlo en BD.
     clave: 'homologacion-mmsi', nombre: '🔄 Homologación de naves (OMI → MMSI)', horario: '0 * * * *',
@@ -108,7 +163,7 @@ function initCronJobs() {
 
     const tarea = cron.schedule(
       job.horario,
-      () => ejecutarConMonitoreo(job.nombre, job.tarea, { timeoutMs: job.timeoutMs }),
+      () => ejecutarConMonitoreo(job.nombre, job.tarea, { timeoutMs: job.timeoutMs, soloFallos: job.soloFallos }),
       { name: job.clave, timezone }
     );
     programados.push(tarea);

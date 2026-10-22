@@ -5,7 +5,7 @@
       - puerto:{PUERTO}:{modulo}: datos de un módulo para un puerto (ej. puerto:BUENAVENTURA:gnl).
 */
 const SALA_OPERACION = 'operacion';
-const MODULOS = ['gnl', 'mapa', 'gate', 'maritimo', 'bodegas', 'contenedores'];
+const MODULOS = ['gnl', 'mapa', 'gate', 'maritimo', 'bodegas', 'contenedores', 'granel', 'suelta', 'capacidad', 'noticias'];
 const PATRON_SALA_PUERTO = new RegExp(`^puerto:[A-Z0-9_]{2,40}:(${MODULOS.join('|')})$`);
 
 /** "Buenaventura " → "BUENAVENTURA"; "Santa Marta" → "SANTA_MARTA" */

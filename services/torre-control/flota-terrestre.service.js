@@ -4,14 +4,9 @@
 */
 const FlotaTerrestreRepository = require('../../repositories/torre-control/flota-terrestre.repository');
 const { cajaPuerto, cajaWkt, MARGEN } = require('../../helpers/caja-puerto.helper');
-const { emitir } = require('../../helpers/socket.helper');
+const SimuladorFlotaService = require('./simulador-flota.service');
 
 class FlotaTerrestreService {
-
-  constructor() {
-    // Memoria para control de alertas de geocercas sin spam
-    this.memoriaZonas = new Map();
-  }
 
   // ==========================================
   // 1. GENERADOR DE GEOJSON PARA MAPLIBRE
@@ -70,40 +65,14 @@ class FlotaTerrestreService {
   // ==========================================
   // 2. MOTOR VECTORIAL (Simulador Masivo Global)
   // ==========================================
+  /**
+   * Un ciclo del simulador (proceso 'simulador-flota' y GET /simular-tick). Desde 2026-10-19 lo hace
+   * simulador-flota.service.js: avance por distancia, peajes, cola en portería, cargue y regreso.
+   * Las alertas del mapa sobre la flota las corre el simulador cada 30 s.
+   */
   async simularMovimientoFlota() {
-    try {
-      // Ejecuta la actualización masiva de toda la flota en SQL Server (sin offsets)
-      const result = await FlotaTerrestreRepository.ejecutarMotorVectorial();
-
-      const movidos = (result && result[0] && result[0][0]) ? result[0][0].FilasMovidas : 0;
-
-      // Detección opcional de eventos en geocercas
-      const camionesEnZona = await FlotaTerrestreRepository.detectarEventosGeocerca();
-      if (camionesEnZona && Array.isArray(camionesEnZona)) {
-        for (const evento of camionesEnZona) {
-          if (!this.memoriaZonas.has(evento.placa)) {
-            this.memoriaZonas.set(evento.placa, evento.Lugar);
-            const mensaje = `🚛 ${evento.placa} ingresó a ${evento.Lugar}`;
-
-            const esCritico = evento.Lugar && evento.Lugar.includes('Crítico');
-            if (esCritico) {
-              const payload = {
-                placa: evento.placa,
-                geocerca: evento.Lugar,
-                mensaje: mensaje,
-                fecha: new Date()
-              };
-              emitir('alerta-terrestre', payload);
-            }
-          }
-        }
-      }
-
-      return movidos;
-    } catch (error) {
-      console.error("❌ Error en el servicio de simulación:", error.message);
-      throw error;
-    }
+    const movidos = await SimuladorFlotaService.ciclo();
+    return { movidos, ...SimuladorFlotaService.resumen() };
   }
 
   // ==========================================

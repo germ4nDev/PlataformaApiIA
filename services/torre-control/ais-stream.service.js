@@ -93,6 +93,8 @@ const construirZona = (fila) => {
 
 class AISStreamService {
   constructor() {
+    /** Suscriptores a los cambios de cada ciclo (p. ej. el motor de alertas del mapa). Ver alCambios(). */
+    this.observadoresCambios = [];
     this.ws = null;
     this.io = null;
     this.activo = false;
@@ -674,16 +676,38 @@ class AISStreamService {
     };
   }
 
+  /**
+   * Suscribe una función a los cambios de cada ciclo de emisión:
+   * fn(navesConPosicionNueva[{mmsi, nombre, lon, lat, puerto}], cambiosDeEstado[]).
+   * Así el motor AIS no depende de quién consume sus datos (alertas del mapa, reportes...).
+   */
+  alCambios(fn) {
+    if (typeof fn === 'function') this.observadoresCambios.push(fn);
+  }
+
   /** Cada nave va solo a la sala de su puerto: quien mira Buenaventura no recibe Cartagena. */
   emitirCambios() {
     if (!this.io) return;
     const ahora = Date.now();
 
+    const movidas = []; // para el motor de alertas del mapa (naves en zona de faro)
     for (const nave of this.naves.values()) {
       if (!nave.pendienteSocket) continue;
       nave.pendienteSocket = false;
       if (!nave.puerto?.salas?.length) continue;
       this.io.to(nave.puerto.salas).emit('radar-actualizado', this.construirFeature(nave, ahora));
+      if (nave.lat != null && nave.lon != null) {
+        movidas.push({ mmsi: String(nave.mmsi), nombre: nave.nombre_motonave, lon: nave.lon, lat: nave.lat,
+          puerto: nave.puerto?.id_puerto || nave.puerto?.nombre || null });
+      }
+    }
+
+    const eventosCiclo = this.eventosPorEmitir.slice();
+    if ((movidas.length || eventosCiclo.length) && this.observadoresCambios.length) {
+      // Se avisa sin esperar: un suscriptor lento o con error no frena el radar
+      this.observadoresCambios.forEach((fn) => Promise.resolve()
+        .then(() => fn(movidas, eventosCiclo))
+        .catch((e) => console.error('[AIS] Suscriptor de cambios:', e.message)));
     }
 
     if (this.eventosPorEmitir.length > 0) {

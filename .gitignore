@@ -50,3 +50,5 @@ dist/
 # 7. Archivos del Sistema Operativo
 .DS_Store
 Thumbs.db
+# Salidas de scripts (vistas previas)
+scripts/salidas/

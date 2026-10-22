@@ -1082,3 +1082,4 @@ class MaritimoRepository {
 }
 
 module.exports = new MaritimoRepository();
+module.exports.FECHA_LINEUP = FECHA_LINEUP;

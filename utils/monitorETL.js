@@ -46,7 +46,9 @@ function emitirEstado(payload) {
 /**
  * @param {string} nombreProceso  Nombre legible para la bitácora.
  * @param {Function} funcionETL   Función async que ejecuta el proceso.
- * @param {{ timeoutMs?: number }} [opciones]
+ * @param {{ timeoutMs?: number, soloFallos?: boolean }} [opciones]
+ *   soloFallos: procesos de alta frecuencia (cada 10 s o cada minuto) registran en la bitácora solo los fallos,
+ *   para no llenar TCL_BitacoraSincronizacion ni el Monitor de cron con miles de éxitos al día.
  */
 async function ejecutarConMonitoreo(nombreProceso, funcionETL, opciones = {}) {
   const timeoutMs = opciones.timeoutMs || TIMEOUT_POR_DEFECTO_MS;
@@ -76,6 +78,7 @@ async function ejecutarConMonitoreo(nombreProceso, funcionETL, opciones = {}) {
 
   const duracion = Date.now() - inicio;
   const fechaISO = new Date().toISOString();
+  if (opciones.soloFallos && estado === 'EXITO') return resultado;
 
   try {
     await BitacoraSincronizacion.create({

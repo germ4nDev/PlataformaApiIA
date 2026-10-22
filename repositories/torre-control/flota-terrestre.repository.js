@@ -67,42 +67,95 @@ class FlotaTerrestreRepository {
     }
   }
 
-  // 3. Motor vectorial masivo (Modelo "Waypoints") - Ultra veloz y realista
-  async ejecutarMotorVectorial() {
-    const sqlQuery = `
-        SET NOCOUNT ON;
+  // 3. Simulador de flota (utils/simulador-flota.js). Reemplaza al motor por waypoints que saltaba un punto por ciclo
+  //    (copia en _respaldos/2026-10-19_simulador-flota).
 
-        -- 1. Actualizamos el "paso" en la cabeza de los camiones (Si llegan al destino, se devuelven al inicio)
-        UPDATE F
-        SET F.paso_actual = CASE 
-                WHEN F.paso_actual >= R.max_pasos THEN 1 
-                ELSE F.paso_actual + 1 
-            END
-        FROM TCL_FlotaTerrestre F
-        INNER JOIN TCL_SimuladorRutas R ON F.id_ruta = R.id_ruta
-        WHERE F.id_ruta IS NOT NULL;
-
-        -- 2. Teletransportamos la flota masivamente al paso exacto en su ruta y aplicamos rotación
-        UPDATE F
-        SET 
-            F.ubicacion_geo = W.ubicacion_geo,
-            F.rumbo = W.rumbo, -- 🟢 Hereda la rotación exacta del waypoint actual
-            F.ultima_actualizacion = GETDATE()
-        OUTPUT inserted.placa
-        FROM TCL_FlotaTerrestre F
-        INNER JOIN TCL_SimuladorWaypoints W 
-            ON F.id_ruta = W.id_ruta AND F.paso_actual = W.paso;
-    `;
-
-    try {
-      const resultados = await sequelize.query(sqlQuery, { type: QueryTypes.SELECT });
-      const filasMovidas = Array.isArray(resultados) ? resultados.length : 0;
-
-      return [[{ FilasMovidas: filasMovidas }]];
-    } catch (error) {
-      console.error('❌ [ERROR MOTOR WAYPOINTS]:', error?.message);
-      return [[{ FilasMovidas: 0 }]];
+  /** Waypoints de las rutas del simulador, en orden. */
+  async rutasSimulador() {
+    const filas = await sequelize.query(`
+      SELECT W.id_ruta, W.paso, W.ubicacion_geo.STX AS lon, W.ubicacion_geo.STY AS lat
+      FROM TCL_SimuladorWaypoints W WITH(NOLOCK)
+      WHERE W.ubicacion_geo IS NOT NULL
+      ORDER BY W.id_ruta, W.paso`, { type: QueryTypes.SELECT });
+    const rutas = new Map();
+    for (const f of filas) {
+      if (!rutas.has(f.id_ruta)) rutas.set(f.id_ruta, { id: f.id_ruta, puntos: [] });
+      rutas.get(f.id_ruta).puntos.push({ paso: Number(f.paso), lon: Number(f.lon), lat: Number(f.lat) });
     }
+    return [...rutas.values()];
+  }
+
+  /** Camiones del simulador (los que tienen ruta asignada). */
+  flotaSimulada() {
+    return sequelize.query(`
+      SELECT placa, id_ruta, paso_actual
+      FROM TCL_FlotaTerrestre WITH(NOLOCK)
+      WHERE id_ruta IS NOT NULL`, { type: QueryTypes.SELECT });
+  }
+
+  /**
+   * Escribe posición, rumbo, velocidad, estado y paso de los camiones simulados.
+   * Lotes de 300 filas × 7 parámetros (tope de SQL Server: 2100). Sin OPENJSON: la base está en nivel 110.
+   */
+  async actualizarSimulacion(filas) {
+    let total = 0;
+    for (let i = 0; i < filas.length; i += 300) {
+      const lote = filas.slice(i, i + 300);
+      const r = {};
+      const valores = lote.map((f, j) => {
+        Object.assign(r, { [`pl${j}`]: f.placa, [`lo${j}`]: f.lon, [`la${j}`]: f.lat, [`ru${j}`]: f.rumbo,
+          [`ve${j}`]: f.velocidad, [`es${j}`]: f.estado, [`pa${j}`]: f.paso });
+        return `(:pl${j}, :lo${j}, :la${j}, :ru${j}, :ve${j}, :es${j}, :pa${j})`;
+      });
+      await sequelize.query(`
+        UPDATE F SET
+          F.ubicacion_geo = geometry::Point(V.lon, V.lat, 4326),
+          F.rumbo = V.rumbo, F.velocidad = V.velocidad, F.estado = LEFT(V.estado, 20), F.paso_actual = V.paso,
+          F.ultima_actualizacion = GETDATE()
+        FROM TCL_FlotaTerrestre F
+        INNER JOIN (VALUES ${valores.join(', ')}) AS V (placa, lon, lat, rumbo, velocidad, estado, paso) ON F.placa = V.placa`,
+      { replacements: r, type: QueryTypes.UPDATE });
+      total += lote.length;
+    }
+    return total;
+  }
+
+  /**
+   * Reemplaza los waypoints de una ruta del simulador por la geometría ajustada a la red vial
+   * (scripts/rutas-simulador.js). En una transacción:
+   *   1. la primera vez copia la tabla completa a TCL_SimuladorWaypoints_respaldo (reversible);
+   *   2. borra e inserta los waypoints (lotes de 400 × 5 parámetros);
+   *   3. actualiza max_pasos y lleva el paso_actual de los camiones a la misma proporción del recorrido.
+   * @param {number} idRuta
+   * @param {Array<{lon:number, lat:number, rumbo:number}>} puntos
+   */
+  async reemplazarRutaSimulador(idRuta, puntos) {
+    return sequelize.transaction(async (transaction) => {
+      const q = (sql, replacements = {}, type = QueryTypes.RAW) => sequelize.query(sql, { replacements, type, transaction });
+      await q(`IF OBJECT_ID(N'dbo.TCL_SimuladorWaypoints_respaldo', N'U') IS NULL
+                 SELECT * INTO dbo.TCL_SimuladorWaypoints_respaldo FROM dbo.TCL_SimuladorWaypoints;`);
+      const [{ maxAnterior }] = await q(
+        'SELECT ISNULL(MAX(paso), 0) AS maxAnterior FROM TCL_SimuladorWaypoints WHERE id_ruta = :idRuta',
+        { idRuta }, QueryTypes.SELECT);
+      await q('DELETE FROM TCL_SimuladorWaypoints WHERE id_ruta = :idRuta', { idRuta });
+      for (let i = 0; i < puntos.length; i += 400) {
+        const r = { idRuta };
+        const valores = puntos.slice(i, i + 400).map((p, j) => {
+          Object.assign(r, { [`pa${j}`]: i + j + 1, [`lo${j}`]: p.lon, [`la${j}`]: p.lat, [`ru${j}`]: p.rumbo });
+          return `(:idRuta, :pa${j}, geometry::Point(:lo${j}, :la${j}, 4326), :ru${j})`;
+        });
+        await q(`INSERT INTO TCL_SimuladorWaypoints (id_ruta, paso, ubicacion_geo, rumbo) VALUES ${valores.join(', ')}`, r, QueryTypes.INSERT);
+      }
+      await q('UPDATE TCL_SimuladorRutas SET max_pasos = :n WHERE id_ruta = :idRuta', { idRuta, n: puntos.length }, QueryTypes.UPDATE);
+      if (maxAnterior > 0) {
+        await q(`UPDATE TCL_FlotaTerrestre
+                 SET paso_actual = CASE WHEN CEILING(paso_actual * 1.0 * :n / :maxAnterior) < 1 THEN 1
+                                        WHEN CEILING(paso_actual * 1.0 * :n / :maxAnterior) > :n THEN :n
+                                        ELSE CEILING(paso_actual * 1.0 * :n / :maxAnterior) END
+                 WHERE id_ruta = :idRuta`, { idRuta, n: puntos.length, maxAnterior }, QueryTypes.UPDATE);
+      }
+      return { idRuta, pasosAnteriores: maxAnterior, pasosNuevos: puntos.length };
+    });
   }
 
   // 4. Tablero de KPIs unificado (Terrestre y Marítimo)

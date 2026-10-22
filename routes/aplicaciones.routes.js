@@ -14,7 +14,7 @@ const {
     createAplicacion,
     updateAplicacion,
     deleteAplicacion,
-} = require("../controllers/aplicaciones");
+} = require("../controllers/aplicaciones.controller");
 
 const router = Router();
 // router.use(validarSesion);

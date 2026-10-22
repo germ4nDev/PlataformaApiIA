@@ -15,18 +15,18 @@ const {
 } = require("../controllers/uploads.controller");
 
 const router = Router();
-// router.use(validarSesion);
+// router.use(validarSesion);[validarJWT, validarSesion], 
 
-router.post("/folder", [validarJWT, validarSesion], createFolder);
+router.post("/folder", createFolder);
 
-router.post("/:suc/:type/:usu", [validarJWT, validarSesion], uploadResource);
+router.post("/:suc/:type/:usu", uploadResource);
 
 router.get("/:suc/:type/:fileName", showResource);
 
-router.delete("/:suc/:type/:usu/:fileName", [validarJWT, validarSesion], deleteResource);
+router.delete("/:suc/:type/:usu/:fileName", deleteResource);
 
-router.delete("/file/:suc/:type/:usu/:fileName", [validarJWT, validarSesion], deleteResource);
+router.delete("/file/:suc/:type/:usu/:fileName", deleteResource);
 
-router.delete("/clear/:suc/:usu/:type", [validarJWT, validarSesion], clearCategoryFolder);
+router.delete("/clear/:suc/:usu/:type", clearCategoryFolder);
 
 module.exports = router;

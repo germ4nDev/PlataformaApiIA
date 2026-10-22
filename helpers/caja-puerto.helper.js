@@ -51,6 +51,19 @@ async function cajaPuerto(puerto, margen = MARGEN.MARITIMO) {
 const cajaWkt = (c) =>
   `POLYGON((${c.oeste} ${c.sur}, ${c.este} ${c.sur}, ${c.este} ${c.norte}, ${c.oeste} ${c.norte}, ${c.oeste} ${c.sur}))`;
 
+/** Puertos (clave normalizada) cuya caja, ampliada con el margen, contiene el punto. Para enrutar alertas por sala. */
+async function puertosEnPunto(lon, lat, margen = MARGEN.TERRESTRE) {
+  if (!Number.isFinite(lon) || !Number.isFinite(lat)) return [];
+  return (await puertosConCaja())
+    .filter((p) => lat >= p.sur - margen && lat <= p.norte + margen && lon >= p.oeste - margen && lon <= p.este + margen)
+    .map((p) => p.claves[0]);
+}
+
+/** Puertos con caja configurada: [{ clave, centro: [lon, lat] }]. */
+async function listarPuertos() {
+  return (await puertosConCaja()).map((p) => ({ clave: p.claves[0], centro: [(p.oeste + p.este) / 2, (p.sur + p.norte) / 2] }));
+}
+
 const _reiniciarCache = () => { cache = { hasta: 0, puertos: [] }; };
 
-module.exports = { cajaPuerto, cajaWkt, MARGEN, _reiniciarCache };
+module.exports = { cajaPuerto, cajaWkt, MARGEN, puertosEnPunto, listarPuertos, _reiniciarCache };

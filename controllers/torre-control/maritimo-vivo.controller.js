@@ -5,12 +5,14 @@
       GET /api/maritimo/:puerto/resumen    ?vigenciaMin=60&limiteCola=20
       GET /api/maritimo/:puerto/tiempos    ?dias=30
       GET /api/maritimo/:puerto/ocupacion  ?vigenciaMin=60
+      GET /api/maritimo/:puerto/muelles-estado ?vigenciaMin=60&horasReserva=24  (GeoJSON para el mapa)
+      GET /api/maritimo/:puerto/embudo     ?horas=72&vigenciaMin=60&diasReferencia=7  (embudo de llegada)
       GET /api/maritimo/:puerto/llegadas   ?horas=72&horasAtras=12&limite=200
     Respuesta: { ok: true, data }. Errores con helpers/errores.helper (400/404/503/500).
 */
 const MaritimoVivoService = require('../../services/torre-control/maritimo-vivo.service');
 const {
-  PuertoParamSchema, ResumenQuerySchema, TiemposQuerySchema, OcupacionQuerySchema, LlegadasQuerySchema,
+  PuertoParamSchema, ResumenQuerySchema, TiemposQuerySchema, OcupacionQuerySchema, EstadoMuellesQuerySchema, EmbudoQuerySchema, LlegadasQuerySchema,
 } = require('../../models/torre-control/maritimo-vivo.model');
 const { responderError, validarCon } = require('../../helpers/errores.helper');
 
@@ -29,5 +31,7 @@ module.exports = {
   obtenerResumenVivo: responder('resumen', ResumenQuerySchema),
   obtenerTiemposVivo: responder('tiempos', TiemposQuerySchema),
   obtenerOcupacionVivo: responder('ocupacion', OcupacionQuerySchema),
+  obtenerEstadoMuellesVivo: responder('estadoMuelles', EstadoMuellesQuerySchema),
+  obtenerEmbudoVivo: responder('embudo', EmbudoQuerySchema),
   obtenerLlegadasVivo: responder('llegadas', LlegadasQuerySchema),
 };

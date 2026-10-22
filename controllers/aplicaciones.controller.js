@@ -71,9 +71,9 @@ const updateAplicacion = async (req, res = response) => {
     try {
         const { codigoAplicacion, ...data } = req.body;
 
-        // QPLUS: Hidratación del payload y delegación pura al servicio
-        const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-        const dataDTO = { ...data, codigoUsuario: usuarioAccion };
+        const dataDTO = { ...data };
+        console.log('codigo aplicacion controller', codigoAplicacion);
+        console.log('aplicacion controller', dataDTO);
 
         const aplicacionActualizada = await service.updateAplicacion(codigoAplicacion, dataDTO);
 
