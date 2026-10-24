@@ -22,7 +22,7 @@ const getParametros = async (req, res = response) => {
 const getParametroByCodigo = async (req, res = response) => {
   try {
     const { id } = req.params;
-    console.log('codigo', id);
+    // console.log('codigo', id);
 
     const parametro = await service.getParametroById(id);
     return res.status(200).json({ ok: true, parametro });
@@ -38,12 +38,12 @@ const createParametro = async (req, res = response) => {
   try {
     // QPLUS: Auditoría inicial
     const dataDTO = { ...req.body };
-    console.log('parametro controlaador', dataDTO);
+    // console.log('parametro controlaador', dataDTO);
 
-    console.log('parametro dto', dataDTO);
+    // console.log('parametro dto', dataDTO);
 
     const parametro = await service.createParametro(dataDTO);
-    console.log('parametro creado', parametro);
+    // console.log('parametro creado', parametro);
 
     return res.status(201).json({ ok: true, parametro });
   } catch (error) {

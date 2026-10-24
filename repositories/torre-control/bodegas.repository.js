@@ -34,7 +34,7 @@ class BodegasRepository {
                 CAST(
                     CASE WHEN capacidad_maxima_ton > 0
                          THEN ROUND((inventario_actual_ton / capacidad_maxima_ton) * 100, 1)
-                         ELSE 0
+                         ELSE NULL  -- sin capacidad no hay porcentaje (antes 0 %, que se veía como bodega vacía)
                     END AS FLOAT
                 ) AS ocupacion_pct,
                 CAST(temperatura_c AS FLOAT) AS temperatura_c,
@@ -84,6 +84,31 @@ class BodegasRepository {
 
     return await sequelize.query(query, {
       replacements: { puerto },
+      type: QueryTypes.SELECT
+    });
+  }
+
+  /**
+   * Movimientos del puerto desde una fecha (Fase 1, 2026-10-23): reemplaza al TOP 50 sin fecha para el tablero.
+   * fechaCreacion se guarda como texto ISO; las filas con otro formato quedan fuera (TRY_CONVERT → NULL).
+   * Trae como máximo :limite filas y en `total_rango` cuántas había en el rango.
+   */
+  async obtenerMovimientosBodegaDesde(puerto, desdeIso, limite = 500) {
+    const query = `
+            SELECT TOP (:limite)
+                id_movimiento_bodega, id_puerto, id_bodega, nombre_bodega, lote_bl, producto, tipo_operacion,
+                CAST(toneladas AS FLOAT) AS toneladas, cliente, dias_almacenaje, estado, activo,
+                codigoUsuarioCreacion, fechaCreacion, codigoUsuarioModificacion, fechaModificacion,
+                COUNT(*) OVER () AS total_rango
+            FROM dbo.TCL_MovimientosBodega WITH (NOLOCK)
+            WHERE UPPER(LTRIM(RTRIM(id_puerto))) = :puerto
+              AND activo = 1
+              AND TRY_CONVERT(datetimeoffset, fechaCreacion) >= TRY_CONVERT(datetimeoffset, :desde)
+            ORDER BY TRY_CONVERT(datetimeoffset, fechaCreacion) DESC, id_movimiento_bodega DESC;
+        `;
+
+    return await sequelize.query(query, {
+      replacements: { puerto, desde: desdeIso, limite },
       type: QueryTypes.SELECT
     });
   }

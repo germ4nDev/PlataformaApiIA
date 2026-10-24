@@ -34,6 +34,15 @@ const getHeaders = (extraHeaders = {}) => ({
 // Algunas fuentes públicas colombianas sirven certificados incompletos.
 const agent = new https.Agent({ rejectUnauthorized: false });
 
+/** Zonas logísticas consultadas a TomTom (cada caja < 10.000 km², límite de la API) y su corredor. */
+const ZONAS_TOMTOM = Object.freeze([
+  { nombre: 'Pacífico', bbox: '-77.10,3.40,-76.20,4.00', corredor: 'Buga - Buenaventura' },
+  { nombre: 'Cafetero', bbox: '-75.90,4.80,-75.40,5.40', corredor: 'Eje Cafetero' },
+  { nombre: 'Centro', bbox: '-74.30,4.40,-73.90,4.90', corredor: 'Bogotá y salidas' },
+  { nombre: 'Antioquia', bbox: '-75.70,6.00,-75.30,6.50', corredor: 'Valle de Aburrá y accesos' },
+  { nombre: 'Caribe', bbox: '-75.10,10.30,-74.70,11.10', corredor: 'Cartagena - Barranquilla' },
+]);
+
 class FuentesExternasAdapter {
 
   // ==========================================
@@ -173,55 +182,49 @@ class FuentesExternasAdapter {
   // ==========================================
   // 8. FUENTES OFICIALES (Incidentes Viales - TOMTOM)
   // ==========================================
-  static async getEventosVialesOficiales() {
-    const cacheKey = 'vias_tomtom_nacional';
+  /**
+   * Incidentes vigentes de TomTom por zona logística (cajas < 10.000 km²), con el resultado de cada zona.
+   * El ciclo de vida (utils/eventos-viales.js) solo cierra eventos de las zonas que respondieron bien.
+   * Pide startTime, endTime, lastReportTime y delay; timeValidityFilter=present (solo lo vigente ahora).
+   * @returns {Promise<{incidentes: Array<{zona: object, item: object}>, zonas: Array<{nombre, bbox, corredor, ok, error}>}>}
+   */
+  static async getEventosVialesPorZona() {
+    const cacheKey = 'vias_tomtom_por_zona';
     if (apiCache.has(cacheKey)) return apiCache.get(cacheKey);
 
-    // Bounding Boxes calculados estrictamente < 10,000 km2 enfocados en rutas clave
-    const zonasLogisticas = [
-      { nombre: 'Pacífico', bbox: '-77.10,3.40,-76.20,4.00' }, // Cali, Yumbo, Buenaventura
-      { nombre: 'Cafetero', bbox: '-75.90,4.80,-75.40,5.40' }, // Pereira, Armenia, Cartago
-      { nombre: 'Centro', bbox: '-74.30,4.40,-73.90,4.90' },   // Bogotá Sabana y salidas
-      { nombre: 'Antioquia', bbox: '-75.70,6.00,-75.30,6.50' },// Valle de Aburrá y accesos
-      { nombre: 'Caribe', bbox: '-75.10,10.30,-74.70,11.10' }  // Corredor Cartagena-B/quilla
-    ];
+    const resultados = await Promise.all(ZONAS_TOMTOM.map((zona) =>
+      http.get('https://api.tomtom.com/traffic/services/5/incidentDetails', {
+        params: {
+          key: process.env.TOMTOM_API_KEY,
+          bbox: zona.bbox,
+          language: 'es-ES',
+          timeValidityFilter: 'present',
+          fields: '{incidents{type,geometry{type,coordinates},properties{id,iconCategory,magnitudeOfDelay,from,to,startTime,endTime,lastReportTime,delay,events{description,code}}}}',
+        },
+      })
+        .then((res) => ({ zona: { ...zona, ok: true, error: null }, incidentes: res.data?.incidents || [] }))
+        .catch((err) => {
+          const detalle = err.response?.data?.detailedError?.message || err.response?.data?.message || err.message;
+          const codigo = err.response?.status ? `HTTP ${err.response.status}` : 'sin respuesta';
+          console.warn(`⚠️ Error TomTom en zona ${zona.nombre} (${codigo}):`, detalle);
+          return { zona: { ...zona, ok: false, error: `${codigo}: ${detalle}`.substring(0, 300) }, incidentes: [] };
+        })));
 
-    try {
-      const peticiones = zonasLogisticas.map(zona =>
-        http.get(`https://api.tomtom.com/traffic/services/5/incidentDetails`, {
-          params: {
-            key: process.env.TOMTOM_API_KEY,
-            bbox: zona.bbox,
-            language: 'es-ES',
-
-            // ¡Corregido! El 'id' ahora vive dentro de 'properties' junto con los textos
-            fields: '{incidents{geometry{type,coordinates},properties{id,iconCategory,magnitudeOfDelay,from,to,events{description}}}}'
-          }
-        }).catch(err => {
-          const detalleError = err.response?.data?.detailedError?.message || err.response?.data?.message || err.message;
-          console.warn(`⚠️ Error TomTom en zona ${zona.nombre}:`, detalleError);
-          return { data: { incidents: [] } };
-        })
-      );
-
-      const resultados = await Promise.all(peticiones);
-
-      let incidentesNacionales = [];
-      resultados.forEach(res => {
-        if (res.data && res.data.incidents) {
-          incidentesNacionales = [...incidentesNacionales, ...res.data.incidents];
-        }
-      });
-
-      apiCache.set(cacheKey, incidentesNacionales, 300);
-
-      return incidentesNacionales;
-
-    } catch (error) {
-      console.error("❌ Error General en TomTom:", error.message);
-      return [];
-    }
+    const salida = {
+      incidentes: resultados.flatMap((r) => r.incidentes.map((item) => ({ zona: r.zona, item }))),
+      zonas: resultados.map((r) => r.zona),
+    };
+    // Solo se guarda en caché si todas respondieron: una falla se reintenta en el siguiente ciclo
+    if (salida.zonas.every((z) => z.ok)) apiCache.set(cacheKey, salida, 300);
+    return salida;
   }
+
+  /** Compatibilidad: solo la lista de incidentes (sin zona). */
+  static async getEventosVialesOficiales() {
+    const { incidentes } = await FuentesExternasAdapter.getEventosVialesPorZona();
+    return incidentes.map((i) => i.item);
+  }
+
 
   // ==========================================
   // 8. AIS (Automatic Identification System - MarineTraffic)
@@ -243,4 +246,5 @@ class FuentesExternasAdapter {
 
 }
 
+FuentesExternasAdapter.ZONAS_TOMTOM = ZONAS_TOMTOM;
 module.exports = FuentesExternasAdapter;

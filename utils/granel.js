@@ -31,13 +31,25 @@ function armarGranel({ operaciones = [], avance = [], equipos = [], bodegas = []
   // Toneladas operadas hoy por tipo (avance desde la medianoche de Colombia)
   const hoy = { AGRICOLA: 0, MINERAL: 0, LIQUIDO: 0 };
   const productosHoy = { AGRICOLA: new Set(), MINERAL: new Set(), LIQUIDO: new Set() };
+  const hoyPorOperacion = new Map();
   for (const a of avance) {
     if (Date.parse(a.hora) < hoyMs) continue;
     const op = porId.get(String(a.id_operacion));
     if (!op || !(op.tipo in hoy)) continue;
     hoy[op.tipo] += C.num(a.cantidad) || 0;
+    hoyPorOperacion.set(String(a.id_operacion), (hoyPorOperacion.get(String(a.id_operacion)) || 0) + (C.num(a.cantidad) || 0));
     if (op.producto) productosHoy[op.tipo].add(op.producto);
   }
+  // Vista ampliada de los KPI: toneladas de hoy por motonave y serie de 24 h del tipo
+  const desgloseTipo = (tipo) => [...hoyPorOperacion.entries()]
+    .map(([id, t]) => ({ op: porId.get(id), t }))
+    .filter((x) => x.op?.tipo === tipo)
+    .sort((a, b) => b.t - a.t)
+    .map((x) => ({ etiqueta: [x.op.motonave, x.op.producto].filter(Boolean).join(' · ') || `Operación ${x.op.id_operacion}`, valor: Math.round(x.t), unidad: 't' }));
+  const serieTipo = (tipo) => {
+    const s = C.serieHoraria(avance.filter((a) => porId.get(String(a.id_operacion))?.tipo === tipo), ahoraMs, 24, 'hora', 'cantidad');
+    return { '24 h': { labels: s.labels, valores: s.valores } };
+  };
   // Ritmo de cada operación: promedio de las últimas 3 horas con avance
   const desde3h = C.inicioHora(ahoraMs) - 2 * 3600000;
   const ritmo = new Map();
@@ -54,12 +66,16 @@ function armarGranel({ operaciones = [], avance = [], equipos = [], bodegas = []
     kpis[d.codigo] = C.kpi({
       titulo: d.titulo, valor: Math.round(hoy[tipo]), unidad: 't', colorBorde: d.colorBorde, icono: d.icono, simulado,
       subtitulo: prods ? `Hoy · ${prods}` : 'Sin operación hoy',
+      desglose: desgloseTipo(tipo), serie: serieTipo(tipo),
+      definicion: 'Toneladas operadas desde la medianoche (hora de Colombia), según el avance horario de cada motonave.',
     });
   }
   kpis.PTT_GRA_KPI_EQUIPOS = C.kpi({
     titulo: 'EQUIPOS EN USO', valor: `${enUso.length}/${equiposGranel.length}`, unidad: '', colorBorde: 'borde-blue',
     icono: 'feather icon-settings', simulado,
     subtitulo: equiposGranel.length ? 'Aspiradores · grúas · cintas' : 'Sin equipos registrados',
+    desglose: C.agrupar(equiposGranel, (e) => `${e.tipo} · ${e.estado}`, () => 1).map((g) => ({ etiqueta: g.clave, valor: g.valor, unidad: 'equipos' })),
+    definicion: 'Aspiradores, grúas móviles y cintas en estado OPERANDO sobre el total de esos equipos (volquetas y demás no cuentan).',
   });
 
   const visibles = operaciones
@@ -121,4 +137,47 @@ function armarGranel({ operaciones = [], avance = [], equipos = [], bodegas = []
   };
 }
 
-module.exports = { TIPOS, armarGranel };
+/**
+ * Serie de avance (vista ampliada, Fase 3): de una operación (t/h por hora, acumulado y ritmo necesario para
+ * terminar en la fecha estimada) o, sin operación, por tipo de granel. 24 y 72 h por hora; 168 h por día.
+ * @param {{ avance:object[], operaciones:object[], operacion?:object|null, horas:number }} datos
+ */
+function serieAvance({ avance = [], operaciones = [], operacion = null, horas = 24 }, ahora = new Date()) {
+  const ahoraMs = ahora.getTime();
+  const porDia = horas > 72;
+  const agrupar = (filas) => {
+    if (!porDia) return C.serieHoraria(filas, ahoraMs, horas, 'hora', 'cantidad');
+    const dias = Array.from({ length: Math.ceil(horas / 24) }, (_, i) => C.inicioDiaColombia(ahoraMs) - (Math.ceil(horas / 24) - 1 - i) * 86400000);
+    const valores = dias.map((d) => C.redondear(C.suma(filas.filter((f) => C.inicioDiaColombia(Date.parse(f.hora)) === d), (f) => f.cantidad), 1));
+    const labels = dias.map((d) => new Date(d).toISOString().slice(5, 10).split('-').reverse().join('/'));
+    return { labels, valores };
+  };
+  if (operacion) {
+    const s = agrupar(avance);
+    let acumulado = 0;
+    const total = C.num(operacion.cantidad_total) || 0;
+    const operadas = Math.min(total, C.num(operacion.cantidad_operada) || 0);
+    const finMs = Date.parse(operacion.fecha_fin_estimada);
+    const horasRestantes = Number.isFinite(finMs) ? (finMs - ahoraMs) / 3600000 : null;
+    const ritmoNecesario = horasRestantes !== null && horasRestantes > 0 ? C.redondear((total - operadas) / horasRestantes, 1) : null;
+    return {
+      operacion: {
+        idOperacion: operacion.id_operacion, motonave: operacion.motonave, producto: operacion.producto, tipo: operacion.tipo,
+        total, operadas, pendiente: C.redondear(total - operadas, 1), finEstimado: operacion.fecha_fin_estimada || null, simulado: !!operacion.simulado,
+      },
+      labels: s.labels, valores: s.valores, acumulado: s.valores.map((v) => (acumulado = C.redondear(acumulado + v, 1))),
+      ritmoNecesarioTmh: ritmoNecesario, unidad: porDia ? 't/día' : 't/h', horas,
+    };
+  }
+  const tipoDe = new Map(operaciones.map((o) => [String(o.id_operacion), o.tipo]));
+  const series = {};
+  let labels = [];
+  for (const tipo of ['AGRICOLA', 'MINERAL', 'LIQUIDO']) {
+    const s = agrupar(avance.filter((a) => tipoDe.get(String(a.id_operacion)) === tipo));
+    labels = s.labels;
+    series[tipo] = s.valores;
+  }
+  return { labels, series, unidad: porDia ? 't/día' : 't/h', horas };
+}
+
+module.exports = { serieAvance, TIPOS, armarGranel };

@@ -54,7 +54,7 @@ const updateItem = async (req, res = response) => {
     const { id } = req.params;
 
     const dataDTO = { ...req.body };
-    console.log('item comtroller', dataDTO);
+    // console.log('item comtroller', dataDTO);
     const item = await service.updateItem(id, dataDTO);
     return res.status(200).json({ ok: true, item });
   } catch (error) {

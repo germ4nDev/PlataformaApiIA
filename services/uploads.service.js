@@ -63,9 +63,9 @@ class UploadsService {
   }
 
   async uploadFile(file, susc, type) {
-    console.log('file', file);
-    console.log('susc', susc);
-    console.log('type', type);
+    // console.log('file', file);   // [ruido de consola: comentado 2026-10-26]
+    // console.log('susc', susc);   // [ruido de consola: comentado 2026-10-26]
+    // console.log('type', type);   // [ruido de consola: comentado 2026-10-26]
 
     this.validateType(type);
 

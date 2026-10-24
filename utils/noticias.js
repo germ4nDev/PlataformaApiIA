@@ -114,6 +114,12 @@ function armarNoticias({ noticias = [], trm = [], eventos = [], alertasClima = [
   const corredores = [...porCorredor.entries()].map(([nombre, evs]) => ({
     corredor: nombre, ...estadoCorredor(evs), eventos: evs.length,
     detalle: evs.slice(0, 3).map((e) => [e.tipoEvento, e.sector].filter(Boolean).join(' · ')).join(' | '),
+    // Vista ampliada (2026-10-25): los eventos del día del corredor, con su ubicación para llevarlos al mapa
+    lista: evs.map((e) => ({
+      codigo: e.codigoEvento ?? null, tipo: e.tipoEvento ?? null, sector: e.sector ?? null, descripcion: e.descripcion ?? null,
+      severidad: e.nivelSeveridad ?? null, desde: e.fechaInicio ? new Date(e.fechaInicio).toISOString() : null,
+      lat: C.num(e.lat), lon: C.num(e.lon),
+    })).sort((a, b) => String(b.desde).localeCompare(String(a.desde))),
   })).sort((a, b) => ({ rojo: 0, amarillo: 1, verde: 2 }[a.semaforo] - { rojo: 0, amarillo: 1, verde: 2 }[b.semaforo]) || b.eventos - a.eventos);
 
   const severas = alertasClima.filter((a) => Number(a.nivelSeveridad) >= 3).length;
@@ -124,6 +130,7 @@ function armarNoticias({ noticias = [], trm = [], eventos = [], alertasClima = [
     kpis: {
       PTT_NOT_KPI_TRM: C.kpi({
         // Texto con '$' para que la tarjeta no la abrevie a "4K"; el valor completo va debajo
+        serie: trmOrden.length > 1 ? { 'Últimos datos': { labels: [...trmOrden].reverse().map((t) => String(t.fecha).slice(0, 10)), valores: [...trmOrden].reverse().map((t) => Number(t.valor)) } } : null,
         titulo: 'TRM HOY', valor: trmHoy ? `$${Math.round(Number(trmHoy.valor)).toLocaleString('es-CO')}` : 0, unidad: 'COP', colorBorde: 'borde-green', icono: 'feather icon-dollar-sign',
         valorCompleto: trmHoy ? `${Number(trmHoy.valor).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} COP por dólar` : null,
         subtitulo: trmHoy ? `${variacion === null ? 'Banco de la República' : `${variacion > 0 ? '▲' : variacion < 0 ? '▼' : '='} ${Math.abs(variacion)} % vs. anterior`}` : 'Sin dato de TRM',
@@ -131,14 +138,19 @@ function armarNoticias({ noticias = [], trm = [], eventos = [], alertasClima = [
       PTT_NOT_KPI_NOTICIAS: C.kpi({
         titulo: 'NOTICIAS HOY', valor: deHoy.length, colorBorde: 'borde-blue', icono: 'feather icon-file-text',
         subtitulo: deHoy.length ? `${deHoy.filter((n) => n.id_puerto === puerto).length} del puerto` : 'Sin noticias nuevas hoy',
+        desglose: TEMAS.map((t) => ({ etiqueta: t.nombre, valor: deHoy.filter((n) => n.categoria === t.categoria).length, unidad: 'noticias' })),
+        definicion: 'Titulares publicados desde la medianoche (hora de Colombia) en Google News y GNews, sin repetidos.',
       }),
       PTT_NOT_KPI_VIAS: C.kpi({
-        titulo: 'RESTRICCIONES VIALES', valor: eventos.length, colorBorde: eventos.length ? 'borde-naranja' : 'borde-green', icono: 'feather icon-alert-octagon',
+        titulo: 'RESTRICCIONES VIALES (HOY)', valor: eventos.length, colorBorde: eventos.length ? 'borde-naranja' : 'borde-green', icono: 'feather icon-alert-octagon',
         subtitulo: corredores.length ? `${corredores.filter((c) => c.semaforo === 'rojo').length} corredores con cierre o accidente` : 'Corredores sin eventos',
+        desglose: corredores.map((c) => ({ etiqueta: `${c.corredor} · ${c.estado}`, valor: c.eventos, unidad: 'eventos', semaforo: c.semaforo })),
+        definicion: 'Eventos viales activos del día en curso (hora de Colombia), agrupados por corredor.',
       }),
       PTT_NOT_KPI_CLIMA: C.kpi({
         titulo: 'ALERTAS CLIMÁTICAS', valor: alertasClima.length, colorBorde: severas ? 'borde-rojo' : alertasClima.length ? 'borde-amarillo' : 'borde-green', icono: 'feather icon-cloud-rain',
         subtitulo: alertasClima.length ? `${severas} de severidad alta` : 'Sin alertas activas',
+        desglose: C.agrupar(alertasClima, (a) => a.tipoAlerta || a.region || 'Alerta', () => 1).map((g) => ({ etiqueta: g.clave, valor: g.valor, unidad: 'alertas' })),
       }),
     },
     noticias: ordenadas.slice(0, 60).map((n) => ({
@@ -157,4 +169,15 @@ function armarNoticias({ noticias = [], trm = [], eventos = [], alertasClima = [
   };
 }
 
-module.exports = { TEMAS, RETENCION_DIAS, separarMedio, hashTitulo, prepararNoticia, sinRepetidos, estadoCorredor, armarNoticias };
+/** TRM por día (el último valor de cada fecha), del más antiguo al más reciente (vista ampliada, Fase 3). */
+function serieTrm(filas = [], dias = 30) {
+  const porDia = new Map();
+  for (const f of filas) {
+    const d = String(f.fecha instanceof Date ? f.fecha.toISOString() : f.fecha).slice(0, 10);
+    if (!porDia.has(d)) porDia.set(d, Number(f.valor));
+  }
+  const ordenados = [...porDia.entries()].sort((a, b) => a[0].localeCompare(b[0])).slice(-dias);
+  return { labels: ordenados.map(([d]) => d), valores: ordenados.map(([, v]) => v), fuente: filas[0]?.fuente || 'datos.gov.co' };
+}
+
+module.exports = { serieTrm, TEMAS, RETENCION_DIAS, separarMedio, hashTitulo, prepararNoticia, sinRepetidos, estadoCorredor, armarNoticias };

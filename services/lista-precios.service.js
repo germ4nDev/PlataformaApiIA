@@ -43,7 +43,7 @@ class ListaPreciosService {
 
     async createListaCompleta(rawData) {
         const cabeceraDTO = ListaPreciosDTO(rawData);
-        console.log('crear lista', cabeceraDTO);
+        // console.log('crear lista', cabeceraDTO);   // [ruido de consola: comentado 2026-10-26]
 
         return await sequelize.transaction(async (t) => {
             const existente = await this.Cabecera.findOne({ where: { codigoLista: cabeceraDTO.codigoLista }, transaction: t });
@@ -81,7 +81,7 @@ class ListaPreciosService {
     async updateLista(codigoLista, rawData) {
         const payload = { ...rawData, codigoLista };
         const cabeceraDTO = ListaPreciosDTO(payload);
-        console.log('actualizar lista', cabeceraDTO);
+        // console.log('actualizar lista', cabeceraDTO);   // [ruido de consola: comentado 2026-10-26]
 
         return await sequelize.transaction(async (t) => {
             const listaDB = await this.Cabecera.findByPk(codigoLista, { transaction: t });
@@ -108,7 +108,7 @@ class ListaPreciosService {
     async addDetalle(codigoLista, rawDetalle) {
         const payload = { ...rawDetalle, codigoLista };
         const detalleDTO = ListaPreciosDetalleDTO(payload);
-        console.log('crear detalle precio', detalleDTO);
+        // console.log('crear detalle precio', detalleDTO);   // [ruido de consola: comentado 2026-10-26]
 
         return await sequelize.transaction(async (t) => {
             const listaDB = await this.Cabecera.findByPk(codigoLista, { transaction: t });
@@ -130,7 +130,7 @@ class ListaPreciosService {
     }
 
     async updateDetalle(codigoDetalle, rawDetalle) {
-        console.log('actualizar detalle precio ID:', codigoDetalle);
+        // console.log('actualizar detalle precio ID:', codigoDetalle);   // [ruido de consola: comentado 2026-10-26]
 
         return await sequelize.transaction(async (t) => {
             const detalleDB = await this.Detalle.findByPk(codigoDetalle, { transaction: t });

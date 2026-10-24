@@ -11,7 +11,7 @@ const createFolder = async (req, res = response) => {
     try {
         const { fld } = req.body;
 
-        console.log('crear folder', fld);
+        // console.log('crear folder', fld);
 
         const resultado = await service.createFolder(fld);
 

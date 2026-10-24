@@ -41,10 +41,10 @@ class TiposItemService {
   }
 
   async createTipoItem(rawData) {
-    console.log('servicio antes', rawData);
+    // console.log('servicio antes', rawData);   // [ruido de consola: comentado 2026-10-26]
 
     const dataDTO = TipoItemDTO(rawData);
-    console.log('servicio dto', dataDTO);
+    // console.log('servicio dto', dataDTO);   // [ruido de consola: comentado 2026-10-26]
 
     return await sequelize.transaction(async (t) => {
       const nuevo = await this.model.create(dataDTO, { transaction: t });
@@ -59,10 +59,10 @@ class TiposItemService {
   }
 
   async updateTipoItem(codigoTipoItem, rawData) {
-    console.log('rawDta antes dto', rawData);
+    // console.log('rawDta antes dto', rawData);   // [ruido de consola: comentado 2026-10-26]
 
     const dataDTO = TipoItemDTO(rawData);
-    console.log('rawDta despues dto', dataDTO);
+    // console.log('rawDta despues dto', dataDTO);   // [ruido de consola: comentado 2026-10-26]
 
     return await sequelize.transaction(async (t) => {
       const registroDB = await this.model.findOne({

@@ -39,7 +39,6 @@ const postTipoActividad = async (req, res) => {
   try {
     const tipoActividad = await TiposActividadService.crear(req.body);
 
-    // 🟢 Emitimos el evento al frontend para actualizar la tabla reactivamente
     io.emit('tipos-actividad-actualizados', { action: 'create', msg: 'Nuevo Tipo de Actividad Creado' });
 
     res.json({
@@ -60,7 +59,6 @@ const putTipoActividad = async (req, res) => {
   try {
     const tipoActividad = await TiposActividadService.actualizar(id, req.body);
 
-    // 🟢 Emitimos evento de actualización
     io.emit('tipos-actividad-actualizados', { action: 'update', msg: 'Tipo de Actividad Modificado' });
 
     res.json({
@@ -84,7 +82,6 @@ const deleteTipoActividad = async (req, res) => {
   try {
     const tipoActividad = await TiposActividadService.eliminar(id);
 
-    // 🟢 Emitimos evento de eliminación
     io.emit('tipos-actividad-actualizados', { action: 'delete', msg: 'Tipo de Actividad Eliminado' });
 
     res.json({

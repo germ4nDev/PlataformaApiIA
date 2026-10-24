@@ -62,7 +62,7 @@ const updateInfraestructura = async (req, res = response) => {
   try {
     const { id } = req.params;
     const userContext = contextoUsuario(req);
-    console.log('datos actualizar', req.body);
+    // console.log('datos actualizar', req.body);   // [ruido de consola: comentado 2026-10-26]
 
     const infraestructuraActualizada = await infraestructuraService.updateInfraestructura(id, req.body, userContext);
 

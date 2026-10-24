@@ -10,7 +10,7 @@ const service = new PestanasService();
 const getPestanasTodas = async (req, res) => {
   try {
     const resultado = await service.obtenerPestanas();
-    console.log('resultado', resultado);
+    // console.log('resultado', resultado);
     return res.status(200).json({
       ok: true,
       respuesta: resultado
@@ -56,7 +56,7 @@ const getPestanas = async (req, res) => {
 const getPestanaById = async (req, res = response) => {
   try {
     const { id } = req.params;
-    console.log('codigo controller', id);
+    // console.log('codigo controller', id);
     const tipo = await service.obtenerPestanaPorId(id);
     return res.status(200).json({ ok: true, tipo });
   } catch (error) {
@@ -74,7 +74,7 @@ const getPestanaById = async (req, res = response) => {
 const getPestanaByCodeAplicacion = async (req, res = response) => {
   try {
     const { id } = req.params;
-    console.log('codigo controller', id);
+    // console.log('codigo controller', id);
     const tipo = await service.obtenerPestanasPorAplicacion(id);
     return res.status(200).json({ ok: true, tipo });
   } catch (error) {
@@ -93,7 +93,7 @@ const createPestana = async (req, res = response) => {
   try {
     // QPLUS: Inyección de auditoría
     const dataDTO = { ...req.body };
-    console.log('data contrller', dataDTO);
+    // console.log('data contrller', dataDTO);
 
     const tipo = await service.crearPestana(dataDTO);
     return res.status(201).json({ ok: true, tipo });
@@ -110,7 +110,7 @@ const updatePestana = async (req, res = response) => {
     const { id } = req.params;
 
     const dataDTO = { ...req.body };
-    console.log('rawDta conbtroller', dataDTO);
+    // console.log('rawDta conbtroller', dataDTO);
 
     const tipo = await service.acturlzarPestana(id, dataDTO);
     return res.status(200).json({ ok: true, tipo });

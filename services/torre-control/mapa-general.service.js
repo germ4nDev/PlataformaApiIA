@@ -188,12 +188,9 @@ class MapaGeneralService {
   // ==========================================
   async ejecutarSincronizacionCompleta() {
     try {
-      // 1. Sincronizar Eventos Viales
-      const eventos = await ExternalIntegrationService.getEventosVialesOficiales();
-      const promesasEventos = eventos.map(item =>
-        this.repository.upsertEventoVial(this._mapearEventoVial(item))
-      );
-      await Promise.all(promesasEventos);
+      // 1. Eventos viales: un solo camino de escritura, con su ciclo de vida (2026-10-26). Antes este método
+      //    escribía por su cuenta con otro mapeo y sin despejar nada. Se carga aquí para no crear un ciclo.
+      await require('./sincronizacion.service').sincronizarEventosViales();
 
       // 2. Sincronizar Alertas Climáticas
       const alertas = await ExternalIntegrationService.getAlertasClimaticasOficiales();
@@ -216,7 +213,7 @@ class MapaGeneralService {
       }
 
       if (datos && datos.length > 0) {
-        console.dir(datos[0], { depth: null });
+        // console.dir(datos[0], { depth: null });   // [ruido de consola: comentado 2026-10-26]
       } else {
         console.warn("⚠️ La API devolvió un array vacío o falló.");
       }

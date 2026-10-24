@@ -42,11 +42,11 @@ class EmpresaSCService {
 
   async updateEmpresaSC(codigoEmpresaSC, rawData) {
     // El controlador debe inyectar el codigoUsuario en rawData antes de llamar al servicio
-    console.log('empresa  sc antes', rawData);
-    console.log('codigoEmpresaSC', codigoEmpresaSC);
+    // console.log('empresa  sc antes', rawData);   // [ruido de consola: comentado 2026-10-26]
+    // console.log('codigoEmpresaSC', codigoEmpresaSC);   // [ruido de consola: comentado 2026-10-26]
 
     const dataDTO = EmpresaSCDTO(rawData);
-    console.log('empresa  sc despues', dataDTO);
+    // console.log('empresa  sc despues', dataDTO);   // [ruido de consola: comentado 2026-10-26]
 
     return await sequelize.transaction(async (t) => {
       const registroDB = await this.model.findOne({

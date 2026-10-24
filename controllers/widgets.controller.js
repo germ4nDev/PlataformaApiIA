@@ -36,10 +36,10 @@ const createWidget = async (req, res = response) => {
     try {
         // QPLUS: Auditoría inicial e hidratación del payload
         const dataDTO = { ...req.body };
-        console.log('widget dto', dataDTO);
+        // console.log('widget dto', dataDTO);
 
         const widget = await service.createWidget(dataDTO);
-        console.log('widget creado', widget);
+        // console.log('widget creado', widget);
 
         return res.status(201).json({
             ok: true,

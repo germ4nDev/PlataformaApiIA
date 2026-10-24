@@ -50,6 +50,12 @@ class NoticiasService {
     return N.armarNoticias({ noticias, trm, eventos, alertasClima, clima, fuentes, puerto: p.clave }, ahora);
   }
 
+  /** Vista ampliada: TRM de los últimos días (un valor por día). */
+  async serieTrm(dias = 30) {
+    const filas = await this.repositorio.indicador('TRM', dias * 6);
+    return N.serieTrm(filas, dias);
+  }
+
   /** Clima actual de los puertos configurados (viento en nudos, temperatura). */
   async climaPuertos(ahora = new Date()) {
     if (ahora.getTime() < this.clima.hasta) return this.clima.datos;

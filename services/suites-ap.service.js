@@ -37,7 +37,7 @@ class SuitesAPService {
 
         const nuevaSuite = await this.model.create(dataDTO, { transaction: t });
 
-        console.log('Suite creada en BD:', nuevaSuite.toJSON());
+        // console.log('Suite creada en BD:', nuevaSuite.toJSON());   // [ruido de consola: comentado 2026-10-26]
         getIO().emit('suites-actualizadas', {
           action: 'create',
           msg: `Suite creada: ${nuevaSuite.nombreSuite}`

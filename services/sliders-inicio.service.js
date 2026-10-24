@@ -45,7 +45,7 @@ class SliderService {
   async updateSlider(codigoSlider, rawData) {
     // El controlador inyecta el codigoUsuario en rawData antes de invocar este método
     const dataDTO = SliderInicioDTO(rawData);
-    console.log('dto', dataDTO);
+    // console.log('dto', dataDTO);   // [ruido de consola: comentado 2026-10-26]
 
     return await sequelize.transaction(async (t) => {
       const registroDB = await this.model.findOne({

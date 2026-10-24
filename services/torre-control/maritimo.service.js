@@ -8,6 +8,8 @@ const MaritimoRepository = require('../../repositories/torre-control/maritimo.re
 const ExternalIntegrationService = require('../../adapters/fuentes-externas.adapter');
 const MapaPortuarioService = require('../../services/torre-control/mapa-portuario.service');
 const { DICCIONARIO_HOMOLOGACION_ETL } = require('../../utils/diccionarios');
+const Origen = require('../../utils/origen-dato');
+const Lineup = require('../../utils/motonaves-lineup');
 
 // ---------------------------------------------------------------- Line-up vs AIS
 const { claveMuelle, mismoBarco, verificarConAis } = require('../../utils/linea-ais');
@@ -198,7 +200,7 @@ class MaritimoService {
         visibilidad: c.visibilidad || 'N/A',
         viento: c.viento || 'N/A',
         estadoCanal: c.estadoCanal || 'Desconocido',
-        pilotaje: 'Normal',
+        pilotaje: 'Sin dato',  // no hay fuente de pilotaje (antes 'Normal' fijo)
         claseEstado: c.estadoCanal === 'Abierto' ? 'text-success'
           : (!c.estadoCanal || c.estadoCanal === 'Sin datos' || c.estadoCanal === 'Desconocido') ? 'text-muted' : 'text-danger'
       };
@@ -236,6 +238,29 @@ class MaritimoService {
           tipo_color: rep.tipo_color || rep.colorLinea
         }))
       };
+
+      // Origen del dato por nodo (Fase 1, 2026-10-23): de dónde sale y si es valor de respaldo
+      const ahora = new Date();
+      const conOrigen = (n, datos) => (n && typeof n === 'object' && !Array.isArray(n)
+        ? Object.assign(n, { origen: Origen.origen(datos, ahora) }) : n);
+      const supertransporte = (n, periodo) => conOrigen(n, {
+        fuente: 'Supertransporte (datos.gov.co)', esRespaldo: !!n?.esRespaldo, periodo,
+        nota: n?.esRespaldo ? 'La fuente no respondió: se muestran valores de referencia' : null,
+      });
+      supertransporte(analisisTraficoNacional, 'Últimos 24 meses publicados');
+      supertransporte(participacionNacional, 'Último año publicado');
+      supertransporte(mezclaTipoCarga, 'Último año publicado');
+      supertransporte(tipoOperacionPortuaria, 'Último año publicado');
+      supertransporte(matrizTerminalCarga, matrizTerminalCarga?.anio ? `Año ${matrizTerminalCarga.anio}` : 'Último año publicado');
+      supertransporte(historicoAnual, historicoAnual?.rango || null);
+      supertransporte(implicacionesOperativas, 'Último año publicado');
+      conOrigen(kpiSemanalReal, { fuente: 'TCL_LineUpMaritimo', periodo: 'Semana en curso', nota: 'Sin comparativo con la semana anterior' });
+      conOrigen(WDG_CONDICIONES_CANAL, { fuente: 'OpenWeather + WorldTides', periodo: 'Consulta en vivo (caché)', nota: 'Pilotaje sin fuente' });
+      ['KPI_CONTENEDORES', 'KPI_GRANEL', 'KPI_CARGA_SUELTA', 'KPI_RORO'].forEach((k) => conOrigen(kpisOp[k], {
+        fuente: 'TCL_HistoricoProductividad', periodo: 'Promedio diario sobre el histórico cargado',
+        nota: 'Sin filtro de fecha: no es el movimiento de hoy',
+      }));
+      conOrigen(kpisOp.KPI_CAMIONES_PUERTO, { fuente: 'RNDC (TCL_RNDCOperacionTerrestre)', esRespaldo: true, periodo: 'Estimación', nota: 'Estimado con la ley de Little y tiempos de permanencia fijos' });
 
       const nodoEtaAta = graficaEtaAta?.WDG_CHART_ETA_ATA || { labels: [], datasets: [] };
       const nodoToneladas = graficaToneladas?.WDG_CHART_TONELADAS || { labels: [], datasets: [] };
@@ -502,29 +527,46 @@ class MaritimoService {
       },
       KPI_RORO: {
         valor: totalVehiculos.toLocaleString('es-CO'),
-        subtitulo: `Imp ${impVehiculos} · Exp ${expVehiculos} · PDI 95% ocupado`,
-        tendencia: `Imp ${impVehiculos} · Exp ${expVehiculos} · PDI 95% ocupado`,
+        subtitulo: `Imp ${impVehiculos} · Exp ${expVehiculos}`,
+        tendencia: `Imp ${impVehiculos} · Exp ${expVehiculos}`,
         titulo: 'VEHÍCULOS RO-RO',
         colorBorde: 'borde-teal'
       },
-      KPI_BODEGAS: {
-        valor: ciudadKey === 'BUENAVENTURA' ? '72%' : '85%',
-        subtitulo:
-          ciudadKey === 'BUENAVENTURA'
-            ? '8 bodegas · 2 críticas · ruteo activo'
-            : '5 bodegas · 4 críticas · ruteo activo',
-        tendencia:
-          ciudadKey === 'BUENAVENTURA'
-            ? '8 bodegas · 2 críticas · ruteo activo'
-            : '5 bodegas · 4 críticas · ruteo activo',
-        titulo: 'SATURACIÓN BODEGAS',
-        colorBorde: 'borde-fucsia'
-      }
+      KPI_BODEGAS: await this._kpiBodegas(ciudadKey)
+    };
+  }
+
+  /**
+   * Saturación de bodegas del puerto desde TCL_MaestroBodegas (corregido 2026-10-23: antes '72%' / '85%' y
+   * "8 bodegas · 2 críticas" escritos a mano según el puerto).
+   */
+  async _kpiBodegas(ciudadKey) {
+    let bodegas = [];
+    try {
+      // require diferido: el repositorio carga su modelo Sequelize y aquí solo se usa para este KPI
+      const bodegasRepository = require('../../repositories/torre-control/bodegas.repository');
+      bodegas = await bodegasRepository.obtenerMaestroBodegasPorPuerto(String(ciudadKey || '').toUpperCase());
+    } catch (error) {
+      console.warn('⚠️ [Marítimo] KPI de bodegas sin datos:', error.message);
+    }
+    const conCap = bodegas.filter((b) => Number(b.capacidad_maxima_ton) > 0);
+    const cap = conCap.reduce((a, b) => a + Number(b.capacidad_maxima_ton), 0);
+    const inv = conCap.reduce((a, b) => a + Number(b.inventario_actual_ton || 0), 0);
+    const pct = cap > 0 ? Math.round((inv / cap) * 100) : null;
+    const criticas = bodegas.filter((b) => Number(b.ocupacion_pct) >= 90).length;
+    const texto = bodegas.length ? `${bodegas.length} bodegas · ${criticas} críticas` : 'Sin bodegas registradas';
+    return {
+      valor: pct === null ? '—' : `${pct}%`, subtitulo: texto, tendencia: texto, titulo: 'SATURACIÓN BODEGAS', colorBorde: 'borde-fucsia',
+      origen: Origen.origen({ fuente: 'TCL_MaestroBodegas', periodo: 'Inventario actual' }),
     };
   }
 
   async _obtenerPronosticoMotonaves(anio, mes, ciudadKey) {
-    const data = await MaritimoRepository.getPronosticoMotonaves(ciudadKey).catch(() => []);
+    const todas = await MaritimoRepository.getPronosticoMotonaves(ciudadKey).catch(() => []);
+    // Corregido 2026-10-25: ventana real de 72 h (antes todo el line-up activo)
+    const ahora = new Date();
+    const ventana = Lineup.enVentana(Array.isArray(todas) ? todas : [], ahora, 72);
+    const data = ventana.filas;
 
     if (!Array.isArray(data) || data.length === 0) {
       console.warn(`[WARN] No se encontraron motonaves para: ${ciudadKey}`);
@@ -586,11 +628,29 @@ class MaritimoService {
         eta: formatearFecha(b.fechaETA),
         ata: b.fechaATA ? formatearFecha(b.fechaATA) : '--',
         estadoTexto: textoEstado,
-        estadoClase: clasePildora
+        estadoClase: clasePildora,
+        // Vista ampliada (Fase 3): columnas del line-up que antes se descartaban
+        muelle: b.muelleAsignado || null,
+        estadoReal: b.estadoReal || null,
+        lineaAgencia: b.lineaAgencia || null,
+        viaje: b.viaje || null,
+        eslora: Number(b.eslora) || null,
+        zarpe: b.fechaZarpe ? formatearFecha(b.fechaZarpe) : null,
+        novedades: b.novedades || null,
+        etaIso: Lineup.fecha(b.fechaETA) !== null ? new Date(Lineup.fecha(b.fechaETA)).toISOString() : null,
+        atrasada: !b.fechaATA && Lineup.fecha(b.fechaETA) !== null && Lineup.fecha(b.fechaETA) < ahora.getTime()
       };
     });
 
-    return { WDG_TABLE_REPORTE_MOTONAVES: { motonaves: motonavesFormateadas } };
+    return {
+      WDG_TABLE_REPORTE_MOTONAVES: {
+        motonaves: motonavesFormateadas,
+        origen: Origen.origen({
+          fuente: 'TCL_LineUpMaritimo + agencias DIMAR', periodo: 'Próximas 72 h y atracadas (zarpe en las últimas 24 h)',
+          nota: [ventana.fuera ? `${ventana.fuera} motonaves fuera de la ventana` : null, ventana.sinFecha ? `${ventana.sinFecha} sin fecha legible` : null],
+        }, ahora),
+      },
+    };
   }
 
   async _calcularKpisTerrestres(anio, mes) {
@@ -849,7 +909,6 @@ class MaritimoService {
           subtitulo: `Comparativa promedio (h) - ${ciudadKey}`,
           labels: labelsLimpios,
           datasets: [
-            { label: 'ETA planeada (h)', data: datosPlaneado, backgroundColor: '#60a5fa' },
             { label: 'Retraso real (h)', data: datosRetraso, backgroundColor: '#ff526a' }
           ]
         }
@@ -934,18 +993,10 @@ class MaritimoService {
     let granel = parseFloat(data.totalGranel) || 0;
     let vehiculos = parseFloat(data.totalVehiculos) || 0;
 
-    // DATO FICTICIO (pendiente de limpiar): sin datos de la semana se muestran cifras de referencia.
-    // Desde 2026-10-17 quedan rotuladas para que no se lean como reales.
-    const esReferencia = motonaves === 0 && teus === 0;
-    if (esReferencia) {
-      motonaves = 86;
-      teus = 142000;
-      granel = 312000;
-      vehiculos = 6840;
-    }
-    const tend = (texto, clase) => (esReferencia
-      ? { tendencia: 'Referencia · sin datos de la semana', claseTendencia: 'text-muted' }
-      : { tendencia: texto, claseTendencia: clase });
+    // Corregido 2026-10-23: sin datos de la semana ya no se muestran cifras de referencia (86 / 142.000...) y las
+    // tendencias ('▲ 4 vs sem. anterior', '+8.2% YoY'...) no se escriben a mano: no hay serie para compararlas.
+    const sinDatos = motonaves === 0 && teus === 0 && granel === 0 && vehiculos === 0;
+    const tend = () => ({ tendencia: sinDatos ? 'Sin datos de la semana' : 'Sin comparativo', claseTendencia: 'text-muted' });
 
     return {
       titulo: 'RESUMEN SEMANAL MARÍTIMO',
@@ -953,22 +1004,22 @@ class MaritimoService {
         {
           label: 'MOTONAVES ATENDIDAS',
           valor: motonaves.toString(),
-          ...tend('▲ 4 vs sem. anterior', 'text-success')
+          ...tend()
         },
         {
           label: 'TEUS TOTALES',
           valor: this._formatearNumeroCompacto(teus),
-          ...tend('+8.2% YoY', 'text-success')
+          ...tend()
         },
         {
           label: 'TM GRANEL',
           valor: this._formatearNumeroCompacto(granel),
-          ...tend('+12% YoY', 'text-success')
+          ...tend()
         },
         {
           label: 'VEHÍCULOS',
           valor: vehiculos.toLocaleString('es-CO'),
-          ...tend('▼ 3% vs sem.', 'text-danger')
+          ...tend()
         }
       ]
     };
@@ -1064,9 +1115,10 @@ class MaritimoService {
             detalle: `${anioActual - 1} → ${anioActual} · comparativo YoY`,
             claseTendencia: variacion >= 0 ? 'text-success' : 'text-danger'
           },
+          // Corregido 2026-10-23: antes '13.2% · #4 puerto · líder del Pacífico' fijo para todos los puertos
           participacion: {
-            valor: '13.2%',
-            detalle: '#4 puerto de Colombia · líder del Pacífico'
+            valor: '—',
+            detalle: 'Participación nacional sin calcular (pendiente de fuente)'
           },
           flujo: {
             valor: `IMPO ${pctImpo.toFixed(0)}%`,
@@ -1146,21 +1198,25 @@ class MaritimoService {
 
       if (key.includes('CARTAGENA')) {
         return {
+        esRespaldo: true,
           labels: ['SP CONTECAR', 'SP REG CARTAGENA', 'COMPAS', 'OTROS'],
           valores: [45.0, 38.0, 11.0, 6.0]
         };
       } else if (key.includes('BARRANQUILLA')) {
         return {
+        esRespaldo: true,
           labels: ['SP REG BARRANQUILLA', 'PUERTO PIMSA', 'BITCO', 'PALERMO', 'OTROS'],
           valores: [42.5, 22.0, 18.5, 12.0, 5.0]
         };
       } else if (key.includes('SANTA MARTA')) {
         return {
+        esRespaldo: true,
           labels: ['SP REG SANTA MARTA', 'SMI', 'CARBOSAN', 'OTROS'],
           valores: [55.0, 30.0, 10.0, 5.0]
         };
       }
       return {
+        esRespaldo: true,
         labels: ['SPRBUN', 'TCBUEN', 'AGUADULCE', 'COMPAS', 'OTROS'],
         valores: [38.5, 25.2, 20.1, 10.5, 5.7]
       };
@@ -1211,6 +1267,7 @@ class MaritimoService {
         valores = [48.2, 32.5, 12.1, 7.2];
       }
       return {
+        esRespaldo: true,
         labels: ['Importación', 'Exportación', 'Transbordo', 'Cabotaje'],
         valores
       };
@@ -1285,7 +1342,7 @@ class MaritimoService {
         valores = [13.8, 6.1, 1.9, 0.8, 0.6];
         sub = `Contenedores domina 60% · ${anio}`;
       }
-      return { labels, valores, subtitulo: sub };
+      return { esRespaldo: true, labels, valores, subtitulo: sub };
     }
   }
 
@@ -1362,6 +1419,7 @@ class MaritimoService {
 
       if (key.includes('BARRANQUILLA')) {
         return {
+        esRespaldo: true,
           anio,
           operadores: 4,
           filas: [
@@ -1373,6 +1431,7 @@ class MaritimoService {
         };
       } else if (key.includes('CARTAGENA')) {
         return {
+        esRespaldo: true,
           anio,
           operadores: 3,
           filas: [
@@ -1383,6 +1442,7 @@ class MaritimoService {
         };
       } else {
         return {
+        esRespaldo: true,
           anio,
           operadores: 5,
           filas: [
@@ -1444,7 +1504,7 @@ class MaritimoService {
         valores = [25.5, 20.8, 17.4, 18.0, 19.8, 19.0, 20.7, 23.1];
       }
 
-      return { rango: '2018-2025', labels, valores };
+      return { esRespaldo: true, rango: '2018-2025', labels, valores };
     }
   }
 
@@ -1539,6 +1599,7 @@ class MaritimoService {
     } catch (e) {
       console.warn('⚠️ API Insights falló. Usando contingencia estática...');
       return {
+        esRespaldo: true,
         insights: [
           {
             color: '#3b82f6',
@@ -1668,44 +1729,22 @@ class MaritimoService {
     }
   }
 
+  /** Supertransporte no respondió (2026-10-23): se dice así, sin cifras fijas ni series aleatorias. */
   _obtenerMockAnalisisTrafico() {
-    const labels = [
-      'Abr 24', 'May 24', 'Jun 24', 'Jul 24', 'Ago 24', 'Sep 24', 'Oct 24', 'Nov 24', 'Dic 24',
-      'Ene 25', 'Feb 25', 'Mar 25', 'Abr 25', 'May 25', 'Jun 25', 'Jul 25', 'Ago 25', 'Sep 25',
-      'Oct 25', 'Nov 25', 'Dic 25', 'Ene 26', 'Feb 26', 'Mar 26'
-    ];
-    const genData = (base, varY) =>
-      Array.from({ length: 24 }, () => Math.floor(base + Math.random() * varY));
-
     return {
-      titulo: 'ANÁLISIS DE TRÁFICO PORTUARIO - BUENAVENTURA',
-      subtitulo: 'Fuente: Supertransporte · serie histórica · modo offline',
+      esRespaldo: true,
+      titulo: 'ANÁLISIS DE TRÁFICO PORTUARIO',
+      subtitulo: 'Supertransporte (datos.gov.co) no respondió · sin datos',
       kpisTop: {
-        toneladas: { valor: '23.1 M t', detalle: '23,113,450 t · cierre completo' },
-        variacion: {
-          valor: '+11.8%',
-          detalle: '2024 → 2025 · recuperación sostenida',
-          claseTendencia: 'text-success'
-        },
-        participacion: { valor: '13.2%', detalle: '#4 puerto de Colombia' },
-        flujo: {
-          valor: 'IMPO 75%',
-          detalle: '17.4 M t importadas',
-          claseTendencia: 'text-info'
-        }
+        toneladas: { valor: '—', detalle: 'Sin respuesta de la fuente' },
+        variacion: { valor: '—', detalle: 'Sin respuesta de la fuente', claseTendencia: 'text-muted' },
+        participacion: { valor: '—', detalle: 'Sin respuesta de la fuente' },
+        flujo: { valor: '—', detalle: 'Sin respuesta de la fuente', claseTendencia: 'text-muted' }
       },
-      chartEvolucion: {
-        labels,
-        datasets: [
-          { label: 'Contenedores', data: genData(800000, 400000), backgroundColor: '#00d4ff' },
-          { label: 'Granel sólido', data: genData(300000, 200000), backgroundColor: '#10b981' },
-          { label: 'General / vehíc.', data: genData(100000, 80000), backgroundColor: '#f59e0b' },
-          { label: 'Granel líquido', data: genData(80000, 50000), backgroundColor: '#8b5cf6' },
-          { label: 'Carbón', data: genData(20000, 30000), backgroundColor: '#64748b' }
-        ]
-      }
+      chartEvolucion: { labels: [], datasets: [] }
     };
   }
+
 
   _procesarArribosSemanal(motonaves) {
     const labels = [];

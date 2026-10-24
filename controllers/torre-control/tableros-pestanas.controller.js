@@ -6,6 +6,10 @@
       GET /api/tableros/carga-suelta/:puerto  → TLC_SUELTA_001
       GET /api/tableros/capacidad/:puerto     → TLC_CAPACIDAD_001
       GET /api/tableros/noticias/:puerto      → TLC_NOTICIAS
+    Detalle bajo demanda (vista ampliada, Fase 3):
+      GET /api/tableros/granel/:puerto/avance     ?horas&idOperacion
+      GET /api/tableros/capacidad/:puerto/serie   ?horas&idNodo
+      GET /api/tableros/noticias/:puerto/trm      ?dias
     Respuesta: { ok: true, data } con los KPIs por código de widget y los datos de cada widget.
     Sin la migración 013 responde 503 (MIGRACION_PENDIENTE).
 */
@@ -13,6 +17,7 @@ const TablerosOperacionService = require('../../services/torre-control/tableros-
 const NoticiasService = require('../../services/torre-control/noticias.service');
 const { PuertoParamSchema } = require('../../models/torre-control/ingesta-operacion.model');
 const { responderError, validarCon } = require('../../helpers/errores.helper');
+const { AvanceQuerySchema, SerieNodoQuerySchema, TrmQuerySchema } = require('../../models/torre-control/tableros-detalle.model');
 
 const responder = (contexto, obtener) => async (req, res) => {
   try {
@@ -24,7 +29,22 @@ const responder = (contexto, obtener) => async (req, res) => {
   }
 };
 
+/** Detalle con parámetros de consulta validados. */
+const responderDetalle = (contexto, esquema, obtener) => async (req, res) => {
+  try {
+    const { puerto } = validarCon(PuertoParamSchema, req.params);
+    const filtros = validarCon(esquema, req.query);
+    const data = await obtener(puerto, filtros);
+    return res.status(200).json({ ok: true, data });
+  } catch (error) {
+    return responderError(res, error, contexto);
+  }
+};
+
 module.exports = {
+  obtenerAvanceGranel: responderDetalle('Tableros.granel.avance', AvanceQuerySchema, (p, f) => TablerosOperacionService.avanceGranel(p, f)),
+  obtenerSerieNodo: responderDetalle('Tableros.capacidad.serie', SerieNodoQuerySchema, (p, f) => TablerosOperacionService.serieNodo(p, f)),
+  obtenerTrm: responderDetalle('Tableros.noticias.trm', TrmQuerySchema, (_p, f) => NoticiasService.serieTrm(f.dias)),
   obtenerGranel: responder('Tableros.granel', (p) => TablerosOperacionService.granel(p)),
   obtenerCargaSuelta: responder('Tableros.cargaSuelta', (p) => TablerosOperacionService.cargaSuelta(p)),
   obtenerCapacidad: responder('Tableros.capacidad', (p) => TablerosOperacionService.capacidad(p)),

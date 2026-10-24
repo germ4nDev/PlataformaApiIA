@@ -9,6 +9,7 @@
         - evaluarFlota(): tras cada ciclo del simulador de flota (peaje, geocerca, evento vial cercano).
         - evaluarPuertos(): cron 'alertas-puertos' cada 2 min (ocupación de muelles y fondeo prolongado).
         - evaluarAis(naves, eventos): motor AIS al emitir cambios (nave en zona de faro, atraque, zarpe).
+        - evaluarEventosViales(nuevos, despejados): ciclo de vida de los eventos viales (evento-vial.service).
         - limpiar(): cron diario, retención de 30 días.
       Las alertas de camiones llevan simulado:true mientras la flota sea simulada.
 */
@@ -178,6 +179,17 @@ class AlertasMapaService {
         .forEach((a) => alertas.push(conPuerto(a, puertoEvento.get(a.entidad))));
     }
     return this.publicar(alertas, ahora);
+  }
+
+  /**
+   * Eventos viales nuevos y despejados (los entrega EventoVialService tras cada sincronización o despeje manual).
+   * El puerto de cada alerta sale de su punto (publicar → puertosEnPunto).
+   */
+  async evaluarEventosViales(nuevos = [], resueltos = [], ahora = new Date()) {
+    await this.cargarConfig();
+    const regla = this.cfg('evento_vial');
+    if (!regla.activa) return 0;
+    return this.publicar(R.alertasEventosViales(nuevos, resueltos, ahora, { severidadMinima: regla.umbrales[0] }), ahora);
   }
 
   // ── Publicación ────────────────────────────────────────────────────────────

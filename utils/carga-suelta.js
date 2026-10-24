@@ -34,19 +34,29 @@ function armarCargaSuelta({ folios = [], roro = [], avanceRoro = [], vehiculos =
       titulo: 'BREAK-BULK', valor: Math.round(C.suma(bb, (f) => f.tm)), unidad: 't', colorBorde: 'borde-amarillo',
       icono: 'feather icon-box', simulado,
       subtitulo: productosBb.length ? productosBb.slice(0, 4).map((p) => p.clave.toLowerCase()).join(' · ') : 'Sin carga suelta activa',
+      desglose: productosBb.map((p) => ({ etiqueta: p.clave, valor: p.valor, unidad: 't' })),
+      definicion: 'Toneladas de los folios de break-bulk que no han sido despachados.',
     }),
     PTT_SUE_KPI_PROYECTO: C.kpi({
-      titulo: 'PROJECT CARGO', valor: pr.length, unidad: 'bultos', colorBorde: 'borde-purple', icono: 'feather icon-truck', simulado,
+      // Corregido 2026-10-24: la unidad decía 'bultos' pero el valor cuenta folios
+      titulo: 'PROJECT CARGO', valor: pr.length, unidad: 'folios', colorBorde: 'borde-purple', icono: 'feather icon-truck', simulado,
       subtitulo: esperanPermiso.length ? `${esperanPermiso.length} esperan permiso vial` : 'Maquinaria y bultos pesados',
+      desglose: C.agrupar(pr, (f) => (!f.requiere_permiso ? 'No requiere permiso' : f.permiso_aprobado ? 'Permiso aprobado' : 'Esperan permiso vial'), () => 1)
+        .map((g) => ({ etiqueta: g.clave, valor: g.valor, unidad: 'folios', semaforo: g.clave === 'Esperan permiso vial' ? 'amarillo' : 'verde' })),
+      definicion: 'Folios de project cargo activos (no despachados).',
     }),
     PTT_SUE_KPI_VEH_IMPORT: C.kpi({
       titulo: 'VEHÍCULOS IMPORTADOS', valor: C.suma(importados, (v) => v.unidades), unidad: 'uds', colorBorde: 'borde-cyan',
       icono: 'feather icon-log-in', simulado,
       subtitulo: roroOperando ? `m/v ${roroOperando.motonave} descargando` : 'En patios de vehículos',
+      desglose: C.agrupar(importados, (v) => v.marca, (v) => v.unidades).map((g) => ({ etiqueta: g.clave, valor: g.valor, unidad: 'uds' })),
+      definicion: 'Unidades de importación en patios según la última foto del inventario de vehículos.',
     }),
     PTT_SUE_KPI_VEH_EXPORT: C.kpi({
       titulo: 'VEHÍCULOS EXPORTACIÓN', valor: C.suma(exportados, (v) => v.unidades), unidad: 'uds', colorBorde: 'borde-green',
       icono: 'feather icon-log-out', simulado, subtitulo: 'Parqueo pre-embarque',
+      desglose: C.agrupar(exportados, (v) => v.marca, (v) => v.unidades).map((g) => ({ etiqueta: g.clave, valor: g.valor, unidad: 'uds' })),
+      definicion: 'Unidades de exportación en patios según la última foto del inventario de vehículos.',
     }),
   };
 

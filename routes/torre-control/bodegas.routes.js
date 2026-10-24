@@ -10,7 +10,9 @@ const {
   crearBodega,
   actualizarBodega,
   obtenerMovimientosBodega,
-  registrarMovimientoBodega
+  registrarMovimientoBodega,
+  obtenerOcupacionBodegas,
+  obtenerMovimientosRango
 } = require('../../controllers/torre-control/bodegas.controller');
 
 // Si utilizas middleware de autenticación JWT en QPLUS/PORTTOS, descoméntalo aquí:
@@ -44,6 +46,12 @@ router.put('/maestro/:idBodega', actualizarBodega);
 // =========================================================================
 // GET /api/tablero-control/bodegas/movimientos?puerto=BUENAVENTURA
 router.get('/movimientos', obtenerMovimientosBodega);
+
+// Detalle de la vista ampliada (Fase 3): antes de '/:puerto'
+// GET /api/tablero-control/bodegas/movimientos/rango?puerto=BUENAVENTURA&dias=30
+router.get('/movimientos/rango', obtenerMovimientosRango);
+// GET /api/tablero-control/bodegas/ocupacion?puerto=BUENAVENTURA&horas=24
+router.get('/ocupacion', obtenerOcupacionBodegas);
 
 // POST /api/tablero-control/bodegas/movimientos (Usa MovimientoBodegaDTO + Transacción SQL)
 router.post('/movimientos', registrarMovimientoBodega);

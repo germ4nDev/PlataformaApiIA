@@ -48,6 +48,14 @@ const ocupaciones = (idPuerto, desde) => q(`
   FROM dbo.TCL_OcupacionNodos WITH (NOLOCK)
   WHERE id_puerto = :idPuerto AND fecha >= :desde`, { idPuerto, desde });
 
+/** Fotos de ocupación de un nodo desde la fecha ISO dada (vista ampliada). */
+const ocupacionesDeNodo = (idPuerto, idNodo, desde) => q(`
+  SELECT id_nodo, fecha, CAST(ocupacion AS FLOAT) AS ocupacion, CAST(ocupacion_pct AS FLOAT) AS ocupacion_pct,
+         ingresos_h, salidas_h, espera_min, fuente, CAST(simulado AS INT) AS simulado
+  FROM dbo.TCL_OcupacionNodos WITH (NOLOCK)
+  WHERE id_puerto = :idPuerto AND id_nodo = :idNodo AND fecha >= :desde
+  ORDER BY fecha`, { idPuerto, idNodo, desde });
+
 /** Inserta fotos de ocupación (lotes de 150 × 10 parámetros). */
 async function guardarOcupaciones(filas) {
   for (let i = 0; i < filas.length; i += 150) {
@@ -92,4 +100,4 @@ async function hayDatosReales(idPuerto, desde) {
 
 const purgar = (antes) => q('DELETE FROM dbo.TCL_OcupacionNodos WHERE fecha < :antes', { antes }, QueryTypes.DELETE);
 
-module.exports = { MIGRACION_013, nodos, bodegas, ocupaciones, guardarOcupaciones, guardarNodo, hayDatosReales, purgar };
+module.exports = { MIGRACION_013, nodos, bodegas, ocupaciones, ocupacionesDeNodo, guardarOcupaciones, guardarNodo, hayDatosReales, purgar };

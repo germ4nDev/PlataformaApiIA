@@ -41,10 +41,10 @@ class PaqueteSCService {
   }
 
   async createPaqueteSC(rawData) {
-    console.log('crear paquete sc raw', rawData);
+    // console.log('crear paquete sc raw', rawData);   // [ruido de consola: comentado 2026-10-26]
 
     const dataDTO = PaqueteSCDTO(rawData);
-    console.log('crear paquete sc dto', dataDTO);
+    // console.log('crear paquete sc dto', dataDTO);   // [ruido de consola: comentado 2026-10-26]
 
     return await sequelize.transaction(async (t) => {
       const nuevoPaquete = await this.model.create(dataDTO, { transaction: t });
@@ -87,8 +87,8 @@ class PaqueteSCService {
   }
 
   async updatePaqueteSC(codigoSuscriptorPaquete, rawData) {
-    console.log('codigo', codigoSuscriptorPaquete);
-    console.log('paquete sc', rawData);
+    // console.log('codigo', codigoSuscriptorPaquete);   // [ruido de consola: comentado 2026-10-26]
+    // console.log('paquete sc', rawData);   // [ruido de consola: comentado 2026-10-26]
 
     return await sequelize.transaction(async (t) => {
       // 1. Buscamos si existe
@@ -97,7 +97,7 @@ class PaqueteSCService {
         transaction: t
       });
 
-      console.log('registroDB', registroDB);
+      // console.log('registroDB', registroDB);   // [ruido de consola: comentado 2026-10-26]
       if (!registroDB) throw { statusCode: 404, msg: 'No existe el paquete SC para actualizar.' };
 
       // 2. Actualizamos

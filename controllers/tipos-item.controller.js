@@ -10,7 +10,7 @@ const service = new TiposItemService();
 const getTiposItem = async (req, res = response) => {
   try {
     const tipos = await service.getTiposItem();
-    console.log('los tipos', tipos);
+    // console.log('los tipos', tipos);
 
     return res.status(200).json({ ok: true, tipos });
   } catch (error) {
@@ -24,7 +24,7 @@ const getTiposItem = async (req, res = response) => {
 const getTipoItemById = async (req, res = response) => {
   try {
     const { id } = req.params;
-    console.log('codigo controller', id);
+    // console.log('codigo controller', id);
     const tipo = await service.getTipoItemById(id);
     return res.status(200).json({ ok: true, tipo });
   } catch (error) {
@@ -43,7 +43,7 @@ const createTipoItem = async (req, res = response) => {
   try {
     // QPLUS: Inyección de auditoría
     const dataDTO = { ...req.body };
-    console.log('data contrller', dataDTO);
+    // console.log('data contrller', dataDTO);
 
     const tipo = await service.createTipoItem(dataDTO);
     return res.status(201).json({ ok: true, tipo });
@@ -60,7 +60,7 @@ const updateTipoItem = async (req, res = response) => {
     const { id } = req.params;
 
     const dataDTO = { ...req.body };
-    console.log('rawDta conbtroller', dataDTO);
+    // console.log('rawDta conbtroller', dataDTO);
 
     const tipo = await service.updateTipoItem(id, dataDTO);
     return res.status(200).json({ ok: true, tipo });

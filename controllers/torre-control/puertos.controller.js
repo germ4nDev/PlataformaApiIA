@@ -67,7 +67,7 @@ const updatePuerto = async (req, res = response) => {
   try {
     const { id } = req.params;
     const userContext = contextoUsuario(req);
-    console.log('controlador', req.body);
+    // console.log('controlador', req.body);   // [ruido de consola: comentado 2026-10-26]
 
     const puertoActualizado = await puertosService.updatePuerto(id, req.body, userContext);
 

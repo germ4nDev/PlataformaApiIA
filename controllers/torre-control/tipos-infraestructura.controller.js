@@ -59,8 +59,8 @@ const updateTipoInfraestructura = async (req, res = response) => {
   try {
     const { id } = req.params;
     const userContext = contextoUsuario(req);
-    console.log('id', id);
-    console.log('req.body', req.body);
+    // console.log('id', id);   // [ruido de consola: comentado 2026-10-26]
+    // console.log('req.body', req.body);   // [ruido de consola: comentado 2026-10-26]
 
     const tipoInfreaestructuraActualizado = await TiposInfraestructuraService.updateTipoInfraestructura(id, req.body, userContext);
 

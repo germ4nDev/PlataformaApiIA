@@ -28,10 +28,10 @@ class RolesService {
   }
 
   async createRole(rawData) {
-    console.log('role antes', rawData);
+    // console.log('role antes', rawData);   // [ruido de consola: comentado 2026-10-26]
 
     const dataDTO = RoleAPDTO(rawData);
-    console.log('role despues dto', dataDTO);
+    // console.log('role despues dto', dataDTO);   // [ruido de consola: comentado 2026-10-26]
 
     return await sequelize.transaction(async (t) => {
       const nuevo = await this.model.create(dataDTO, { transaction: t });

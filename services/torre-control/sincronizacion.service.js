@@ -7,8 +7,9 @@
 */
 const FuentesExternas = require('../../adapters/fuentes-externas.adapter');
 const AlertasRepository = require('../../repositories/torre-control/alertas-climaticas.repository');
-const EventosVialesRepository = require('../../repositories/torre-control/eventos-viales.repository');
+const EventoVialService = require('./evento-vial.service');
 const { EventoVialDTO } = require('../../models/torre-control/evento-vial.model');
+const EV = require('../../utils/eventos-viales');
 
 class SincronizacionService {
 
@@ -34,73 +35,42 @@ class SincronizacionService {
     return guardadas;
   }
 
+  /**
+   * Eventos viales de TomTom (cron 'eventos-viales', cada 10 min). Trae los incidentes vigentes por zona,
+   * los mapea y valida (utils/eventos-viales.js + EventoVialDTO) y le pasa el reporte a EventoVialService,
+   * que despeja los que dejaron de reportarse (ciclo de vida, migración 014).
+   * Si ninguna zona respondió (llave rechazada, sin red) lanza error para que la bitácora del cron lo registre.
+   * @param {{ dryRun?: boolean }} opciones  dryRun: devuelve lo mapeado sin escribir
+   */
   async sincronizarEventosViales(opciones = {}) {
-    // Extraemos dryRun, si no existe, por defecto es false
     const { dryRun = false } = opciones;
-    let procesados = 0;
-
-    try {
-      console.log('📡 Consumiendo API externa (TomTom) vía FuentesExternas...');
-
-      const incidentesTomTom = await FuentesExternas.getEventosVialesOficiales();
-      const userContext = { codigoUsuario: 'SYS_CRON_TOMTOM' };
-
-      console.log(`📊 Total de incidentes activos reportados por TomTom: ${incidentesTomTom.length}`);
-
-      const payloadParaBD = [];
-
-      // -------------------------------------------------------------
-      // 🚧 ZONA DE MAPEO Y DTO
-      // -------------------------------------------------------------
-      for (const item of incidentesTomTom) {
-        try {
-          const rawData = this._mapearEventoVial(item);
-
-          // El DTO retorna el GeoJSON puro: { type: 'Point', coordinates: [lon, lat] }
-          const eventoDTO = EventoVialDTO(rawData, userContext);
-
-          // La geometría la convierte el repositorio al guardar.
-          const eventoParaGuardar = { ...eventoDTO };
-
-          // Agregamos el objeto ya formateado a nuestro arreglo
-          payloadParaBD.push(eventoParaGuardar);
-
-        } catch (error) {
-          console.log(`===========================================`);
-          console.log(`❌ FALLO CAPTURADO EN REGISTRO: ${item.properties?.id || 'Desconocido'}`);
-          console.log(`MOTIVO:`, error.details || error.message || error);
-          console.log(`===========================================`);
-        }
-      }
-
-      // -------------------------------------------------------------
-      // 🛑 EL SEMÁFORO DRY-RUN
-      // -------------------------------------------------------------
-      // Si dryRun es true, devolvemos el payload exacto y salimos de la función sin tocar SQL Server.
-      if (dryRun) {
-        console.log(`🛠️ [DRY RUN] Modo diagnóstico activo. Simulados ${payloadParaBD.length} registros estructurados.`);
-        return payloadParaBD;
-      }
-
-      // -------------------------------------------------------------
-      // 💾 INSERCIÓN EN BASE DE DATOS
-      // -------------------------------------------------------------
-      console.log('💾 Insertando/Actualizando registros en SQL Server...');
-      for (const eventoGuardar of payloadParaBD) {
-        await EventosVialesRepository.guardar(eventoGuardar);
-        procesados++;
-      }
-
-      console.log("🏁 Sincronización de eventos viales finalizada.");
-
-      // Retornamos la cantidad de insertados/actualizados para que el Wrapper de monitoreo (Bitácora) lo registre
-      //return { insertados: procesados };
-      return procesados;
-
-    } catch (error) {
-      console.error('❌ Error grave en sincronizarEventosViales:', error);
-      throw error; // Propagamos el error para que la Torre de Control (Bitácora) lo atrape y registre
+    const ahora = new Date();
+    const { incidentes, zonas } = await FuentesExternas.getEventosVialesPorZona();
+    const fallidas = zonas.filter((z) => !z.ok);
+    if (zonas.length && fallidas.length === zonas.length) {
+      throw new Error(`TomTom no respondió en ninguna zona (${fallidas[0].error}). Revisar TOMTOM_API_KEY y la cuota.`);
     }
+
+    const userContext = { codigoUsuario: 'SYS_CRON_TOMTOM' };
+    const reportados = [];
+    let invalidos = 0;
+    for (const { zona, item } of incidentes) {
+      const mapeado = EV.mapearIncidente(item, zona);
+      if (!mapeado) { invalidos++; continue; }
+      try {
+        // El DTO exige fechaInicio: si TomTom no la manda vale ahora, pero la reconciliación conserva la del primer reporte
+        const dto = EventoVialDTO({ ...mapeado, fechaInicio: mapeado.fechaInicio || ahora.toISOString() }, userContext);
+        reportados.push({ ...dto, fechaInicio: mapeado.fechaInicio, fuente: mapeado.fuente, zonaFuente: mapeado.zonaFuente });
+      } catch (error) {
+        invalidos++;
+        console.warn(`[EventosViales] Incidente ${item?.properties?.id || '?'} descartado:`, JSON.stringify(error.details || error.message || error));
+      }
+    }
+    if (dryRun) return { reportados, zonas, invalidos };
+
+    const r = await EventoVialService.aplicarReporte({ reportados, zonas }, ahora);
+    console.log(`🚧 Eventos viales: ${reportados.length} reportados (${invalidos} descartados) · ${r.nuevos} nuevos · ${r.despejados} despejados · zonas con falla: ${fallidas.map((z) => z.nombre).join(', ') || 'ninguna'}`);
+    return { insertados: reportados.length, ...r, invalidos, zonasFallidas: fallidas.map((z) => z.nombre) };
   }
 
   async ejecutarSincronizacion(opciones = {}) {
@@ -169,77 +139,8 @@ class SincronizacionService {
       throw error;
     }
   };
+  // El mapeo de TomTom vive en utils/eventos-viales.js (mapearIncidente), con pruebas.
 
-  _mapearEventoVial(item) {
-    const props = item.properties || {};
-
-    // iconCategory es el código numérico que manda TomTom
-    const categoria = props.iconCategory || 0;
-    const magnitud = props.magnitudeOfDelay || 0;
-
-    const coords = item.geometry?.coordinates;
-    const puntoInicial = Array.isArray(coords[0]) ? coords[0] : coords;
-    const lon = puntoInicial[0];
-    const lat = puntoInicial[1];
-
-    // 1. CLASIFICACIÓN CORREGIDA DE TOMTOM
-    let tipoEventoMapeado = 'ALERTA_VIAL';
-
-    switch (categoria) {
-      case 1:
-        tipoEventoMapeado = 'ACCIDENTE';
-        break;
-      case 6: // <--- Congestión corregida
-        tipoEventoMapeado = 'CONGESTION';
-        break;
-      case 8:
-      case 9:
-        tipoEventoMapeado = 'CIERRE_VIAL';
-        break;
-      case 11:
-        tipoEventoMapeado = 'MANTENIMIENTO_OBRA';
-        break;
-      case 2:
-      case 3:
-      case 4:
-      case 5:
-        tipoEventoMapeado = 'ALERTA_CLIMATICA';
-        break;
-      case 14:
-        tipoEventoMapeado = 'VEHICULO_AVERIDADO';
-        break;
-      default:
-        tipoEventoMapeado = 'ALERTA_VIAL';
-    }
-
-    // 2. Cálculo de severidad
-    let severidadMapeada = 1;
-    if (magnitud >= 3) severidadMapeada = 3;
-    else if (magnitud === 2) severidadMapeada = 2;
-
-    const corredorPorDefecto = 'Buga - Buenaventura';
-    let descripcionLugar = props.from ? `De ${props.from} a ${props.to || ''}` : 'Sector Georreferenciado';
-
-    let descripcionLimpia = 'Novedad vial reportada.';
-    if (props.events && props.events.length > 0) {
-      descripcionLimpia = props.events.map(e => e.description).join(' | ').substring(0, 4000);
-    }
-
-    return {
-      idExterno: props.id || Buffer.from(`${lon}-${lat}-${Date.now()}-${Math.random()}`).toString('base64').substring(0, 36),
-      codigoEvento: props.id || Buffer.from(`${lon}-${lat}-${Date.now()}-${Math.random()}`).toString('base64').substring(0, 36),
-      corredorVial: corredorPorDefecto,
-      sector: descripcionLugar.substring(0, 100),
-      tipoEvento: tipoEventoMapeado,
-      descripcion: descripcionLimpia,
-      nivelSeveridad: severidadMapeada,
-      estadoEvento: 'ACTIVO',
-      // Envio de la ubicación pura para que el DTO y Sequelize lo manejen
-      ubicacion_geo: (lat && lon) ? { type: 'Point', coordinates: [lon, lat] } : null,
-      fechaInicio: props.startTime ? new Date(props.startTime).toISOString() : new Date().toISOString(),
-      fechaFin: props.endTime ? new Date(props.endTime).toISOString() : null
-    };
-  }
 }
 
 module.exports = new SincronizacionService();

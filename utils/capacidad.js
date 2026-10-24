@@ -90,7 +90,26 @@ function armarCapacidad({ nodos = [], bodegas = [], ocupaciones = [], puerto = n
     PTT_CAP_KPI_TEU: C.kpi({ titulo: 'CAPACIDAD CONTENEDOR', valor: Math.round(C.suma(filas.filter((f) => f.unidad === 'TEU'), (f) => f.capacidad)), unidad: 'TEU', colorBorde: 'borde-cyan', icono: 'feather icon-box', simulado, subtitulo: 'Terminales, patios y depots' }),
     PTT_CAP_KPI_TON: C.kpi({ titulo: 'CAPACIDAD GRANEL / SUELTA', valor: Math.round(C.suma(filas.filter((f) => f.unidad === 'TON'), (f) => f.capacidad)), unidad: 't', colorBorde: 'borde-green', icono: 'feather icon-database', simulado, subtitulo: `${filas.filter((f) => f.categoria.startsWith('BODEGA')).length} bodegas` }),
     PTT_CAP_KPI_CRITICOS: C.kpi({ titulo: 'NODOS CRÍTICOS', valor: criticos.length, colorBorde: criticos.length ? 'borde-rojo' : 'borde-green', icono: 'feather icon-alert-triangle', simulado, subtitulo: criticos.length ? criticos.slice(0, 3).map((f) => f.nombre).join(' · ') : `Ninguno ≥ ${C.UMBRALES_SATURACION.critico} %` }),
-  };
+  };  // Vista ampliada de los KPI (2026-10-24)
+  const umbralesCap = { amarillo: C.UMBRALES_SATURACION.atencion, rojo: C.UMBRALES_SATURACION.critico, sentido: 'mayor' };
+  Object.assign(kpis.PTT_CAP_KPI_NODOS, {
+    desglose: porCategoria.map(({ k, filas: fs }) => ({ etiqueta: CATEGORIAS[k], valor: fs.length, unidad: 'nodos' })),
+    definicion: `Nodos activos del catálogo de capacidad y bodegas del puerto; ${conDato.length} de ${filas.length} con dato de ocupación vigente.`,
+  });
+  Object.assign(kpis.PTT_CAP_KPI_TEU, {
+    desglose: filas.filter((f) => f.unidad === 'TEU').sort((a, b) => b.capacidad - a.capacidad).map((f) => ({ etiqueta: f.nombre, valor: f.capacidad, unidad: 'TEU' })),
+    definicion: 'Suma de la capacidad declarada (TEU) de terminales, patios y depots del catálogo.',
+  });
+  Object.assign(kpis.PTT_CAP_KPI_TON, {
+    desglose: filas.filter((f) => f.unidad === 'TON').sort((a, b) => b.capacidad - a.capacidad).map((f) => ({ etiqueta: f.nombre, valor: f.capacidad, unidad: 't' })),
+    definicion: 'Suma de la capacidad en toneladas de bodegas y patios de granel y carga suelta.',
+  });
+  Object.assign(kpis.PTT_CAP_KPI_CRITICOS, {
+    desglose: criticos.map((f) => ({ etiqueta: f.nombre, valor: f.ocupacionPct, unidad: '%', semaforo: 'rojo' })),
+    umbrales: umbralesCap,
+    definicion: `Nodos con ocupación ≥ ${C.UMBRALES_SATURACION.critico} % en su último dato vigente (${filas.length - conDato.length} nodos sin dato no se evalúan).`,
+  });
+
 
   const promedio = (fs) => {
     const v = fs.map((f) => f.ocupacionPct).filter((x) => x !== null);
@@ -133,4 +152,24 @@ function armarCapacidad({ nodos = [], bodegas = [], ocupaciones = [], puerto = n
   };
 }
 
-module.exports = { CATEGORIAS, categoriaBodega, armarCapacidad };
+/**
+ * Serie de un nodo (vista ampliada, Fase 3): última foto de cada hora (ocupación, entradas, salidas, espera).
+ * Las horas sin foto quedan en null (no se inventa 0).
+ */
+function serieNodo({ fotos = [], horas = 24 }, ahora = new Date()) {
+  const fin = C.inicioHora(ahora.getTime());
+  const horasMs = Array.from({ length: horas }, (_, i) => fin - (horas - 1 - i) * 3600000);
+  const ultima = new Map();
+  for (const f of fotos) {
+    const h = C.inicioHora(Date.parse(f.fecha));
+    if (!ultima.has(h) || Date.parse(f.fecha) > Date.parse(ultima.get(h).fecha)) ultima.set(h, f);
+  }
+  const campo = (k) => horasMs.map((h) => (ultima.has(h) ? C.num(ultima.get(h)[k]) : null));
+  return {
+    labels: horasMs.map(horas > 48 ? (h) => `${new Date(h - 5 * 3600000).toISOString().slice(8, 10)}/${C.etiquetaHora(h)}` : C.etiquetaHora),
+    ocupacionPct: campo('ocupacion_pct'), ingresosH: campo('ingresos_h'), salidasH: campo('salidas_h'), esperaMin: campo('espera_min'),
+    simulado: fotos.some((f) => f.simulado === 1 || f.simulado === true), conDato: ultima.size, horas,
+  };
+}
+
+module.exports = { serieNodo, CATEGORIAS, categoriaBodega, armarCapacidad };

@@ -6,7 +6,8 @@
 const { response, request } = require('express');
 // Ajusta la ruta relativa según donde tengas ubicado bodegas.service.js (ej: ../../services/torre-control/bodegas.service)
 const bodegasService = require('../../services/torre-control/bodegas.service');
-const { responderError } = require('../../helpers/errores.helper');
+const { responderError, validarCon } = require('../../helpers/errores.helper');
+const { BodegasOcupacionQuerySchema, BodegasMovimientosQuerySchema } = require('../../models/torre-control/tableros-detalle.model');
 
 /**
  * Extrae el usuario de la sesión/token JWT para el estándar de auditoría QPLUS
@@ -148,7 +149,35 @@ const registrarMovimientoBodega = async (req = request, res = response) => {
   }
 };
 
+/**
+ * GET /api/tablero-control/bodegas/ocupacion?puerto&horas  (vista ampliada, Fase 3)
+ * Serie de ocupación por bodega.
+ */
+const obtenerOcupacionBodegas = async (req = request, res = response) => {
+  try {
+    const { puerto, horas } = validarCon(BodegasOcupacionQuerySchema, req.query);
+    return res.status(200).json({ ok: true, data: await bodegasService.ocupacionBodegas(puerto, horas) });
+  } catch (error) {
+    return responderError(res, error, 'BodegasController.obtenerOcupacionBodegas');
+  }
+};
+
+/**
+ * GET /api/tablero-control/bodegas/movimientos/rango?puerto&dias  (vista ampliada, Fase 3)
+ * Movimientos del rango con estadía calculada (hasta 2.000, con el total del rango).
+ */
+const obtenerMovimientosRango = async (req = request, res = response) => {
+  try {
+    const { puerto, dias } = validarCon(BodegasMovimientosQuerySchema, req.query);
+    return res.status(200).json({ ok: true, data: await bodegasService.movimientosRango(puerto, dias) });
+  } catch (error) {
+    return responderError(res, error, 'BodegasController.obtenerMovimientosRango');
+  }
+};
+
 module.exports = {
+  obtenerOcupacionBodegas,
+  obtenerMovimientosRango,
   obtenerDashboardBodegas,
   obtenerMaestroBodegas,
   crearBodega,

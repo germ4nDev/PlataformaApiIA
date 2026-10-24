@@ -98,7 +98,7 @@ const getPlantillaMaestra = async (req, res = response) => {
 const savePestanasUsuario = async (req, res = response) => {
   try {
     const datosRaw = req.body;
-    console.log('datos pestanas', datosRaw);
+    // console.log('datos pestanas', datosRaw);
 
     const pestanasGuardadas = await service.savePestanasUsuario(datosRaw);
     return res.status(200).json({

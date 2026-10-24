@@ -47,7 +47,7 @@ const getSesionById = async (req, res = response) => {
 const registrarSesion = async (req, res = response) => {
   try {
     const dataDTO = { ...req.body };
-    console.log('sesion despues dto', dataDTO);
+    // console.log('sesion despues dto', dataDTO);
     const sesion = await service.registrarSesion(dataDTO);
     return res.status(201).json({ ok: true, sesion });
   } catch (error) {

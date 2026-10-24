@@ -21,9 +21,9 @@ const getActividades = async (req, res = response) => {
 
 const getActividadById = async (req, res = response) => {
   try {
-    console.log('actividad parametros', req.params);
+    // console.log('actividad parametros', req.params);
     const { id } = req.params;
-    console.log('actividad code controller', id);
+    // console.log('actividad code controller', id);
 
     const actividad = await service.getActividadPorId(id);
 
@@ -81,7 +81,7 @@ const createActividad = async (req, res = response) => {
   try {
     // QPLUS: Inyección de contexto de auditoría antes del servicio
     const dataDTO = { ...req.body };
-    console.log('data actividad crear', dataDTO);
+    // console.log('data actividad crear', dataDTO);
 
     const actividadDB = await service.createActividad(dataDTO);
     return res.status(201).json({ ok: true, actividadDB });

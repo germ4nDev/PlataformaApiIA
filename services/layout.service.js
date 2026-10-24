@@ -184,7 +184,7 @@ class LayoutService {
           transaction: t
         });
 
-        console.log('✅ Pestañas mapeadas con ESTRATEGIA HEREDADA listas para guardar:', dataDTOs);
+        // console.log('✅ Pestañas mapeadas con ESTRATEGIA HEREDADA listas para guardar:', dataDTOs);   // [ruido de consola: comentado 2026-10-26]
 
         return await LayoutPestana.bulkCreate(dataDTOs, { transaction: t });
       });

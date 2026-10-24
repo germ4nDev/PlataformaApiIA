@@ -101,8 +101,8 @@ const createBulkActividadesRoles = async (req, res = response) => {
   try {
     const { id } = req.params; // Generalmente este 'id' es el código del rol o actividad según tu diseño
     const dataDTO = { ...req.body };
-    console.log('codigoActividad / Parámetro:', id);
-    console.log('datos insertar:', dataDTO);
+    // console.log('codigoActividad / Parámetro:', id);
+    // console.log('datos insertar:', dataDTO);
 
     const nuevaActividad = await service.syncActividadesRoles(id, dataDTO);
 

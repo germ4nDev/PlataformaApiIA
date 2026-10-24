@@ -41,10 +41,10 @@ class ItemService {
   }
 
   async createItem(rawData) {
-    console.log('item antes dto', rawData);
+    // console.log('item antes dto', rawData);   // [ruido de consola: comentado 2026-10-26]
 
     const dataDTO = ItemDTO(rawData);
-    console.log('item despues dto', dataDTO);
+    // console.log('item despues dto', dataDTO);   // [ruido de consola: comentado 2026-10-26]
 
 
     return await sequelize.transaction(async (t) => {

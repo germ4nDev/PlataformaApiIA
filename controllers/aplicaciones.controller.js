@@ -53,10 +53,10 @@ const createAplicacion = async (req, res = response) => {
         // QPLUS: Inyección del contexto de auditoría antes del servicio
         const codigoUsuarioCreacion = req.body?.codigoUsuarioCreacion || 'SISTEMA';
         const dataDTO = { ...req.body, codigoUsuarioCreacion };
-        console.log('dataDTO', dataDTO);
+        // console.log('dataDTO', dataDTO);
 
         const aplicacionDB = await service.crearAplicacion(dataDTO);
-        console.log('aplicacionDB', aplicacionDB);
+        // console.log('aplicacionDB', aplicacionDB);
 
         return res.status(201).json({ ok: true, aplicacionDB });
     } catch (error) {
@@ -72,8 +72,8 @@ const updateAplicacion = async (req, res = response) => {
         const { codigoAplicacion, ...data } = req.body;
 
         const dataDTO = { ...data };
-        console.log('codigo aplicacion controller', codigoAplicacion);
-        console.log('aplicacion controller', dataDTO);
+        // console.log('codigo aplicacion controller', codigoAplicacion);
+        // console.log('aplicacion controller', dataDTO);
 
         const aplicacionActualizada = await service.updateAplicacion(codigoAplicacion, dataDTO);
 

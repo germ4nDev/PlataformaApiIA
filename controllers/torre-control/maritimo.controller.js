@@ -55,10 +55,10 @@ const obtenerClima = async (req, res) => {
 const obtenerResumenOperativo = async (req, res) => {
   try {
     const puerto = (req.query.puerto || req.params.puerto || 'BUENAVENTURA').trim().toUpperCase();
-    console.log('🔍 [DEBUG API] Recibiendo consulta resumen-operativo para puerto:', puerto);
+    // console.log('🔍 [DEBUG API] Recibiendo consulta resumen-operativo para puerto:', puerto);   // [ruido de consola: comentado 2026-10-26]
 
     const data = await MaritimoService.obtenerResumenOperativo(puerto);
-    console.log('✅ [DEBUG API] Resumen operativo generado con', Object.keys(data || {}).length, 'nodos');
+    // console.log('✅ [DEBUG API] Resumen operativo generado con', Object.keys(data || {}).length, 'nodos');   // [ruido de consola: comentado 2026-10-26]
 
     return res.status(200).json({
       ok: true,
@@ -111,7 +111,7 @@ const vincularNave = async (req, res) => {
 const recibirPosicionAis = async (req, res) => {
   try {
     const datosAIS = req.body;
-    console.log(`[DEBUG] Datos recibidos en guardarUltimaPosicionAIS: ${JSON.stringify(datosAIS)}`);
+    // console.log(`[DEBUG] Datos recibidos en guardarUltimaPosicionAIS: ${JSON.stringify(datosAIS)}`);   // [ruido de consola: comentado 2026-10-26]
 
     if (!datosAIS.mmsi) {
       return res.status(400).json({ success: false, message: 'El MMSI es obligatorio' });

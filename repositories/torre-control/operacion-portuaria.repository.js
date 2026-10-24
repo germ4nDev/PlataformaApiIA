@@ -42,6 +42,17 @@ const avance = (idPuerto, segmento, desde) => q(`
   WHERE id_puerto = :idPuerto AND segmento = :segmento AND hora >= :desde
   ORDER BY hora`, { idPuerto, segmento, desde });
 
+/** Una operación por su id (cualquier segmento) y su avance horario desde la fecha ISO dada (vista ampliada). */
+const operacionPorId = async (idPuerto, idOperacion) => (await q(`
+  SELECT ${COLUMNAS_OPERACION} FROM dbo.TCL_OperacionesBuque WITH (NOLOCK)
+  WHERE id_puerto = :idPuerto AND id_operacion = :idOperacion`, { idPuerto, idOperacion }))[0] || null;
+
+const avanceDeOperacion = (idPuerto, idOperacion, desde) => q(`
+  SELECT id_operacion, hora, CAST(cantidad AS FLOAT) AS cantidad
+  FROM dbo.TCL_AvanceOperacionBuque WITH (NOLOCK)
+  WHERE id_puerto = :idPuerto AND id_operacion = :idOperacion AND hora >= :desde
+  ORDER BY hora`, { idPuerto, idOperacion, desde });
+
 const equipos = (idPuerto, segmentos) => q(`
   SELECT id, codigo_equipo, tipo, descripcion, terminal, segmento, CAST(capacidad_tmh AS FLOAT) AS capacidad_tmh,
          CAST(capacidad_ton AS FLOAT) AS capacidad_ton, estado, id_operacion, folio_carga_suelta, motonave, producto,
@@ -194,6 +205,6 @@ async function purgar(antes) {
 }
 
 module.exports = {
-  MIGRACION_013, operaciones, avance, equipos, folios, vehiculos, historico, idsOperacion,
+  MIGRACION_013, operaciones, avance, operacionPorId, avanceDeOperacion, equipos, folios, vehiculos, historico, idsOperacion,
   guardarOperacion, guardarAvance, guardarEquipo, guardarFolio, guardarVehiculos, hayDatosReales, purgar,
 };

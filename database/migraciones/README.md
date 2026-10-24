@@ -28,6 +28,8 @@ Los scripts son autocontenidos: se pueden abrir y ejecutar directamente en SSMS.
 13. `012_recorrido_mapa.sql` → (independiente) muestras de posición de naves y camiones (`TCL_RecorridoMapa`) para el modo reproducir del mapa (últimas 24 h). Retención de 3 días. Sin ella el API funciona y el modo reproducir avisa que falta; después de correrla, reiniciar el API.
 14. `013_granel_suelta_capacidad_noticias.sql` → (independiente) pestañas Granel, Carga suelta, Capacidad y Noticias: 10 tablas (operación de buques y su avance, equipos, carga suelta, vehículos, capacidad y ocupación de nodos, noticias, TRM, fuentes), catálogo inicial de nodos de Buenaventura (capacidades de referencia, a validar con cada operador) y 38 widgets en el layout base de las 4 pestañas. Sin ella el API funciona y esos tableros responden 503; después de correrla, reiniciar el API.
 
+15. `014_eventos_viales_ciclo_vida.sql` → (independiente) ciclo de vida de los eventos viales: columnas `fuente`, `zonaFuente`, `fechaUltimoReporte`, `ausencias` y `motivoCierre` en `TCL_EventosViales`, respaldo `TCL_EventosViales_respaldo014`, corrección de `VEHICULO_AVERIDADO` y depuración de los ACTIVO de TomTom sin reporte hace más de 1 h (pasan a DESPEJADO, no se borran). Sin ella el API funciona con la regla anterior (reportados hoy) y no despeja nada; después de correrla, reiniciar el API. Reversa en el encabezado del script.
+
 Reversa de la 001: `001_reversa.sql`.
 
 ```

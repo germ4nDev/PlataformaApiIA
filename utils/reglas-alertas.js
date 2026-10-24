@@ -33,6 +33,10 @@ const CATALOGO_REGLAS = Object.freeze({
   faro: { nombre: 'Nave entra a la zona de un faro', niveles: 'Azul', enfriamientoMin: 30, porPuerto: true, umbrales: [] },
   atraque: { nombre: 'Nave atraca', niveles: 'Azul', enfriamientoMin: 60, porPuerto: true, umbrales: [] },
   zarpe: { nombre: 'Nave desatraca', niveles: 'Azul', enfriamientoMin: 60, porPuerto: true, umbrales: [] },
+  evento_vial: {
+    nombre: 'Evento vial nuevo o despejado', niveles: 'Rojo accidente o cierre · amarillo los demás · azul despejado', enfriamientoMin: 5, porPuerto: true,
+    umbrales: [{ etiqueta: 'Severidad mínima para avisar uno nuevo (1 a 3)', defecto: 1 }],
+  },
   fondeo: {
     nombre: 'Nave fondeada mucho tiempo', niveles: 'Amarillo · rojo', enfriamientoMin: 360, porPuerto: true,
     umbrales: [{ etiqueta: 'Amarillo desde (horas)', defecto: 12 }, { etiqueta: 'Rojo desde (horas)', defecto: 24 }],
@@ -191,6 +195,47 @@ function alertasProximidadEventos(flota, eventos, ahora = new Date(), opc = {}) 
   return alertas;
 }
 
+// ── Ciclo de vida de los eventos viales ──────────────────────────────────────
+
+/**
+ * Un aviso por evento nuevo (rojo si es accidente o cierre o severidad 3, amarillo los demás) y uno azul por
+ * evento despejado, con lo que duró. Entrada: la salida de utils/eventos-viales.reconciliar() o un despeje manual.
+ * @param {object[]} nuevos     eventos (con ubicacion_geo o lon/lat)
+ * @param {object[]} resueltos  { codigoEvento, motivo, duracionMin, evento }
+ * @param {{ severidadMinima?: number }} [opc]
+ */
+function alertasEventosViales(nuevos = [], resueltos = [], ahora = new Date(), opc = {}) {
+  const EV = require('./eventos-viales');
+  const minima = opc.severidadMinima ?? defecto('evento_vial', 0);
+  const punto = (e) => {
+    const c = e?.ubicacion_geo?.coordinates;
+    return c ? [Number(c[0]), Number(c[1])] : [Number(e?.lon), Number(e?.lat)];
+  };
+  const lugar = (e) => [e?.corredorVial, e?.sector].filter(Boolean).join(' · ');
+  const alertas = [];
+  nuevos.filter((e) => (Number(e.nivelSeveridad) || 1) >= minima).forEach((e) => {
+    const tipo = String(e.tipoEvento || '').toUpperCase();
+    const grave = tipo === 'ACCIDENTE' || tipo === 'CIERRE_VIAL' || Number(e.nivelSeveridad) >= 3;
+    alertas.push(crearAlerta({
+      nivel: grave ? 'error' : 'warning', categoria: 'evento_vial', entidad: `${e.codigoEvento}|nuevo`,
+      titulo: `🚧 ${EV.nombreTipo(tipo)} en ${e.corredorVial || 'la vía'}`,
+      mensaje: lugar(e) || 'Evento vial reportado', coordenadas: punto(e),
+    }, ahora));
+  });
+  resueltos.forEach((r) => {
+    const e = r.evento || {};
+    const duracion = EV.textoDuracion(r.duracionMin);
+    const como = r.motivo === EV.MOTIVO.MANUAL ? 'despejado por el operador' : r.motivo === EV.MOTIVO.FIN_PROGRAMADO ? 'terminó (fin programado)' : 'despejado';
+    alertas.push(crearAlerta({
+      nivel: 'info', categoria: 'evento_vial', entidad: `${r.codigoEvento}|despejado`,
+      titulo: `✅ ${EV.nombreTipo(e.tipoEvento)} ${como}`,
+      mensaje: [lugar(e), duracion ? `duró ${duracion}` : null].filter(Boolean).join(' · ') || 'Evento vial despejado',
+      coordenadas: punto(e),
+    }, ahora));
+  });
+  return alertas;
+}
+
 // ── Ocupación de muelles ─────────────────────────────────────────────────────
 
 /**
@@ -342,6 +387,6 @@ function peajesDesdeGeoJson(fc) {
 module.exports = {
   CATALOGO_REGLAS, resolverConfig, crearAlerta,
   alertasPeajes, alertasGeocercas, alertasProximidadEventos, alertasOcupacion,
-  alertasNavesFaros, alertasCambiosEstado, alertasFondeo,
+  alertasNavesFaros, alertasCambiosEstado, alertasFondeo, alertasEventosViales,
   Enfriamiento, peajesDesdeGeoJson, distanciaATramo, metros,
 };

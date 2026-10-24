@@ -68,9 +68,9 @@ class ParametrosSistemaService {
   }
 
   async createParametro(rawData) {
-    console.log('data parametro antes dto', rawData);
+    // console.log('data parametro antes dto', rawData);   // [ruido de consola: comentado 2026-10-26]
     const dataDTO = ParametroSistemaDTO(rawData);
-    console.log('data parametro despues dto', dataDTO);
+    // console.log('data parametro despues dto', dataDTO);   // [ruido de consola: comentado 2026-10-26]
 
     return await sequelize.transaction(async (t) => {
       const existeLlave = await this.model.findOne({
@@ -101,9 +101,9 @@ class ParametrosSistemaService {
     // Aseguramos que el código del parámetro viaje en el payload para el DTO
     rawData.codigoParametro = codigoParametro;
 
-    console.log('data parametro antes dto', rawData);
+    // console.log('data parametro antes dto', rawData);   // [ruido de consola: comentado 2026-10-26]
     const dataDTO = ParametroSistemaDTO(rawData);
-    console.log('data parametro despues dto', dataDTO);
+    // console.log('data parametro despues dto', dataDTO);   // [ruido de consola: comentado 2026-10-26]
 
     return await sequelize.transaction(async (t) => {
       const parametroDB = await this.model.findOne({

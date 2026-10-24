@@ -49,10 +49,10 @@ const createUsuario = async (req, res = response) => {
   try {
     // QPLUS: Auditoría inicial
     const dataDTO = { ...req.body };
-    console.log('usuario dto', dataDTO);
+    // console.log('usuario dto', dataDTO);
 
     const usuario = await service.createUsuario(dataDTO);
-    console.log('usuario creado', usuario);
+    // console.log('usuario creado', usuario);
     return res.status(201).json({ ok: true, usuario });
   } catch (error) {
     return res.status(error.statusCode || 400).json({

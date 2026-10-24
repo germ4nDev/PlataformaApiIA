@@ -47,10 +47,10 @@ const getUsuariosSCBySuscriptorCode = async (req, res = response) => {
 
 const createUsuarioSC = async (req, res = response) => {
     try {
-        console.log('userSC antes', req.body);
+        // console.log('userSC antes', req.body);
 
         const dataDTO = { ...req.body };
-        console.log('userSC despues', dataDTO);
+        // console.log('userSC despues', dataDTO);
 
         const usuarioSC = await service.createUsuarioSC(dataDTO);
         return res.status(201).json({ ok: true, usuarioSC });

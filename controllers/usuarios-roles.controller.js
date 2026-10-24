@@ -121,10 +121,10 @@ const sincronizarUsuariosRole = async (req, res) => {
 const updateUsuarioRole = async (req, res = response) => {
   try {
     const { id } = req.params;
-    console.log('codigo', id);
+    // console.log('codigo', id);
 
     const dataDTO = { ...req.body };
-    console.log('dataDTO', dataDTO);
+    // console.log('dataDTO', dataDTO);
 
     const usuarioRole = await service.updateUsuarioRole(id, dataDTO);
     return res.status(200).json({ ok: true, usuarioRole });

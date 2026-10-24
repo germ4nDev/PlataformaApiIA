@@ -6,7 +6,7 @@ const service = new TiposWidgetService();
 const getTiposWidget = async (req, res) => {
   try {
     const resultado = await service.obtenerTiposWidget();
-    console.log('resultado', resultado);
+    // console.log('resultado', resultado);
     return res.status(200).json({
       ok: true,
       respuesta: resultado

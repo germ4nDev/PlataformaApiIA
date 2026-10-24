@@ -17,7 +17,7 @@ const actualizarContextoSesion = async (req, res) => {
 
     // 🟢 AGREGA ESTA LÍNEA PARA VER QUÉ LLEGA DESDE ANGULAR
     console.log(`🔎 [POST CONTEXTO] Buscando sesión: "${codigoSesion}"`);
-    console.log(`🔎 [POST CONTEXTO] Datos a actualizar:`, datosContexto);
+    // console.log(`🔎 [POST CONTEXTO] Datos a actualizar:`, datosContexto);   // [ruido de consola: comentado 2026-10-26]
 
     if (!codigoSesion) {
       return res.status(400).json({ ok: false, msg: 'Falta el código de sesión' });

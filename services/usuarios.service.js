@@ -178,7 +178,7 @@ class UsuariosService {
       const usuActualizar = usuarioDB.dataValues;
 
       if (rawData.claveUsuario != usuActualizar.claveUsuario) {
-        console.log('cambiar clave', usuActualizar.claveUsuario);
+        // console.log('cambiar clave', usuActualizar.claveUsuario);   // [ruido de consola: comentado 2026-10-26]
         const salt = bcrypt.genSaltSync();
         const hashedPassword = await bcrypt.hash(rawData.claveUsuario, salt);
         usuActualizar.claveUsuario = hashedPassword

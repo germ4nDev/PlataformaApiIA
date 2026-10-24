@@ -150,11 +150,11 @@ class UsuariosRolesService {
   }
 
   async updateUsuarioRole(codigoUsuarioRole, rawData) {
-    console.log('rawData', rawData);
-    console.log('codigoUsuarioRole', codigoUsuarioRole);
+    // console.log('rawData', rawData);   // [ruido de consola: comentado 2026-10-26]
+    // console.log('codigoUsuarioRole', codigoUsuarioRole);   // [ruido de consola: comentado 2026-10-26]
 
     const dataDTO = UsuarioRoleDTO(rawData);
-    console.log('dataDTO', dataDTO);
+    // console.log('dataDTO', dataDTO);   // [ruido de consola: comentado 2026-10-26]
 
     return await sequelize.transaction(async (t) => {
       // 1. Validar existencia usando el nombre correcto de la columna

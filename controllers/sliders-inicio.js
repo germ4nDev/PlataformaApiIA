@@ -51,7 +51,7 @@ const createSlider = async (req, res = response) => {
 const updateSlider = async (req, res = response) => {
   try {
     const { id } = req.params;
-    console.log('body', req.body);
+    // console.log('body', req.body);   // [ruido de consola: comentado 2026-10-26]
 
     // QPLUS: Hidratación del payload de auditoría
     const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };

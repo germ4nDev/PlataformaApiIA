@@ -12,7 +12,7 @@ const controller = require('../../controllers/torre-control/mapa-general.control
 
 // 🟢 RUTAS DESACOPLADAS: Cada capa tiene su propio endpoint
 // Estas apuntan a los métodos corregidos en mapa-general.controller.js
-console.log("Controlador cargado:", Object.keys(controller));
+// console.log("Controlador cargado:", Object.keys(controller));   // [ruido de consola: comentado 2026-10-26]
 router.get('/infraestructura', controller.obtenerCapaInfraestructura);
 router.get('/terrestre', controller.obtenerCapaTerrestre);
 router.get('/clima', controller.obtenerCapaClima);

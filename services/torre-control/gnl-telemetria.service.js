@@ -15,6 +15,8 @@ const { salaPuerto } = require('../../helpers/salas.helper');
 global.bufferGNL = global.bufferGNL || [];
 global.simuladorGNLActivo = global.simuladorGNLActivo || false;
 
+const { consolidar, serieHistorial } = require('../../utils/gnl-consolidado');
+
 class GnlTelemetriaService {
 
   // ==========================================
@@ -138,45 +140,17 @@ class GnlTelemetriaService {
     const datosAProcesar = [...global.bufferGNL];
     global.bufferGNL = []; // Limpiamos la memoria inmediatamente
 
-    const totalLecturas = datosAProcesar.length;
-    const id_puerto = datosAProcesar[0].id_puerto;
-    const codigo_segmento = datosAProcesar[0].codigo_segmento;
-
-    // Matemáticas de Agregación
-    const sumaPresion = datosAProcesar.reduce((acc, curr) => acc + curr.presion_psi, 0);
-    const sumaTemp = datosAProcesar.reduce((acc, curr) => acc + curr.temperatura_celsius, 0);
-    const flujoTotalM3 = datosAProcesar.reduce((acc, curr) => acc + curr.flujo_m3, 0);
-    const totalAlarmas = datosAProcesar.filter(d => d.alarma_activa).length;
-
-    // Reglas de Negocio GNL
-    const presionPromedio = sumaPresion / totalLecturas;
-    const tempPromedio = sumaTemp / totalLecturas;
-
-    // 1 m3 de GNL = ~22.4 MMBTU de energía
-    const energiaMMBTU = flujoTotalM3 * 22.4;
-    const bogCalculado = flujoTotalM3 * 0.00015;
-
-    const fechaInicio = datosAProcesar[0].timestamp;
-    const fechaFin = datosAProcesar[totalLecturas - 1].timestamp;
-
-    const rawData = {
-      id_puerto,
-      codigo_segmento,
-      fecha_inicio_lectura: fechaInicio,
-      fecha_fin_lectura: fechaFin,
-      presion_promedio_psi: presionPromedio,
-      temperatura_promedio_celsius: tempPromedio,
-      flujo_total_m3: flujoTotalM3,
-      bog_calculado_m3: bogCalculado,
-      energia_total_mmbtu: energiaMMBTU,
-      alertas_disparadas: totalAlarmas,
-      codigoUsuarioCreacion: 'CRON_MANAGER'
-    };
-
+    // Corregido 2026-10-25: una fila por brazo y volumen = caudal × tiempo (ver utils/gnl-consolidado.js)
+    const filas = consolidar(datosAProcesar);
     try {
-      const dataDTO = OperacionesFlujoGNLDTO(rawData);
-      await conTransaccion((t) => GnlRepository.registrarConsolidado(dataDTO, { transaction: t }));
-      console.log(`[GNL COLD PATH] Éxito: Consolidados ${totalLecturas} registros a BD. Energía: ${energiaMMBTU.toFixed(2)} MMBTU.`);
+      await conTransaccion(async (t) => {
+        for (const f of filas) {
+          const { lecturas, ...rawData } = f;
+          await GnlRepository.registrarConsolidado(OperacionesFlujoGNLDTO({ ...rawData, codigoUsuarioCreacion: 'CRON_MANAGER' }), { transaction: t });
+        }
+      });
+      const energia = filas.reduce((a, f) => a + f.energia_total_mmbtu, 0);
+      console.log(`[GNL COLD PATH] Éxito: ${datosAProcesar.length} lecturas → ${filas.length} brazos. Energía: ${energia.toFixed(2)} MMBTU.`);
     } catch (error) {
       console.error("[GNL COLD PATH] Error al persistir agregación:", error);
       global.bufferGNL = [...datosAProcesar, ...global.bufferGNL];
@@ -185,6 +159,12 @@ class GnlTelemetriaService {
 
   async obtenerHistorialFlujo(id_puerto, limite = 50) {
     return GnlRepository.historial(id_puerto, limite);
+  }
+
+  /** Vista ampliada (Fase 3): serie por hora de las últimas `horas` horas, total y por brazo. */
+  async serieHistorial(id_puerto, horas = 24, ahora = new Date()) {
+    const filas = await GnlRepository.historialDesde(id_puerto, new Date(ahora.getTime() - horas * 3600000).toISOString());
+    return { ...serieHistorial(filas, horas, ahora), simulado: true, fuente: 'TCL_OperacionesFlujoGNL (consolidado cada 5 min)' };
   }
 }
 

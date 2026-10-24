@@ -63,7 +63,7 @@ class ActividadesService {
       if (existente) throw { statusCode: 400, msg: "Ya existe una actividad con ese código." };
       if (existeLlavePermiso) throw { statusCode: 400, msg: "Ya existe una actividad con llavePermiso." };
 
-      console.log('crear actividad', dataDTO);
+      // console.log('crear actividad', dataDTO);   // [ruido de consola: comentado 2026-10-26]
       const actividadDB = await this.model.create(dataDTO, { transaction: t });
 
       getIO().emit("actividades-actualizadas", {
@@ -76,7 +76,7 @@ class ActividadesService {
   }
 
   async updateActividad(codigoActividad, rawData) {
-    console.log('actualizar actividad', rawData);
+    // console.log('actualizar actividad', rawData);   // [ruido de consola: comentado 2026-10-26]
 
     const payload = {
       ...rawData,
@@ -84,8 +84,8 @@ class ActividadesService {
     };
 
     const dataDTO = ActividadDTO(payload);
-    console.log('actualizar actividad', codigoActividad);
-    console.log('actualizar actividad dto', dataDTO);
+    // console.log('actualizar actividad', codigoActividad);   // [ruido de consola: comentado 2026-10-26]
+    // console.log('actualizar actividad dto', dataDTO);   // [ruido de consola: comentado 2026-10-26]
 
     return await sequelize.transaction(async (t) => {
       const actividadDB = await this.model.findOne({ where: { codigoActividad }, transaction: t });

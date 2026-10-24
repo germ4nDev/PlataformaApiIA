@@ -15,7 +15,7 @@ function configurarSockets(io) {
     // 🟢 ESCUCHA EL EVENTO QUE MANDA ANGULAR TRAS EL LOGIN
     socket.on('registrar_sesion', async (userData) => {
       try {
-        console.log('📥 Recibido evento registrar_sesion desde Angular:', userData);
+        // console.log('📥 Recibido evento registrar_sesion desde Angular:', userData);   // [ruido de consola: comentado 2026-10-26]
 
         // Si ya había una sesión previa en este socket, la cerramos
         if (socketToSesionMap.has(socket.id)) {

@@ -38,8 +38,8 @@ class PestanaService {
 
   async obtenerPestanasPorContexto(codigoSuite, codigoAplicacion) {
     try {
-      console.log('app', codigoAplicacion);
-      console.log('sui', codigoSuite);
+      // console.log('app', codigoAplicacion);   // [ruido de consola: comentado 2026-10-26]
+      // console.log('sui', codigoSuite);   // [ruido de consola: comentado 2026-10-26]
 
       const pestanas = await this.model.findAll({
         where: {

@@ -25,7 +25,7 @@ const obtenerTableroUsuario = async (req, res) => {
   try {
     const usurio = req.params.codigo_usuario;
     const tablero = req.params.tablero
-    console.log('======== datos', usurio, tablero);
+    // console.log('======== datos', usurio, tablero);   // [ruido de consola: comentado 2026-10-26]
 
     if (!usurio) {
       return res.status(400).json({ success: false, message: 'Falta el código de usuario' });

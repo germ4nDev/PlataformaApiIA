@@ -36,7 +36,7 @@ const createPaquete = async (req, res = response) => {
   try {
     // QPLUS: Inyección de auditoría
     const dataDTO = { ...req.body };
-    console.log('crear paquete sc', req.body);
+    // console.log('crear paquete sc', req.body);
     const paquete = await service.createPaqueteSC(dataDTO);
     return res.status(201).json({ ok: true, paquete });
   } catch (error) {
@@ -50,10 +50,10 @@ const createPaquete = async (req, res = response) => {
 const updatePaquete = async (req, res = response) => {
   try {
     const { id } = req.params;
-    console.log('paquetesc raw', req.body);
+    // console.log('paquetesc raw', req.body);   // [ruido de consola: comentado 2026-10-26]
 
     const dataDTO = { ...req.body };
-    console.log('paquetesc dto', dataDTO);
+    // console.log('paquetesc dto', dataDTO);
 
     const paquete = await service.updatePaqueteSC(id, dataDTO);
     return res.status(200).json({ ok: true, paquete });

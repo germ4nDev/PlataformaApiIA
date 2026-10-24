@@ -35,7 +35,7 @@ const emitirActualizacionPermisos = (req, codigoRole) => {
 const getWidgetsRoles = async (req, res = response) => {
   try {
     const widgetsRoles = await service.getWidgetsRoles();
-    console.log('retornar widgetRoles', widgetsRoles);
+    // console.log('retornar widgetRoles', widgetsRoles);
 
     return res.status(200).json({ ok: true, widgetsRoles });
   } catch (error) {
@@ -62,7 +62,7 @@ const getWidgetByCodeWidget = async (req, res = response) => {
 const getWidgetByCodeRole = async (req, res = response) => {
   try {
     const { ro } = req.params;
-    console.log('consultar el role', ro);
+    // console.log('consultar el role', ro);
 
     const data = await service.getWidgetByCodeRole(ro);
     return res.status(200).json({ ok: true, data });
@@ -102,8 +102,8 @@ const createBulkWidgetsRoles = async (req, res = response) => {
   try {
     const { id } = req.params; // Generalmente este 'id' es el código del rol o actividad según tu diseño
     const dataDTO = { ...req.body };
-    console.log('codigoWidget / Parámetro:', id);
-    console.log('datos insertar:', dataDTO);
+    // console.log('codigoWidget / Parámetro:', id);
+    // console.log('datos insertar:', dataDTO);
 
     const nuevaWidget = await service.syncWidgetsRoles(id, dataDTO);
 

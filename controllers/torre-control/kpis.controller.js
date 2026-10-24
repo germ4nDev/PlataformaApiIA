@@ -13,7 +13,7 @@ const obtenerDashboard = async (req, res) => {
     const data = await KpisService.obtenerResumenOperativo(puerto);
 
     console.log("=== DATA ENVIADA AL FRONTEND ===");
-    console.log(JSON.stringify(data.KPI_CAMIONES, null, 2));
+    // console.log(JSON.stringify(data.KPI_CAMIONES, null, 2));   // [ruido de consola: comentado 2026-10-26]
 
     // console.log("🔍 [DEBUG CONTROLADOR] Objeto devuelto por el servicio:", JSON.stringify(data, null, 2));
     res.status(200).json(data);

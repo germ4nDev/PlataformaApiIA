@@ -40,9 +40,9 @@ class UsuarioSCService {
   }
 
   async createUsuarioSC(rawData) {
-    console.log('data usuario antes dto', rawData);
+    // console.log('data usuario antes dto', rawData);   // [ruido de consola: comentado 2026-10-26]
     const dataDTO = UsuarioSCDTO(rawData);
-    console.log('data usuario despues dto', dataDTO);
+    // console.log('data usuario despues dto', dataDTO);   // [ruido de consola: comentado 2026-10-26]
 
     return await sequelize.transaction(async (t) => {
 

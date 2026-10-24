@@ -76,11 +76,22 @@ const EventoVialModel = (sequelize) => {
     codigoUsuarioCreacion: { type: DataTypes.STRING(200), allowNull: false },
     fechaCreacion: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
     codigoUsuarioModificacion: { type: DataTypes.STRING(200), allowNull: true },
-    fechaModificacion: { type: DataTypes.DATE, allowNull: true }
+    fechaModificacion: { type: DataTypes.DATE, allowNull: true },
+    // Ciclo de vida (migración 014). Sin la migración el repositorio no los lee ni los escribe.
+    fuente: { type: DataTypes.STRING(20), allowNull: true },              // TOMTOM | MANUAL
+    zonaFuente: { type: DataTypes.STRING(40), allowNull: true },          // zona de la consulta TomTom
+    fechaUltimoReporte: { type: DataTypes.DATE, allowNull: true },        // última vez que la fuente lo reportó
+    ausencias: { type: DataTypes.INTEGER, allowNull: true },              // ciclos seguidos sin reporte
+    motivoCierre: { type: DataTypes.STRING(30), allowNull: true }         // NO_REPORTADO | FIN_PROGRAMADO | MANUAL
   }, {
     tableName: 'TCL_EventosViales',
     timestamps: false
   });
 };
 
-module.exports = { EventoVialModel, EventoVialDTO, EventoVialSchema };
+/** Despejar un evento a mano (operador): solo el código; el motivo queda MANUAL. */
+const DespejarEventoParamsSchema = Joi.object({
+  codigo: Joi.string().trim().max(200).required(),
+});
+
+module.exports = { EventoVialModel, EventoVialDTO, EventoVialSchema, DespejarEventoParamsSchema };

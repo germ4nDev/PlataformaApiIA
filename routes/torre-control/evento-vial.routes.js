@@ -8,5 +8,7 @@ const EventoVialController = require('../../controllers/torre-control/evento-via
 
 // Este es el endpoint que consumirá Angular
 router.get('/eventos', EventoVialController.getEventosActivos);
+// Despeje manual (operador): el evento pasa a DESPEJADO con motivo MANUAL y sale del mapa
+router.patch('/eventos/:codigo/despejar', EventoVialController.despejar);
 
 module.exports = router;

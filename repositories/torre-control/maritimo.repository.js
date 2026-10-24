@@ -138,10 +138,10 @@ class MaritimoRepository {
    * 5. Alertas Viales desde dbo.TCL_EventosViales
    */
   async getAlertasViales() {
-    return await db.sequelize.query(
-      `SELECT COUNT(*) AS a FROM dbo.TCL_EventosViales WHERE UPPER(estadoEvento) = 'ACTIVO'`,
-      { type: QueryTypes.SELECT }
-    );
+    // Misma regla que el mapa: solo los eventos vigentes (antes contaba todo lo ACTIVO
+    // de la tabla, que nunca se desactiva). Mismo formato de respuesta: [{ a }].
+    const a = await require('./eventos-viales.repository').contarVigentes();
+    return [{ a }];
   }
 
   /**
@@ -228,7 +228,8 @@ class MaritimoRepository {
           COALESCE(DA.agencia, 'NO REPORTADA') AS agenciaNaviera,
           COALESCE(TRY_CAST(O.ocupacionActual AS FLOAT), 0) AS cantidadMovida,
           COALESCE(O.tipoNodo, L.trabajoOperacion, 'GENERAL') AS tipoCarga,
-          COALESCE(O.estadoOperativo, L.posicion, 'EN TRÁNSITO') AS estadoReal
+          COALESCE(O.estadoOperativo, L.posicion, 'EN TRÁNSITO') AS estadoReal,
+          L.lineaAgencia, L.viaje, L.eslora, L.fechaZarpe, L.novedades
         FROM dbo.TCL_LineUpMaritimo L
         LEFT JOIN dbo.TCL_MaestroNodosLogisticos O 
           ON UPPER(TRIM(L.motonave)) = UPPER(TRIM(O.nombreNodo))

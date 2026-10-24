@@ -63,10 +63,10 @@ const updateMuelle = async (req, res = response) => {
     const { id } = req.params;
     const userContext = contextoUsuario(req);
 
-    console.log('actualizar muelle id', id);
-    console.log('actualizar muelle', req.body);
+    // console.log('actualizar muelle id', id);   // [ruido de consola: comentado 2026-10-26]
+    // console.log('actualizar muelle', req.body);   // [ruido de consola: comentado 2026-10-26]
     const muelleActualizado = await muellesService.updateMuelle(id, req.body, userContext);
-    console.log('actualizado muelle', muelleActualizado);
+    // console.log('actualizado muelle', muelleActualizado);   // [ruido de consola: comentado 2026-10-26]
 
     res.json({
       ok: true,

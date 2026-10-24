@@ -17,10 +17,13 @@ const suma = (lista, f = (x) => x) => lista.reduce((t, x) => t + (num(f(x)) || 0
 const pct = (parte, total) => (total > 0 ? redondear((parte / total) * 100, 1) : 0);
 
 /** Tarjeta KPI (contrato de kpi-card-tcl). Con simulado=true el subtítulo lo dice. */
-function kpi({ titulo, valor, unidad = '', subtitulo = '', colorBorde = 'borde-cyan', icono = 'feather icon-activity', simulado = false, valorCompleto = null }) {
+function kpi({ titulo, valor, unidad = '', subtitulo = '', colorBorde = 'borde-cyan', icono = 'feather icon-activity', simulado = false, valorCompleto = null,
+  desglose = null, serie = null, definicion = null, formula = null, umbrales = null }) {
+  // Lo opcional (desglose, serie, definición...) alimenta la vista ampliada del KPI (contrato de kpi-card-tcl)
+  const extras = Object.fromEntries(Object.entries({ valorCompleto, desglose, serie, definicion, formula, umbrales }).filter(([, v]) => v !== null && v !== undefined));
   return {
     titulo, valor: valor ?? 0, unidad, colorBorde, icono, simulado: !!simulado,
-    ...(valorCompleto ? { valorCompleto } : {}),
+    ...extras,
     subtitulo: simulado ? [subtitulo, 'SIMULADO'].filter(Boolean).join(' · ') : subtitulo,
   };
 }

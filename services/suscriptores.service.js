@@ -22,7 +22,7 @@ class SuscriptoresService {
   }
 
   async createSuscriptor(rawData) {
-    console.log('crear suscriptor', rawData);
+    // console.log('crear suscriptor', rawData);   // [ruido de consola: comentado 2026-10-26]
     // const dataDTO = SuscriptorDTO(rawData);
 
     return await sequelize.transaction(async (t) => {
