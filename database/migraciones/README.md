@@ -30,6 +30,14 @@ Los scripts son autocontenidos: se pueden abrir y ejecutar directamente en SSMS.
 
 15. `014_eventos_viales_ciclo_vida.sql` → (independiente) ciclo de vida de los eventos viales: columnas `fuente`, `zonaFuente`, `fechaUltimoReporte`, `ausencias` y `motivoCierre` en `TCL_EventosViales`, respaldo `TCL_EventosViales_respaldo014`, corrección de `VEHICULO_AVERIDADO` y depuración de los ACTIVO de TomTom sin reporte hace más de 1 h (pasan a DESPEJADO, no se borran). Sin ella el API funciona con la regla anterior (reportados hoy) y no despeja nada; después de correrla, reiniciar el API. Reversa en el encabezado del script.
 
+16. `015_analisis_ia.sql` → (independiente) capa de análisis con IA: fotos de KPI cada 15 min (`TCL_SnapshotsKpi`), prompts versionados, configuración por puerto y tarea, ejecuciones, hallazgos y retroalimentación. Sin ella el API funciona y las fotos se apagan solas; después de correrla, reiniciar el API. Interruptores en el `.env`: `IA_ENABLED` (analista con el modelo, apagado por defecto) e `IA_SNAPSHOTS_ENABLED` (fotos y señales, encendido por defecto). Reversa en el encabezado.
+
+17. `016_widget_analista_ia.sql` → (independiente, después de la 015) widget «Analista IA» `PTT_IA_ANALISTA_<PESTAÑA>` en cada pestaña del tablero que tenga widgets, con los roles de un widget de la misma pestaña. Queda disponible en el selector (`inicial = 0`); con `@mostrarEnLayoutInicial = 1` entra al layout base. Si se crea una pestaña nueva, volver a correrla. Reversa en el encabezado.
+
+18. `017_ia_resumenes_admin.sql` → (después de la 015) capa de IA fase 4: columna `contenido` en `TCL_IAHallazgos` para los resúmenes de turno y diarios, y `TCL_IAConfig` con «NULL = hereda del .env» más `tiposPublicar`, para el panel de administración por puerto y tarea. Sin ella el API funciona: los resúmenes se calculan pero no se guardan y el panel queda en solo lectura. Reiniciar el API después. Reversa en el encabezado.
+
+19. `018_ia_asistente.sql` → (después de la 015) capa de IA fase 5: `TCL_IAPreguntas` (cada pregunta al asistente con su decisión de alcance, respuesta, fuentes, herramientas, verificación y voto) y `TCL_IAAlcance` (ajustes al marco de alcance incorporado; vacía = el incorporado). Sin ella el asistente responde, pero no guarda, no aplica el tope por usuario y el marco no se edita. Reiniciar el API después. Reversa en el encabezado.
+
 Reversa de la 001: `001_reversa.sql`.
 
 ```

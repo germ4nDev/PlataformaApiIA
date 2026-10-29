@@ -22,6 +22,10 @@ const RecorridoMapaService = require('../services/torre-control/recorrido-mapa.s
 const SimuladorFlotaService = require('../services/torre-control/simulador-flota.service');
 const SimuladorOperacionService = require('../services/torre-control/simulador-operacion.service');
 const NoticiasService = require('../services/torre-control/noticias.service');
+const FotoOperativaService = require('../services/ia/foto-operativa.service');
+const AnalistaService = require('../services/ia/analista.service');
+const ResumenesIAService = require('../services/ia/resumenes-ia.service');
+const { configIA } = require('../config/ia.config');
 const ejecutarConMonitoreo = require('../utils/monitorETL');
 
 const MINUTO = 60 * 1000;
@@ -87,6 +91,35 @@ const JOBS = [
     clave: 'recorrido-muestreo', nombre: '🎞️ Muestreo del recorrido del mapa', horario: '* * * * *',
     activo: true, timeoutMs: 50 * 1000, soloFallos: true,
     tarea: () => RecorridoMapaService.muestrear(),
+  },
+  // Capa de análisis con IA, fase 1 (sin modelo): fotos de KPI y su retención. IA_SNAPSHOTS_ENABLED en el .env.
+  {
+    clave: 'ia-fotos', nombre: '📸 Fotos de KPI para el análisis IA', horario: '*/15 * * * *',
+    activo: configIA.fotosHabilitadas, timeoutMs: 5 * MINUTO, soloFallos: true,
+    tarea: () => FotoOperativaService.tomarFotos(),
+  },
+  // Fase 2: analista de turno en modo sombra. Solo con IA_ENABLED=true; el modelo se llama si hay señales nuevas o por latido.
+  {
+    clave: 'ia-analista', nombre: '🧠 Analista IA de turno', horario: configIA.intervaloAnalistaMin < 60 ? `*/${configIA.intervaloAnalistaMin} * * * *` : '5 * * * *',
+    activo: configIA.habilitada, timeoutMs: 5 * MINUTO,
+    tarea: () => AnalistaService.ejecutarTurno(),
+  },
+  // Fase 3: cierre del ciclo. Al vencer el horizonte de cada alerta revisa con las fotos de KPI si se cumplió (sin modelo).
+  {
+    clave: 'ia-verificacion', nombre: '✅ Verificación de las alertas tempranas IA', horario: '35 * * * *',
+    activo: configIA.fotosHabilitadas, timeoutMs: 5 * MINUTO, soloFallos: true,
+    tarea: () => AnalistaService.verificarVencidos(),
+  },
+  // Fase 4: cierre de turno y resumen diario (IA_TURNOS, hora de Colombia). Sin IA o sin presupuesto: resumen automático.
+  {
+    clave: 'ia-resumenes', nombre: '📝 Cierre de turno y resumen diario IA', horario: '5 * * * *',
+    activo: configIA.resumenesHabilitados && configIA.fotosHabilitadas, timeoutMs: 8 * MINUTO,
+    tarea: () => ResumenesIAService.cerrarPeriodos(),
+  },
+  {
+    clave: 'ia-limpieza', nombre: '🧹 Retención de las fotos de KPI', horario: '20 4 * * *',
+    activo: configIA.fotosHabilitadas, timeoutMs: 10 * MINUTO,
+    tarea: () => FotoOperativaService.limpiar(),
   },
   {
     // Retención del recorrido: RECORRIDO_RETENCION_DIAS (3 por defecto).

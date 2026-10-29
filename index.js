@@ -32,17 +32,18 @@ const app = express();
 const server = http.createServer(app);
 
 // Orígenes permitidos (HTTP y Socket.IO). Extra: CORS_ORIGINS=https://a.com,https://b.com
-const normalizarOrigen = (url) => (url || '').trim().replace(/\/+$/, '');
-const whitelist = [...new Set([
-  'http://localhost:4200',
-  'http://localhost:3000',
-  'https://porttos.co',
-  process.env.ANGULAR_URL_LOCAL,
-  process.env.ANGULAR_URL_LOCL, // nombre usado hoy en .env
-  process.env.ANGULAR_URL_PRUE,
-  process.env.ANGULAR_URL_PROD,
-  ...(process.env.CORS_ORIGINS || '').split(','),
-].map(normalizarOrigen).filter(Boolean))];
+// const normalizarOrigen = (url) => (url || '').trim().replace(/\/+$/, '');
+// const whitelist = [...new Set([
+//   'http://localhost:4200',
+//   'http://localhost:3000',
+//   'https://porttos.co',
+//   process.env.ANGULAR_URL_LOCAL,
+//   process.env.ANGULAR_URL_LOCL, // nombre usado hoy en .env
+//   process.env.ANGULAR_URL_PRUE,
+//   process.env.ANGULAR_URL_PROD,
+//   ...(process.env.CORS_ORIGINS || '').split(','),
+// ].map(normalizarOrigen).filter(Boolean))];
+
 
 const io = new Server(server, {
   cors: {
@@ -68,8 +69,19 @@ module.exports.io = io;
 // ================================================
 // === CORS Y SEGURIDAD ===
 // ================================================
+const whitelist = [
+  'https://porttos.co',           // Web producción
+  'https://www.porttos.co',       // Web producción (con www)
+  'capacitor://localhost',        // App móvil (iOS Capacitor)
+  'http://localhost',             // App móvil (Android Capacitor)
+  'http://localhost:4200'         // Desarrollo local Angular (opcional)
+];
+
+// 2. Configuramos las opciones de CORS
 const corsOptions = {
   origin: function (origin, callback) {
+    // Permitimos peticiones sin origen (como las de herramientas REST o de servidor a servidor) 
+    // y las que coincidan exactamente con la lista blanca.
     if (whitelist.indexOf(origin) !== -1 || !origin) {
       callback(null, true);
     } else {
@@ -77,6 +89,7 @@ const corsOptions = {
     }
   }
 };
+
 app.use(cors(corsOptions));
 
 // ================================================
@@ -111,6 +124,9 @@ app.use("/api/roles", require("./routes/roles.routes"));
 app.use("/api/usuarios", require("./routes/usuarios.routes"));
 app.use("/api/usuarios-roles", require("./routes/usuarios-roles.routes"));
 app.use("/api/ia", require("./routes/ia"));
+// Capa de análisis con IA de Porttos (fase 1: fotos de KPI, señales y foto operativa; IA_ENABLED en el .env)
+app.use("/api/analisis-ia", require("./routes/ia/analisis-ia.routes"));
+app.use("/api/movil", require("./routes/movil/movil.routes")); // App móvil (PorttosMovil)
 app.use("/api/historial-facturacion", require("./routes/historial-facturacion.routes"));
 app.use('/api/tipos-pago', require('./routes/tipos-pago.routes'));
 app.use('/api/tipos-paquete', require('./routes/tipos-paquete.routes'));
@@ -208,7 +224,10 @@ const simuladorGnlActivo = process.env.GNL_SIMULADOR
   : process.env.NODE_ENV !== 'production';
 
 if (simuladorGnlActivo) {
-  simuladorGNL.iniciarSimulador('BUENAVENTURA')
+  // Corregido 2026-10-25: el puerto ya no va fijo en el código (regla: nada fijo a un puerto). GNL_SIMULADOR_PUERTO en .env.
+  const puertoSimuladorGnl = (process.env.GNL_SIMULADOR_PUERTO || '').trim().toUpperCase();
+  if (!puertoSimuladorGnl) console.warn('⚠️ Simulador GNL sin GNL_SIMULADOR_PUERTO en .env: no se inicia.');
+  else simuladorGNL.iniciarSimulador(puertoSimuladorGnl)
     .then(res => console.log(res.msg))
     .catch(err => console.error("❌ Error arrancando simulador GNL:", err.msg || err));
 }

@@ -4,6 +4,16 @@ const db = require('../models'); // Importa tu core de Sequelize
 const ToolRegistry = {
 
   "ejecutar_consulta_analitica_relacional": async (inputs) => {
+    // RETIRADA (2026-10-24, capa de análisis con IA): ejecutaba SQL escrito por el modelo con un filtro por
+    // palabras que se podía saltar. La reemplazan herramientas de lectura tipadas (fase 5 del diseño).
+    // El código anterior queda abajo como referencia y no se ejecuta.
+    const RETIRADA = true;
+    if (RETIRADA) {
+      return {
+        error: 'Herramienta retirada por seguridad: el asistente ya no ejecuta SQL generado por el modelo.',
+        db_source: 'Core-ASE Security Guardrail',
+      };
+    }
     const { sql_generado } = inputs;
 
     const queryVerificable = sql_generado.trim().toUpperCase();

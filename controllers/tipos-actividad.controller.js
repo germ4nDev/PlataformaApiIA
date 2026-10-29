@@ -3,7 +3,9 @@
     Description: Controlador para los Tipos de Actividad (Endpoints)
 */
 const TiposActividadService = require('../services/tipos-actividad.service');
-const { io } = require('../index'); // Asegúrate de que la ruta a tu index.js sea correcta
+// Socket por el helper (no require('../index'): crea una dependencia circular y deja el controlador vacío)
+const { emitir } = require('../helpers/socket.helper');
+const EVENTO = 'tipos-actividad-actualizados';
 
 const getTiposActividades = async (req, res) => {
   try {
@@ -39,7 +41,7 @@ const postTipoActividad = async (req, res) => {
   try {
     const tipoActividad = await TiposActividadService.crear(req.body);
 
-    io.emit('tipos-actividad-actualizados', { action: 'create', msg: 'Nuevo Tipo de Actividad Creado' });
+    emitir(EVENTO, { action: 'create', msg: 'Nuevo Tipo de Actividad Creado' });
 
     res.json({
       ok: true,
@@ -59,7 +61,7 @@ const putTipoActividad = async (req, res) => {
   try {
     const tipoActividad = await TiposActividadService.actualizar(id, req.body);
 
-    io.emit('tipos-actividad-actualizados', { action: 'update', msg: 'Tipo de Actividad Modificado' });
+    emitir(EVENTO, { action: 'update', msg: 'Tipo de Actividad Modificado' });
 
     res.json({
       ok: true,
@@ -82,7 +84,7 @@ const deleteTipoActividad = async (req, res) => {
   try {
     const tipoActividad = await TiposActividadService.eliminar(id);
 
-    io.emit('tipos-actividad-actualizados', { action: 'delete', msg: 'Tipo de Actividad Eliminado' });
+    emitir(EVENTO, { action: 'delete', msg: 'Tipo de Actividad Eliminado' });
 
     res.json({
       ok: true,

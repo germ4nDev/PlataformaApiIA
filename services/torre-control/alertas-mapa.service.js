@@ -10,6 +10,7 @@
         - evaluarPuertos(): cron 'alertas-puertos' cada 2 min (ocupación de muelles y fondeo prolongado).
         - evaluarAis(naves, eventos): motor AIS al emitir cambios (nave en zona de faro, atraque, zarpe).
         - evaluarEventosViales(nuevos, despejados): ciclo de vida de los eventos viales (evento-vial.service).
+        - publicarIA(puerto, hallazgos): alertas tempranas del analista IA (services/ia/analista.service, fase 3).
         - limpiar(): cron diario, retención de 30 días.
       Las alertas de camiones llevan simulado:true mientras la flota sea simulada.
 */
@@ -190,6 +191,17 @@ class AlertasMapaService {
     const regla = this.cfg('evento_vial');
     if (!regla.activa) return 0;
     return this.publicar(R.alertasEventosViales(nuevos, resueltos, ahora, { severidadMinima: regla.umbrales[0] }), ahora);
+  }
+
+  /**
+   * Alertas tempranas del analista IA ya PUBLICADO (las entrega services/ia/analista.service, fase 3). Van a la sala
+   * del puerto del hallazgo; la regla ia_temprana se puede apagar por puerto en el panel de reglas.
+   * @returns {Promise<number>} alertas emitidas
+   */
+  async publicarIA(puerto, hallazgos = [], ahora = new Date()) {
+    await this.cargarConfig();
+    if (!hallazgos.length || !this.cfg('ia_temprana', puerto).activa) return 0;
+    return this.publicar(R.alertasIA(hallazgos, ahora).map((a) => ({ ...a, puertos: [puerto] })), ahora);
   }
 
   // ── Publicación ────────────────────────────────────────────────────────────

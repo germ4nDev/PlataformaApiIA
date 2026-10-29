@@ -33,6 +33,10 @@ const CATALOGO_REGLAS = Object.freeze({
   faro: { nombre: 'Nave entra a la zona de un faro', niveles: 'Azul', enfriamientoMin: 30, porPuerto: true, umbrales: [] },
   atraque: { nombre: 'Nave atraca', niveles: 'Azul', enfriamientoMin: 60, porPuerto: true, umbrales: [] },
   zarpe: { nombre: 'Nave desatraca', niveles: 'Azul', enfriamientoMin: 60, porPuerto: true, umbrales: [] },
+  ia_temprana: {
+    nombre: 'Alerta temprana del analista IA', niveles: 'Rojo crítica · amarillo atención · azul informativa', enfriamientoMin: 30, porPuerto: true,
+    umbrales: [],
+  },
   evento_vial: {
     nombre: 'Evento vial nuevo o despejado', niveles: 'Rojo accidente o cierre · amarillo los demás · azul despejado', enfriamientoMin: 5, porPuerto: true,
     umbrales: [{ etiqueta: 'Severidad mínima para avisar uno nuevo (1 a 3)', defecto: 1 }],
@@ -236,6 +240,29 @@ function alertasEventosViales(nuevos = [], resueltos = [], ahora = new Date(), o
   return alertas;
 }
 
+// ── Alertas tempranas del analista IA (fase 3) ───────────────────────────────
+
+/**
+ * Hallazgos PUBLICADO del analista IA → alertas del mapa. El sello «IA», la confianza y el horizonte van en el texto
+ * (las alertas del mapa tienen un formato único). La entidad agrupa por tipo y entidad: una alerta que el analista
+ * actualiza en cada ciclo no vuelve a sonar hasta que pase el enfriamiento.
+ * @param {Array<{id, tipo, entidad, severidad, confianza, horizonteMinH, horizonteMaxH, titulo, explicacion, soloSimulado?}>} hallazgos
+ */
+function alertasIA(hallazgos = [], ahora = new Date()) {
+  const nivel = { critica: 'error', atencion: 'warning', info: 'info' };
+  const n = (v) => (Number.isFinite(Number(v)) ? Number(v) : null);
+  return hallazgos.map((h) => {
+    const horizonte = n(h.horizonteMinH) !== null && n(h.horizonteMaxH) !== null ? `en ${n(h.horizonteMinH)}–${n(h.horizonteMaxH)} h` : null;
+    const confianza = n(h.confianza) !== null ? `confianza ${Math.round(n(h.confianza) * 100)} %` : null;
+    return crearAlerta({
+      nivel: nivel[h.severidad] || 'info', categoria: 'ia_temprana', entidad: `${h.tipo}|${h.entidad || ''}`,
+      titulo: `🧠 IA · ${String(h.titulo || '').slice(0, 120)}`,
+      mensaje: [String(h.explicacion || '').slice(0, 220), [horizonte, confianza].filter(Boolean).join(' · ')].filter(Boolean).join(' — '),
+      coordenadas: null, simulado: !!h.soloSimulado,
+    }, ahora);
+  });
+}
+
 // ── Ocupación de muelles ─────────────────────────────────────────────────────
 
 /**
@@ -387,6 +414,6 @@ function peajesDesdeGeoJson(fc) {
 module.exports = {
   CATALOGO_REGLAS, resolverConfig, crearAlerta,
   alertasPeajes, alertasGeocercas, alertasProximidadEventos, alertasOcupacion,
-  alertasNavesFaros, alertasCambiosEstado, alertasFondeo, alertasEventosViales,
+  alertasNavesFaros, alertasCambiosEstado, alertasFondeo, alertasEventosViales, alertasIA,
   Enfriamiento, peajesDesdeGeoJson, distanciaATramo, metros,
 };
