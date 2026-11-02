@@ -4,7 +4,7 @@
 */
 const { sequelize } = require('../database/connection');
 const { WidgetMaestroModel, WidgetMaestroDTO } = require('../models/widget');
-const { getIO } = require('../helpers/socket.helper');
+const { emitir } = require('../helpers/socket.helper');
 const { Op } = require('sequelize');
 const { PTLLayouts } = require('../models/layout');
 
@@ -56,7 +56,7 @@ class WidgetsService {
 
       const widgetDB = await this.model.create(dataDTO, { transaction: t });
 
-      getIO().emit("widgets-actualizados", {
+      emitir("widgets-actualizados", {
         action: "create",
         msg: `Nuevo widget disponible: ${widgetDB.nombreWidget}`
       });
@@ -102,7 +102,7 @@ class WidgetsService {
       });
 
       try {
-        getIO().emit("widgets-actualizados", {
+        emitir("widgets-actualizados", {
           action: dataDTO.estadoWidget ? "update" : "inactivado",
           codigoWidget: codigoWidget,
           msg: `Widget ${dataDTO.estadoWidget ? 'actualizado' : 'inactivado'}: ${widgetActualizado.nombreWidget}`
@@ -135,7 +135,7 @@ class WidgetsService {
 
       await this.limpiarWidgetDeLayouts(codigoWidget, t);
 
-      getIO().emit("widgets-actualizados", {
+      emitir("widgets-actualizados", {
         action: "inactivado",
         codigoWidget: codigoWidget,
         msg: `Widget retirado del catálogo: ${nombreWidget}`
@@ -225,12 +225,12 @@ class WidgetsService {
               layoutData: JSON.stringify(parsedLayout)
             }, { transaction: t });
 
-            getIO().to(layout.codigoUsuario).emit("layout-actualizado", {
+            emitir("layout-actualizado", {
               action: "layout-limpiado",
               codigoWidgetInactivado: codigoWidget,
               nuevoLayout: parsedLayout,
               msg: "Tu tablero se ha actualizado porque un widget fue modificado por administración."
-            });
+            }, layout.codigoUsuario);
           } catch (error) {
             console.error(`Error parseando/limpiando layout del usuario ${layout.codigoUsuario}:`, error);
           }

@@ -1,3 +1,7 @@
+/*
+    Author: German Valencia
+    Ruta: /api/aplicaciones
+*/
 const { Router } = require("express");
 const { check } = require("express-validator");
 const { validarCampos } = require("../middlewares/validar-campos");
@@ -10,7 +14,7 @@ const {
     createColorSetting,
     updateColorSetting,
     deleteColorSetting
-} = require("../controllers/colores-settings");
+} = require("../controllers/colores-settings.controller");
 
 const router = Router();
 

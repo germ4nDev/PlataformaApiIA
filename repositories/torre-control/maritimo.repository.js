@@ -10,6 +10,13 @@ const { db } = require('../../database/connection');
 const FECHA_LINEUP = (col) =>
   `COALESCE(TRY_CONVERT(DATETIME, ${col}, 127), TRY_CAST(${col} AS DATETIME), TRY_CONVERT(DATETIME, ${col}, 103))`;
 
+/**
+ * Claves del puerto para comparar con columnas 'puerto' escritas de varias formas ('SANTA MARTA', 'GUAJIRA', 'LA_GUAJIRA'):
+ * mayúsculas, sin tildes y con '_' por espacio. Acepta una clave o una lista (OT-009).
+ */
+const clavesPuerto = (puerto) => [...new Set([].concat(puerto).filter(Boolean)
+  .map((p) => String(p).normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toUpperCase().replace(/\s+/g, '_')))];
+
 class MaritimoRepository {
 
   /**
@@ -53,7 +60,7 @@ class MaritimoRepository {
             COALESCE(TRY_CAST(vehiculos_movilizados AS FLOAT), 0)
           ) AS volumenTotal
         FROM dbo.TCL_HistoricoProductividad
-        WHERE UPPER(COALESCE(puerto, id_terminal, '')) LIKE UPPER(:puerto)
+        WHERE UPPER(COALESCE(puerto, id_terminal, '')) COLLATE Latin1_General_CI_AI LIKE UPPER(:puerto)
         GROUP BY UPPER(COALESCE(NULLIF(TRIM(tipo_carga), ''), 'GENERAL'))
       `;
       const resHist = await db.sequelize.query(sqlHist, {
@@ -77,7 +84,7 @@ class MaritimoRepository {
         FROM dbo.TCL_LineUpMaritimo L
         LEFT JOIN dbo.TCL_MaestroNodosLogisticos O
           ON UPPER(TRIM(L.motonave)) = UPPER(TRIM(O.nombreNodo))
-        WHERE UPPER(L.puerto) LIKE UPPER(:puerto)
+        WHERE UPPER(L.puerto) COLLATE Latin1_General_CI_AI LIKE UPPER(:puerto)
           AND COALESCE(L.estadoRegistro, 1) = 1
         GROUP BY 
           UPPER(COALESCE(NULLIF(TRIM(O.tipoNodo), ''), NULLIF(TRIM(L.trabajoOperacion), ''), 'GENERAL')),
@@ -125,7 +132,7 @@ class MaritimoRepository {
       FROM dbo.TCL_LineUpMaritimo L
       LEFT JOIN dbo.TCL_MaestroNodosLogisticos O
         ON UPPER(TRIM(L.motonave)) = UPPER(TRIM(O.nombreNodo))
-      WHERE UPPER(L.puerto) LIKE UPPER(:puerto)
+      WHERE UPPER(L.puerto) COLLATE Latin1_General_CI_AI LIKE UPPER(:puerto)
         AND COALESCE(L.estadoRegistro, 1) = 1
     `;
     return await db.sequelize.query(query, {
@@ -162,7 +169,7 @@ class MaritimoRepository {
       FROM dbo.TCL_LineUpMaritimo L
       LEFT JOIN dbo.TCL_MaestroNodosLogisticos O
         ON UPPER(TRIM(L.motonave)) = UPPER(TRIM(O.nombreNodo))
-      WHERE UPPER(L.puerto) LIKE UPPER(:puerto) 
+      WHERE UPPER(L.puerto) COLLATE Latin1_General_CI_AI LIKE UPPER(:puerto) 
         AND COALESCE(L.estadoRegistro, 1) = 1
         -- Tiempo real por estado, no por fecha: el barco ya atracó y todavía no zarpa.
         AND (
@@ -191,7 +198,7 @@ class MaritimoRepository {
       WHERE fechaAtraque IS NOT NULL 
         AND eta IS NOT NULL
         AND puerto IS NOT NULL
-        AND UPPER(puerto) LIKE UPPER(:puerto)
+        AND UPPER(puerto) COLLATE Latin1_General_CI_AI LIKE UPPER(:puerto)
         AND ABS(DATEDIFF(hour, TRY_CAST(eta AS DATETIME), TRY_CAST(fechaAtraque AS DATETIME))) < 720
       GROUP BY terminal
     `;
@@ -235,7 +242,7 @@ class MaritimoRepository {
           ON UPPER(TRIM(L.motonave)) = UPPER(TRIM(O.nombreNodo))
         LEFT JOIN DimarAgencias DA
           ON UPPER(TRIM(L.motonave)) = DA.motonave_key
-        WHERE UPPER(L.puerto) LIKE UPPER(:puerto)
+        WHERE UPPER(L.puerto) COLLATE Latin1_General_CI_AI LIKE UPPER(:puerto)
           AND COALESCE(L.estadoRegistro, 1) = 1
       `;
 
@@ -267,7 +274,7 @@ class MaritimoRepository {
             COALESCE(TRY_CAST(teus_movilizados AS FLOAT), 0)
           ) AS totalVolumen
         FROM dbo.TCL_HistoricoProductividad
-        WHERE UPPER(COALESCE(puerto, id_terminal, '')) LIKE UPPER(:puerto)
+        WHERE UPPER(COALESCE(puerto, id_terminal, '')) COLLATE Latin1_General_CI_AI LIKE UPPER(:puerto)
         GROUP BY 
           UPPER(TRIM(id_terminal)),
           UPPER(COALESCE(NULLIF(TRIM(tipo_carga), ''), 'GENERAL'))
@@ -292,7 +299,7 @@ class MaritimoRepository {
         FROM dbo.TCL_LineUpMaritimo L
         LEFT JOIN dbo.TCL_MaestroNodosLogisticos O
           ON UPPER(TRIM(L.motonave)) = UPPER(TRIM(O.nombreNodo))
-        WHERE UPPER(L.puerto) LIKE UPPER(:puerto)
+        WHERE UPPER(L.puerto) COLLATE Latin1_General_CI_AI LIKE UPPER(:puerto)
           AND L.terminal IS NOT NULL
         GROUP BY 
           L.terminal,
@@ -468,7 +475,7 @@ class MaritimoRepository {
     try {
       const sql = `
         SELECT 
-          (SELECT COUNT(DISTINCT motonave) FROM dbo.TCL_LineUpMaritimo WHERE UPPER(puerto) LIKE UPPER(:puerto)) AS totalMotonaves,
+          (SELECT COUNT(DISTINCT motonave) FROM dbo.TCL_LineUpMaritimo WHERE UPPER(puerto) COLLATE Latin1_General_CI_AI LIKE UPPER(:puerto)) AS totalMotonaves,
           COALESCE(SUM(TRY_CAST(teus_movilizados AS FLOAT)), 0) AS totalTeus,
           COALESCE(SUM(CASE 
             WHEN UPPER(COALESCE(tipo_carga, '')) LIKE '%GRANEL%' 
@@ -478,7 +485,7 @@ class MaritimoRepository {
             THEN COALESCE(TRY_CAST(toneladas_movilizadas AS FLOAT), 0) ELSE 0 END), 0) AS totalGranel,
           COALESCE(SUM(TRY_CAST(vehiculos_movilizados AS FLOAT)), 0) AS totalVehiculos
         FROM dbo.TCL_HistoricoProductividad
-        WHERE UPPER(COALESCE(puerto, id_terminal, '')) LIKE UPPER(:puerto)
+        WHERE UPPER(COALESCE(puerto, id_terminal, '')) COLLATE Latin1_General_CI_AI LIKE UPPER(:puerto)
       `;
 
       const resultados = await db.sequelize.query(sql, {
@@ -515,7 +522,7 @@ class MaritimoRepository {
         FROM dbo.TCL_LineUpMaritimo L
         LEFT JOIN dbo.TCL_MaestroNodosLogisticos O 
           ON UPPER(TRIM(L.motonave)) = UPPER(TRIM(O.nombreNodo))
-        WHERE UPPER(L.puerto) LIKE UPPER(:puerto)
+        WHERE UPPER(L.puerto) COLLATE Latin1_General_CI_AI LIKE UPPER(:puerto)
       `;
 
       const resFallback = await db.sequelize.query(sqlFallback, {
@@ -549,12 +556,12 @@ class MaritimoRepository {
           fecha_evento AS etiquetaTiempo, 
           tipo_color AS colorLinea
         FROM dbo.TCL_ReportesOperativos
-        WHERE UPPER(puerto) = UPPER(:puerto)
+        WHERE REPLACE(UPPER(puerto), ' ', '_') COLLATE Latin1_General_CI_AI IN (:puertos)
         ORDER BY id_reporte DESC
       `;
 
       const resultados = await db.sequelize.query(sql, {
-        replacements: { puerto: ciudadKey },
+        replacements: { puertos: clavesPuerto(ciudadKey) },
         type: QueryTypes.SELECT
       });
 
@@ -572,17 +579,17 @@ class MaritimoRepository {
       const sql = `
         SELECT terminal, hora_etiqueta, movimientos_hora 
         FROM dbo.TCL_ProductividadTerminales
-        WHERE UPPER(puerto) = UPPER(:puerto)
+        WHERE REPLACE(UPPER(puerto), ' ', '_') COLLATE Latin1_General_CI_AI IN (:puertos)
           AND fecha = (
             SELECT MAX(fecha) 
             FROM dbo.TCL_ProductividadTerminales 
-            WHERE UPPER(puerto) = UPPER(:puerto)
+            WHERE REPLACE(UPPER(puerto), ' ', '_') COLLATE Latin1_General_CI_AI IN (:puertos)
           )
         ORDER BY hora_etiqueta ASC
       `;
 
       const resultados = await db.sequelize.query(sql, {
-        replacements: { puerto: puertoKey },
+        replacements: { puertos: clavesPuerto(puertoKey) },
         type: QueryTypes.SELECT
       });
 

@@ -4,12 +4,14 @@
 */
 const { response } = require("express");
 const SliderService = require("../services/sliders-inicio.service");
+const { paraDeConsulta } = require("../utils/sliders/sliders");
 
 const service = new SliderService();
 
 const getSliders = async (req, res = response) => {
   try {
-    const slidersInicio = await service.getSliders();
+    // ?para=<codigoAplicacion>|general: lo que muestra el login de ese dominio (CC-104); sin para, todos (la gestión)
+    const slidersInicio = await service.getSliders(paraDeConsulta(req.query.para));
     return res.status(200).json({ ok: true, sliders: slidersInicio });
   } catch (error) {
     return res.status(error.statusCode || 500).json({
@@ -53,7 +55,8 @@ const updateSlider = async (req, res = response) => {
     const { id } = req.params;
     // console.log('body', req.body);   // [ruido de consola: comentado 2026-10-26]
 
-    // QPLUS: Hidratación del payload de auditoría
+    // QPLUS: Hidratación del payload de auditoría (CC-104: usuarioAccion no estaba definido y toda edición fallaba)
+    const usuarioAccion = req.usuario?.codigoUsuario || req.body?.codigoUsuarioModificacion || 'SISTEMA';
     const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
 
     const sliderInicio = await service.updateSlider(id, dataDTO);

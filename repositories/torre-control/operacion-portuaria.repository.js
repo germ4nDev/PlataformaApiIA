@@ -74,12 +74,15 @@ const vehiculos = (idPuerto) => q(`
   FROM dbo.TCL_InventarioVehiculos WITH (NOLOCK)
   WHERE id_puerto = :idPuerto AND unidades > 0`, { idPuerto });
 
-/** Toneladas mensuales de Supertransporte de la zona portuaria (últimos 'anios' años). */
-const historico = (zona, desdeAnio) => q(`
+/**
+ * Toneladas mensuales de Supertransporte del puerto (últimos 'anios' años): por id del puerto (sincronización diaria,
+ * OT-009) o por la zona portuaria (lo cargado por Excel, que no trae id).
+ */
+const historico = (zona, desdeAnio, idPuerto = null) => q(`
   SELECT anio, mes, UPPER(LTRIM(RTRIM(tipo_carga))) AS tipo_carga, SUM(CAST(total_toneladas AS FLOAT)) AS toneladas
   FROM dbo.TCL_HistoricosSupertransporte WITH (NOLOCK)
-  WHERE UPPER(zona_portuaria) LIKE :zona AND anio >= :desdeAnio
-  GROUP BY anio, mes, UPPER(LTRIM(RTRIM(tipo_carga)))`, { zona: `%${String(zona || '').toUpperCase()}%`, desdeAnio })
+  WHERE (UPPER(zona_portuaria) LIKE :zona OR id_puerto = :idPuerto) AND anio >= :desdeAnio
+  GROUP BY anio, mes, UPPER(LTRIM(RTRIM(tipo_carga)))`, { zona: `%${String(zona || '').toUpperCase()}%`, desdeAnio, idPuerto })
   .catch(() => []);   // la tabla de Supertransporte es de otra carga: si falta, el histórico sale vacío
 
 /** id_operacion y segmento de las operaciones con esos códigos externos. */

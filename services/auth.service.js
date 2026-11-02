@@ -96,12 +96,14 @@ class AuthService {
     });
 
     if (!usuarioDB) throw { statusCode: 404, msg: "Usuario no existe." };
+    if (!usuarioDB.estadoUsuario) throw { statusCode: 403, msg: "El usuario se encuentra inactivo." };
 
+    // Mismo orden de campos que en login (antes iban correo y foto cruzados) y el mismo usuario, sin abrir otra sesión (OT-014)
     const token = await generarJWT(
       usuarioDB.codigoUsuario,
       usuarioDB.userNameUsuario,
-      usuarioDB.fotoUsuario,
-      usuarioDB.correoUsuario
+      usuarioDB.correoUsuario,
+      usuarioDB.fotoUsuario
     );
 
     return {
@@ -110,6 +112,7 @@ class AuthService {
         nombreUsuario: usuarioDB.nombreUsuario,
         userNameUsuario: usuarioDB.userNameUsuario,
         correoUsuario: usuarioDB.correoUsuario,
+        usuarioAdministrador: usuarioDB.usuarioAdministrador,
         fotoUsuario: usuarioDB.fotoUsuario
       },
       token

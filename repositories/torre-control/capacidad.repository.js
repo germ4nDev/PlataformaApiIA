@@ -98,6 +98,34 @@ async function hayDatosReales(idPuerto, desde) {
   return Number(f?.n) > 0;
 }
 
+/**
+ * Catálogo simulado (OT-009, migración 021): los nodos van con fuente SIMULADOR y simulado = 1, ids 'SIM-…'.
+ * Lo real no se toca: el retiro filtra fuente SIMULADOR y simulado = 1.
+ */
+async function guardarNodosSimulados(idPuerto, nodos, ahora) {
+  for (const n of nodos) await guardarNodo({ ...n, id_puerto: idPuerto, fuente: 'SIMULADOR' }, ahora);
+  await q021(`UPDATE dbo.TCL_CapacidadNodos SET simulado = 1 WHERE id_puerto = :idPuerto AND fuente = 'SIMULADOR'`, { idPuerto }, QueryTypes.UPDATE);
+  return nodos.length;
+}
+
+async function retirarNodosSimulados(idPuerto) {
+  await q021(`DELETE FROM dbo.TCL_OcupacionNodos WHERE id_puerto = :idPuerto AND simulado = 1 AND id_nodo LIKE 'SIM-%'`, { idPuerto }, QueryTypes.DELETE);
+  await q021(`DELETE FROM dbo.TCL_CapacidadNodos WHERE id_puerto = :idPuerto AND fuente = 'SIMULADOR' AND simulado = 1`, { idPuerto }, QueryTypes.DELETE);
+}
+
+/** Como q(), pero una columna que falta es la migración 021 (simulado en TCL_CapacidadNodos). */
+async function q021(sql, replacements, type) {
+  try {
+    return await db.sequelize.query(sql, { replacements, type });
+  } catch (error) {
+    if (esColumnaInexistente(error)) throw migracionPendiente('021_fuente_simulado_tablas_operacion.sql');
+    throw error;
+  }
+}
+
 const purgar = (antes) => q('DELETE FROM dbo.TCL_OcupacionNodos WHERE fecha < :antes', { antes }, QueryTypes.DELETE);
 
-module.exports = { MIGRACION_013, nodos, bodegas, ocupaciones, ocupacionesDeNodo, guardarOcupaciones, guardarNodo, hayDatosReales, purgar };
+module.exports = {
+  MIGRACION_013, nodos, bodegas, ocupaciones, ocupacionesDeNodo, guardarOcupaciones, guardarNodo, hayDatosReales, purgar,
+  guardarNodosSimulados, retirarNodosSimulados,
+};

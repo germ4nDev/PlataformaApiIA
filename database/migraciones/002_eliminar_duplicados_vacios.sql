@@ -17,7 +17,7 @@ BEGIN
   RETURN;
 END
 
-DECLARE @t TABLE (tabla sysname);
+DECLARE @t TABLE (tabla sysname COLLATE DATABASE_DEFAULT);
 INSERT INTO @t VALUES ('T_Maestro_Bodegas'), ('TCL_CitasGate');
 
 DECLARE @tabla sysname, @filas bigint, @sql nvarchar(max);

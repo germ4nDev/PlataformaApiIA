@@ -1,13 +1,14 @@
 /*
     Author: German Valencia
     Pattern: PORTTOS Service - Tablero móvil (app móvil)
-    Description: Un endpoint por pestaña y puerto. Desde 2026-10-24 el teléfono muestra los widgets del layout del
-      usuario en la web (dbo.PTLLayouts) o, si no tiene, los del layout por defecto (dbo.PTLWidgetsMaestro inicial = 1),
-      en el mismo orden de lectura (utils/movil/widgets-movil.js). Si la pestaña no tiene layout en ninguna de las dos,
-      se usa la receta del módulo (utils/movil/tablero-movil.js, fase 2).
+    Description: Un endpoint por pestaña y puerto. Desde OT-008 (2026-10-29) el layout sale de la MISMA regla que la web
+      (utils/layout/layout-efectivo.js) con los mismos datos de /api/layout (services/layout.service.js: layout del usuario
+      y plantilla maestra; solo se leen) más el estado de cada widget del maestro (los inactivos no entran al por defecto).
+      Todo widget del layout aparece en su celda; sin versión para el teléfono o sin dato, como tarjeta vacía con su título.
+      Sin layout de usuario ni plantilla, la pestaña sale sin widgets (layout 'sin_layout'): no hay receta inventada.
         tablero({ puerto, pestana }, { fresco }, ahora, codigoUsuario)
           → { puerto, nombrePuerto, pestana, modulo, generadoEn, simulado, widgets (con `celda` x,y,cols,rows), fallidos, rejilla,
-              layout: 'usuario' | 'defecto' | 'modulo', soloWeb: [{ codigo, nombre }], sinDatos: [codigo] }
+              layout: 'usuario' | 'defecto' | 'sin_layout', sinDatos: [codigo], sinVersionMovil: [codigo] }
       - Reutiliza los mismos servicios de los tableros de la web y las fotos de KPI de la capa de IA (series de 24 h).
       - El puerto puede ser cualquiera del maestro (404 si no existe); nada fijo a un puerto.
       - Cada fuente tiene tiempo límite; si una falla, sus widgets van a `sinDatos` y la fuente a `fallidos`.
@@ -18,14 +19,17 @@ const PuertosIA = require('../ia/puertos-ia.service');
 const FotoOperativa = require('../ia/foto-operativa.service');
 const Snapshots = require('../../repositories/ia/snapshots-kpi.repository');
 const LayoutMovil = require('../../repositories/movil/layout-movil.repository');
+const LayoutService = require('../layout.service');
+const PestanasMetadatos = require('../../repositories/pestanas-metadatos.repository');
 const MaritimoVivo = require('../torre-control/maritimo-vivo.service');
 const Noticias = require('../torre-control/noticias.service');
 const GNL = require('../torre-control/gnl-telemetria.service');
 const { validarCon } = require('../../helpers/errores.helper');
 const { TableroMovilParamsSchema, TableroMovilQuerySchema } = require('../../models/movil/tablero-movil.model');
 const { extraerKpis } = require('../../utils/ia/catalogo-kpi');
-const { armarTablero, moduloDePestana, FUENTES_POR_MODULO } = require('../../utils/movil/tablero-movil');
-const { ordenarLayout, fuentesDeLayout, armarWidgets, celdasDeLayout } = require('../../utils/movil/widgets-movil');
+const { moduloDePestana } = require('../../utils/movil/tablero-movil');
+const { fuentesDeLayout, armarWidgets, codigoMovil } = require('../../utils/movil/widgets-movil');
+const { layoutEfectivo } = require('../../utils/layout/layout-efectivo');
 
 const CACHE_MS = 60000;
 const TIEMPO_FUENTE_MS = 20000;
@@ -48,10 +52,11 @@ const guardarEn = (mapa, llave, valor) => {
 
 class TableroMovilService {
   constructor({
-    puertos = PuertosIA, fotos = FotoOperativa, snapshots = Snapshots, layouts = LayoutMovil,
+    puertos = PuertosIA, fotos = FotoOperativa, snapshots = Snapshots, layouts = LayoutMovil, layoutWeb = new LayoutService(),
+    metadatos = PestanasMetadatos,
     maritimo = MaritimoVivo, noticias = Noticias, gnl = GNL, maritimoResumen = resumenMaritimo, cacheMs = CACHE_MS,
   } = {}) {
-    Object.assign(this, { puertos, fotos, snapshots, layouts, cacheMs });
+    Object.assign(this, { puertos, fotos, snapshots, layouts, layoutWeb, metadatos, cacheMs });
     this.cacheFuentes = new Map();
     this.cacheLayouts = new Map();
     /** Fuentes que no están en la foto de la IA. Las del catálogo salen de FotoOperativa.fuentes. */
@@ -107,28 +112,37 @@ class TableroMovilService {
   }
 
   /**
-   * Layout que ve el usuario en la web para esa pestaña: el suyo o el por defecto.
-   * @returns {{ origen: 'usuario'|'defecto'|'modulo', codigos: string[], nombres: Object }}
+   * Datos del layout de la pestaña, los mismos que usa la web: filas del usuario y plantilla maestra (/api/layout), el estado
+   * de cada widget del maestro y, de las tablas que mandan, la estrategia (PTLPestanas) y la zona dinámica
+   * (PTLCfgZonasDinamicas): /api/layout/plantilla no las entrega bien (la web las toma de /api/pestanas).
+   * La regla (layoutEfectivo) se aplica después, cuando se sabe cuántas terminales hay.
+   * @returns {{ usuario: Array, plantilla: object, estados: Object, nombres: Object }}
    */
-  async _layout(codigoUsuario, pestana, ahora, fresco) {
+  async _datosLayout(codigoUsuario, pestana, ahora, fresco) {
     const usuario = codigoUsuario || USUARIO_POR_DEFECTO;
     const llave = `${usuario}|${pestana}`;
     const g = this.cacheLayouts.get(llave);
     if (!fresco && g && ahora.getTime() - g.en < this.cacheMs) return g.valor;
     let valor;
     try {
-      const [propias, nombres] = await Promise.all([this.layouts.deUsuario(usuario, pestana), this.layouts.nombres(pestana)]);
-      if (propias.length) valor = { origen: 'usuario', codigos: ordenarLayout(propias), filas: propias, zona: null, nombres };
-      else {
-        const defecto = await this.layouts.porDefecto(pestana);
-        const zona = defecto.length && moduloDePestana(pestana) === 'maritimo' ? await this.layouts.zonaDinamica(pestana) : null;
-        valor = defecto.length
-          ? { origen: 'defecto', codigos: ordenarLayout(defecto, { zonaY: zona?.inicioY ?? null }), filas: defecto, zona, nombres }
-          : { origen: 'modulo', codigos: [], nombres };
-      }
+      const clave = String(pestana || '').trim().toUpperCase();
+      const [propias, maestro, estrategias, zonas] = await Promise.all([
+        this.layoutWeb.getLayoutByUsuario(usuario, pestana), this.layouts.maestro(pestana),
+        this.metadatos.estrategias().catch(() => ({})), this.metadatos.zonas().catch(() => ({})),
+      ]);
+      const plantilla = propias.length ? null : await this.layoutWeb.getPlantillaMaestra(pestana);
+      valor = {
+        usuario: propias,
+        plantilla: {
+          estrategia: estrategias[clave] || plantilla?.estrategia || null,
+          widgetsEstaticos: plantilla?.configuracion?.widgetsEstaticos || [],
+          zonaDinamica: zonas[clave] || plantilla?.configuracion?.zonaDinamica || null,
+        },
+        estados: maestro.estados, nombres: maestro.nombres,
+      };
     } catch (error) {
-      console.warn('[MÓVIL] Layout no disponible, se usa la receta del módulo:', error?.message || error);
-      valor = { origen: 'modulo', codigos: [], nombres: {} };
+      console.warn('[MÓVIL] Layout no disponible:', error?.message || error);
+      valor = { usuario: [], plantilla: null, estados: {}, nombres: {}, error: true };
     }
     guardarEn(this.cacheLayouts, llave, { en: ahora.getTime(), valor });
     return valor;
@@ -138,26 +152,33 @@ class TableroMovilService {
     const { puerto, pestana } = validarCon(TableroMovilParamsSchema, params);
     const { fresco } = validarCon(TableroMovilQuerySchema, query);
     const p = await this.puertos.resolver(puerto);         // 404 si el puerto no existe
-    const layout = await this._layout(codigoUsuario, pestana, ahora, fresco);
-
+    const datos = await this._datosLayout(codigoUsuario, pestana, ahora, fresco);
     const modulo = moduloDePestana(pestana);
-    const nombresFuentes = layout.codigos.length ? fuentesDeLayout(layout.codigos) : (FUENTES_POR_MODULO[modulo] || []);
+
+    // 1.ª pasada sin terminales: qué widgets hay y qué fuentes piden (las tarjetas de terminal piden el resumen marítimo)
+    const previo = layoutEfectivo({ ...datos, terminales: null });
+    const codigos = previo.celdas.map(codigoMovil);
+    // Una pestaña con zona de terminales (o tarjetas guardadas) necesita saber cuántas tiene el puerto aunque la plantilla
+    // aún no traiga ninguna tarjeta: el resumen marítimo las cuenta
+    const manejaTerminales = previo.celdas.some((c) => c.idClon) || !!datos.plantilla?.zonaDinamica
+      || String(datos.plantilla?.estrategia || '').toUpperCase() === 'CASCADA_DINAMICA';
+    const nombresFuentes = [...new Set([...fuentesDeLayout(codigos), ...(manejaTerminales ? ['maritimoResumen'] : [])])];
     const { fuentes, fallidos } = await this._fuentes(nombresFuentes, p, ahora, fresco);
     const filas = extraerKpis(fuentes, p.clave, ahora);
     const series = filas.length ? await this._series(p.clave, ahora) : new Map();
 
-    if (!layout.codigos.length) {
-      return { ...armarTablero({ puerto: p.clave, pestana, fuentes, filas, series, ahora }), nombrePuerto: p.nombre, fallidos, layout: 'modulo', soloWeb: [], sinDatos: [] };
-    }
-    // Rejilla tipo gridster (fase A): las celdas del layout; las tarjetas de terminal se rehacen para las terminales del puerto
-    const terminales = (fuentes.maritimoResumen?.WDG_TERMINALES || []).length;
-    const celdas = layout.filas?.length ? celdasDeLayout(layout.filas, { zona: layout.zona, terminales }) : null;
-    const { widgets, soloWeb, sinDatos } = armarWidgets({ codigos: layout.codigos, celdas, fuentes, filas, series, nombres: layout.nombres });
+    // 2.ª pasada con las terminales del puerto (null si el resumen no llegó: entonces el layout queda como está)
+    const resumen = fuentes.maritimoResumen;
+    const terminales = resumen ? (resumen.WDG_TERMINALES || []).length : null;
+    const { origen, celdas } = layoutEfectivo({ ...datos, terminales });
+    const { widgets, sinDatos, sinVersionMovil } = armarWidgets({
+      celdas: celdas.map((c) => ({ ...c, codigo: codigoMovil(c) })), fuentes, filas, series, nombres: datos.nombres,
+    });
     const simulado = widgets.some((w) => w.tipo === 'kpis' && w.items.some((k) => k.simulado))
       || Object.values(fuentes).some((f) => f && (f.simulado || f.origen?.simulado));
     return {
       puerto: p.clave, nombrePuerto: p.nombre, pestana, modulo, generadoEn: ahora.toISOString(), simulado: !!simulado,
-      widgets, fallidos, layout: layout.origen, soloWeb, sinDatos, rejilla: !!celdas,
+      widgets, fallidos: datos.error ? [...fallidos, 'layout'] : fallidos, layout: origen, sinDatos, sinVersionMovil, rejilla: true,
     };
   }
 }

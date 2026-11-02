@@ -7,6 +7,7 @@
       - Estadía calculada desde la fecha de ingreso del lote (antes dias_almacenaje fijo al registrar: no avanzaba).
       - Bodegas sin capacidad: ocupación null ("sin dato"), no 0 %.
       - Origen del dato con periodo y avisos (bodegas sin capacidad, movimientos recortados).
+      - Simulado (OT-009): si alguna bodega o movimiento viene con simulado = 1, el origen lo dice y web y app lo rotulan.
 */
 const C = require('./tablero-comun');
 const { origen } = require('./origen-dato');
@@ -100,8 +101,10 @@ function armarBodegas({ bodegas = [], movimientos = [], resumenCarga = [], puert
   const movs = (movimientos || []).map((m) => ({ ...m, dias_almacenaje: estadia(m, ahoraMs), dias_almacenaje_registrado: C.num(m.dias_almacenaje) }));
   const sinCapacidad = bodegas.filter((b) => !(C.num(b.capacidad_maxima_ton) > 0)).length;
   const totalRango = C.num(movimientos[0]?.total_rango) ?? movimientos.length;
+  const esSimulado = (x) => x.simulado === true || x.simulado === 1;
   const o = origen({
     fuente: 'TCL_MaestroBodegas + TCL_MovimientosBodega',
+    simulado: bodegas.some(esSimulado) || (movimientos || []).some(esSimulado),
     periodo: `Inventario actual · movimientos de los últimos ${DIAS_FLUJO} días`,
     nota: [
       sinCapacidad ? `${sinCapacidad} bodegas sin capacidad registrada` : null,
@@ -153,11 +156,12 @@ function serieOcupacionBodegas({ bodegas = [], fotos = [], horas = 24 }, ahora =
 /** Vista ampliada (Fase 3): movimientos del rango con la estadía calculada. */
 function movimientosConEstadia(movimientos = [], dias, ahora = new Date()) {
   const total = C.num(movimientos[0]?.total_rango) ?? movimientos.length;
+  const simulado = movimientos.some((m) => m.simulado === true || m.simulado === 1);
   return {
     movimientos: movimientos.map((m) => ({ ...m, dias_almacenaje: estadia(m, ahora.getTime()), dias_almacenaje_registrado: C.num(m.dias_almacenaje) })),
     total,
     origen: origen({
-      fuente: 'TCL_MovimientosBodega', periodo: `Últimos ${dias} días`,
+      fuente: 'TCL_MovimientosBodega', simulado, periodo: `Últimos ${dias} días`,
       nota: total > movimientos.length ? `se muestran los ${movimientos.length} más recientes de ${total}` : null,
     }, ahora),
   };

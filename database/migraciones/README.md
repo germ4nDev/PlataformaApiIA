@@ -8,6 +8,12 @@ Convención de nombres: **`Prefijo_NombreTabla`** en PascalCase, sin guiones baj
 | `TCL_` | Porttos (Tablero de Control Logístico). Maestros: `TCL_Maestro*`, catálogos: `TCL_Tipos*` |
 | `QPL_` | QPlus |
 
+## Collation (obligatorio desde 2026-10-30)
+
+En producción el servidor (y `tempdb`) usa `SQL_Latin1_General_CP1_CI_AS` y la base `Modern_Spanish_CI_AS`. Toda columna de texto de una
+tabla temporal (`#x`) o de una variable tipo tabla (`DECLARE @x TABLE`) se declara con `COLLATE DATABASE_DEFAULT`; al comparar texto de dos
+orígenes distintos, también. Lo vigila `_pruebas/migraciones-collation.test.js`.
+
 ## Orden de ejecución
 
 Los scripts son autocontenidos: se pueden abrir y ejecutar directamente en SSMS. `_mapeo.sql` queda solo como referencia.

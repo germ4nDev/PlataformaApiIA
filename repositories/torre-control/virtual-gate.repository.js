@@ -5,6 +5,10 @@
 */
 const { QueryTypes } = require('sequelize');
 const { sequelize } = require('../../database/connection');
+const { esColumnaInexistente, esTablaInexistente, migracionPendiente } = require('../../helpers/errores.helper');
+
+const MIGRACION_021 = '021_fuente_simulado_tablas_operacion.sql';
+const LOTE_INSERT = 40;   // filas por INSERT (20 columnas × 40 = 800 parámetros, por debajo del tope de 2100)
 
 class VirtualGateRepository {
     /**
@@ -129,7 +133,7 @@ class VirtualGateRepository {
                     ) AS saturacionPromedio,
                     COUNT(1) AS totalBodegas
                 FROM dbo.TCL_MaestroBodegas WITH (NOLOCK)
-                WHERE UPPER(LTRIM(RTRIM(id_puerto))) = :puerto
+                WHERE REPLACE(UPPER(LTRIM(RTRIM(id_puerto))), ' ', '_') = REPLACE(:puerto, ' ', '_')
                   AND activo = 1;
             `;
 
@@ -149,6 +153,68 @@ class VirtualGateRepository {
             // Si llega a fallar algo (tabla sin migrar), el tablero no se cae: KPI en 0 y queda el aviso en consola
             return { saturacionPromedio: 0, totalBodegas: 0 };
         }
+    }
+
+    // ── Simulador de citas (OT-009, migración 021) ────────────────────────────────────────────────────────────
+    // Las citas simuladas van en la misma tabla con fuente = 'SIMULADOR' y simulado = 1. Sin la 021 no hay columna
+    // simulado: se lanza migracionPendiente y el simulador de gate se apaga solo.
+
+    async _q(sql, replacements = {}, type = QueryTypes.SELECT, opciones = {}) {
+        try {
+            return await sequelize.query(sql, { replacements, type, ...opciones });
+        } catch (error) {
+            if (esColumnaInexistente(error) || esTablaInexistente(error)) throw migracionPendiente(MIGRACION_021);
+            throw error;
+        }
+    }
+
+    /** Terminales del puerto con su número de muelles (escala del simulador). */
+    terminalesConMuelles(idPuerto) {
+        return this._q(`
+            SELECT t.id_terminal, t.nombre, COUNT(m.id_interno) AS muelles
+            FROM dbo.TCL_MaestroTerminales t WITH (NOLOCK)
+            LEFT JOIN dbo.TCL_MaestroMuelles m WITH (NOLOCK) ON m.id_terminal = t.id_terminal AND ISNULL(m.estado, 1) = 1
+            WHERE t.id_puerto = :idPuerto AND ISNULL(t.estado, 1) = 1
+            GROUP BY t.id_terminal, t.nombre`, { idPuerto });
+    }
+
+    /** ¿Llegó alguna cita real (simulado = 0) del puerto con fecha desde 'desde'? */
+    async hayCitasReales(idPuerto, desde) {
+        const [fila] = await this._q(`
+            SELECT COUNT(1) AS n FROM dbo.TCL_CitasVirtualGate WITH (NOLOCK)
+            WHERE id_puerto = :idPuerto AND simulado = 0 AND fecha_hora_cita >= :desde`, { idPuerto, desde });
+        return Number(fila?.n || 0) > 0;
+    }
+
+    /** Cambia todas las citas simuladas del puerto por 'filas' (una transacción). Devuelve cuántas escribió. */
+    async reemplazarCitasSimuladas(idPuerto, filas) {
+        const columnas = ['id_puerto', 'id_cita', 'placa', 'conductor', 'transportador', 'tipo_carga', 'operacion', 'terminal',
+            'fecha_hora_cita', 'franja_horaria', 'ubicacion', 'distancia_km', 'estado', 'tiempo_espera_minutos',
+            'validacion_ocr', 'validacion_biometria', 'validacion_documental', 'peso_bascula_ton', 'fuente', 'simulado'];
+        return sequelize.transaction(async (transaction) => {
+            await this._q(`DELETE FROM dbo.TCL_CitasVirtualGate WHERE id_puerto = :idPuerto AND simulado = 1`,
+                { idPuerto }, QueryTypes.DELETE, { transaction });
+            for (let i = 0; i < filas.length; i += LOTE_INSERT) {
+                const lote = filas.slice(i, i + LOTE_INSERT);
+                const replacements = {};
+                const valores = lote.map((f, j) => `(${columnas.map((c) => {
+                    replacements[`${c}_${j}`] = c === 'id_puerto' ? idPuerto
+                        : ['validacion_ocr', 'validacion_biometria', 'validacion_documental', 'simulado'].includes(c)
+                            ? (f[c] === null || f[c] === undefined ? null : (f[c] ? 1 : 0))
+                            : (f[c] === undefined ? null : f[c]);
+                    return `:${c}_${j}`;
+                }).join(', ')})`);
+                await this._q(`INSERT INTO dbo.TCL_CitasVirtualGate (${columnas.join(', ')}) VALUES ${valores.join(',\n')}`,
+                    replacements, QueryTypes.INSERT, { transaction });
+            }
+            return filas.length;
+        });
+    }
+
+    /** Retira las citas simuladas del puerto (llegó el dato real o se apagó el simulador). */
+    retirarCitasSimuladas(idPuerto) {
+        return this._q(`DELETE FROM dbo.TCL_CitasVirtualGate WHERE id_puerto = :idPuerto AND simulado = 1`,
+            { idPuerto }, QueryTypes.DELETE);
     }
 }
 

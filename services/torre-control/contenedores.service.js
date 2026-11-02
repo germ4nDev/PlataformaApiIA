@@ -7,7 +7,6 @@
       valores fijos de AD-04, Math.random() y los multiplicadores; lo que no tiene fuente queda vacío y explicado.
       Cada lectura opcional falla por separado (tabla o migración ausente → lista vacía) sin tumbar el tablero.
 */
-const { Op } = require('sequelize');
 const ContenedoresRepository = require('../../repositories/torre-control/contenedores.repository');
 const CapacidadRepository = require('../../repositories/torre-control/capacidad.repository');
 const { contextoPuerto } = require('../../helpers/puerto-contexto.helper');
@@ -26,12 +25,11 @@ const obtenerDatosContenedores = async (puerto = 'BUENAVENTURA', ahora = new Dat
   const idsPuerto = [...new Set([ctx.clave, ctx.idPuerto, String(ctx.nombre || '').toUpperCase(), clave.replace(/_/g, ' ')].filter(Boolean))];
   const desdeFotos = new Date(ahora.getTime() - 6 * 3600000).toISOString();
 
-  // require diferido: el repositorio de inventario carga su modelo Sequelize al importarse
-  const InventarioContenedoresRepository = require('../../repositories/torre-control/inventario-contenedores.repository');
   try {
     const [movimientos, inventario, nodos, fotos] = await Promise.all([
       ContenedoresRepository.movimientosDelPuerto(clave),
-      opcional(InventarioContenedoresRepository.listar({ where: { id_puerto: { [Op.in]: idsPuerto } } })),
+      // SELECT * (OT-009): con la migración 021 trae también simulado, y el tablero lo rotula
+      opcional(ContenedoresRepository.inventarioDelPuerto(idsPuerto)),
       opcional(CapacidadRepository.nodos(ctx.idPuerto)),
       opcional(CapacidadRepository.ocupaciones(ctx.idPuerto, desdeFotos)),
     ]);

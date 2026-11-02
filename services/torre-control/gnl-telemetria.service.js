@@ -14,6 +14,9 @@ const { salaPuerto } = require('../../helpers/salas.helper');
 // Buffer en memoria compartido entre el simulador y el Cron Job
 global.bufferGNL = global.bufferGNL || [];
 global.simuladorGNLActivo = global.simuladorGNLActivo || false;
+// OT-009 (2026-10-29): un pulso por puerto (puerto → intervalo); simuladorGNLActivo queda en true si corre alguno.
+global.simuladoresGNL = global.simuladoresGNL || new Map();
+let csvSCADA = null;   // el CSV se lee una sola vez para todos los puertos
 
 const { consolidar, serieHistorial } = require('../../utils/gnl-consolidado');
 
@@ -22,36 +25,65 @@ class GnlTelemetriaService {
   // ==========================================
   // HOT PATH: SIMULADOR DE TELEMETRÍA (SOCKETS)
   // ==========================================
-  async iniciarSimulador(id_puerto = 'BUENAVENTURA') {
-    if (global.simuladorGNLActivo) {
-      throw { statusCode: 400, msg: "El simulador SCADA ya se encuentra en ejecución." };
-    }
-
+  /** Lee el CSV SCADA de demostración una sola vez. */
+  _leerCsv() {
+    if (csvSCADA) return Promise.resolve(csvSCADA);
     const datosSCADA = [];
     const csvPath = path.join(__dirname, '../../data/scada_pipeline.csv');
-
     if (!fs.existsSync(csvPath)) {
-      throw { statusCode: 404, msg: "No se encontró el archivo scada_pipeline.csv en la ruta esperada." };
+      return Promise.reject({ statusCode: 404, msg: "No se encontró el archivo scada_pipeline.csv en la ruta esperada." });
     }
-
     return new Promise((resolve, reject) => {
       fs.createReadStream(csvPath)
         .pipe(csv())
         .on('data', (row) => datosSCADA.push(row))
-        .on('end', () => {
-          global.simuladorGNLActivo = true;
-          this.transmitirDatosEnVivo(datosSCADA, id_puerto);
-          resolve({ msg: "Simulador GNL iniciado. Transmitiendo vía Socket.io..." });
-        })
+        .on('end', () => { csvSCADA = datosSCADA; resolve(datosSCADA); })
         .on('error', (error) => reject({ statusCode: 500, msg: error.message }));
     });
   }
 
+  async iniciarSimulador(id_puerto = 'BUENAVENTURA') {
+    const puerto = String(id_puerto || '').trim().toUpperCase();
+    if (global.simuladoresGNL.has(puerto)) {
+      throw { statusCode: 400, msg: `El simulador SCADA ya se encuentra en ejecución para ${puerto}.` };
+    }
+    const datosSCADA = await this._leerCsv();
+    global.simuladorGNLActivo = true;
+    this.transmitirDatosEnVivo(datosSCADA, puerto);
+    return { msg: `Simulador GNL iniciado para ${puerto}. Transmitiendo vía Socket.io...` };
+  }
+
+  /**
+   * Pulso simulado en varios puertos (OT-009: ningún puerto del selector sin datos de GNL). Los que ya transmiten se
+   * dejan como están. Devuelve los puertos que quedaron transmitiendo.
+   */
+  async iniciarSimuladores(puertos = []) {
+    for (const p of puertos) {
+      try { await this.iniciarSimulador(p); } catch (e) { if (e?.statusCode !== 400) throw e; }
+    }
+    return [...global.simuladoresGNL.keys()];
+  }
+
+  /**
+   * Arranque del API: pulso en los puertos dados o, sin lista, en todos los activos del maestro. La clave es la del
+   * selector (normalizarPuerto del nombre: 'La Guajira' → LA_GUAJIRA), la misma con la que el front se une a la sala.
+   */
+  async iniciarEnPuertos(puertos = []) {
+    const { normalizarPuerto } = require('../../helpers/salas.helper');
+    let claves = puertos.map(normalizarPuerto);
+    if (!claves.length) {
+      const MaritimoRepository = require('../../repositories/torre-control/maritimo.repository');
+      claves = (await MaritimoRepository.getPuertosActivos()).map((p) => normalizarPuerto(p.nombre || p.id_puerto));
+    }
+    return this.iniciarSimuladores([...new Set(claves.filter(Boolean))]);
+  }
+
   transmitirDatosEnVivo(datos, id_puerto) {
-    let index = 0;
+    // Cada puerto arranca en un punto distinto del CSV (estable por puerto): las curvas no salen idénticas
+    let index = [...String(id_puerto)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 100000, 7) % Math.max(1, datos.length);
 
     // Dispara 1 lectura cada segundo
-    global.intervaloGNL = setInterval(() => {
+    const intervalo = setInterval(() => {
       if (index >= datos.length) index = 0; // Loop infinito para la demo
       const fila = datos[index];
 
@@ -116,15 +148,18 @@ class GnlTelemetriaService {
 
       index++;
     }, 1000);
+    global.simuladoresGNL.set(id_puerto, intervalo);
+    global.intervaloGNL = intervalo;   // compatibilidad con quien lo lea
   }
 
-  detenerSimulador() {
-    if (global.intervaloGNL) {
-      clearInterval(global.intervaloGNL);
-      global.simuladorGNLActivo = false;
-      return { msg: "Simulador GNL detenido exitosamente." };
-    }
-    throw { statusCode: 400, msg: "El simulador no estaba en ejecución." };
+  /** Detiene el pulso de un puerto o, sin puerto, el de todos. */
+  detenerSimulador(id_puerto = null) {
+    const puertos = id_puerto ? [String(id_puerto).trim().toUpperCase()] : [...global.simuladoresGNL.keys()];
+    const activos = puertos.filter((p) => global.simuladoresGNL.has(p));
+    if (!activos.length) throw { statusCode: 400, msg: "El simulador no estaba en ejecución." };
+    for (const p of activos) { clearInterval(global.simuladoresGNL.get(p)); global.simuladoresGNL.delete(p); }
+    global.simuladorGNLActivo = global.simuladoresGNL.size > 0;
+    return { msg: `Simulador GNL detenido (${activos.join(', ')}).` };
   }
 
   // ==========================================

@@ -9,6 +9,8 @@ const http = require("http");
 const { Server } = require("socket.io");
 const fileUpload = require('express-fileupload');
 const cors = require("cors");
+const Dominios = require('./services/dominios/dominios.service');
+const { validarDominio } = require('./middlewares/validar-dominio');
 const cron = require('node-cron');
 
 // === Base de Datos y Modelos ===
@@ -32,18 +34,23 @@ const app = express();
 const server = http.createServer(app);
 
 // Orígenes permitidos (HTTP y Socket.IO). Extra: CORS_ORIGINS=https://a.com,https://b.com
-// const normalizarOrigen = (url) => (url || '').trim().replace(/\/+$/, '');
-// const whitelist = [...new Set([
-//   'http://localhost:4200',
-//   'http://localhost:3000',
-//   'https://porttos.co',
-//   process.env.ANGULAR_URL_LOCAL,
-//   process.env.ANGULAR_URL_LOCL, // nombre usado hoy en .env
-//   process.env.ANGULAR_URL_PRUE,
-//   process.env.ANGULAR_URL_PROD,
-//   ...(process.env.CORS_ORIGINS || '').split(','),
-// ].map(normalizarOrigen).filter(Boolean))];
-
+// Se declara antes de Socket.IO: con `const` usarla antes de su línea rompe el arranque (corregido 2026-10-29).
+const normalizarOrigen = (url) => (url || '').trim().replace(/\/+$/, '');
+const whitelist = [...new Set([
+  'https://porttos.co',           // Web producción
+  'https://www.porttos.co',       // Web producción (con www)
+  'https://plataforma.dymsites.co', // Consola de la plataforma (OT-012); los demás dominios salen de PTLDominiosAP
+  'capacitor://localhost',        // App móvil (iOS Capacitor)
+  'https://localhost',            // App móvil (Android Capacitor, androidScheme: 'https')
+  'http://localhost',             // App móvil (Android Capacitor con androidScheme: 'http')
+  'http://localhost:4200',        // Desarrollo local Angular
+  'http://localhost:3000',
+  process.env.ANGULAR_URL_LOCAL,
+  process.env.ANGULAR_URL_LOCL, // nombre usado hoy en .env
+  process.env.ANGULAR_URL_PRUE,
+  process.env.ANGULAR_URL_PROD,
+  ...(process.env.CORS_ORIGINS || '').split(','),
+].map(normalizarOrigen).filter(Boolean))];
 
 const io = new Server(server, {
   cors: {
@@ -69,23 +76,18 @@ module.exports.io = io;
 // ================================================
 // === CORS Y SEGURIDAD ===
 // ================================================
-const whitelist = [
-  'https://porttos.co',           // Web producción
-  'https://www.porttos.co',       // Web producción (con www)
-  'capacitor://localhost',        // App móvil (iOS Capacitor)
-  'http://localhost',             // App móvil (Android Capacitor)
-  'http://localhost:4200'         // Desarrollo local Angular (opcional)
-];
-
-// 2. Configuramos las opciones de CORS
+// La lista blanca (`whitelist`) está arriba, junto a Socket.IO, que la usa al crearse.
 const corsOptions = {
   origin: function (origin, callback) {
-    // Permitimos peticiones sin origen (como las de herramientas REST o de servidor a servidor) 
+    // Permitimos peticiones sin origen (como las de herramientas REST o de servidor a servidor)
     // y las que coincidan exactamente con la lista blanca.
-    if (whitelist.indexOf(origin) !== -1 || !origin) {
+    // y los dominios activos de PTLDominiosAP (OT-012: agregar un dominio = una fila, sin tocar el .env).
+    if (!origin || whitelist.includes(normalizarOrigen(origin)) || Dominios.origenPermitido(origin)) {
       callback(null, true);
     } else {
-      callback(new Error('El origen CORS: ' + origin + ' no tiene permiso.'));
+      // Rechazo limpio: sin encabezados CORS el navegador bloquea; antes un Error respondía 500
+      console.warn(`⚠️ [CORS] Origen sin permiso: ${origin}. Agréguelo a CORS_ORIGINS en .env si corresponde.`);
+      callback(null, false);
     }
   }
 };
@@ -98,6 +100,8 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(fileUpload({ useTempFiles: false }));
+// Multidominio (OT-012): desde el dominio de una aplicación, solo entra quien tiene rol en ella
+app.use(validarDominio);
 
 // ================================================
 // === RUTAS DE LA API ===
@@ -110,7 +114,7 @@ app.use("/api/tipos-actividad", require("./routes/tipos-actividad.routes"));
 app.use("/api/auth", require("./routes/auth.routes"));
 app.use("/api/upload", require("./routes/uploads.routes"));
 app.use("/api/sliders", require("./routes/sliders-inicio"));
-app.use("/api/colores", require("./routes/colores-settings"));
+app.use("/api/colores", require("./routes/colores-settings.routes"));
 app.use("/api/tipos-item", require("./routes/tipos-item.routes"));
 app.use("/api/items", require("./routes/items.routes"));
 app.use("/api/db-setup", require("./routes/db-setup"));
@@ -127,6 +131,8 @@ app.use("/api/ia", require("./routes/ia"));
 // Capa de análisis con IA de Porttos (fase 1: fotos de KPI, señales y foto operativa; IA_ENABLED en el .env)
 app.use("/api/analisis-ia", require("./routes/ia/analisis-ia.routes"));
 app.use("/api/movil", require("./routes/movil/movil.routes")); // App móvil (PorttosMovil)
+app.use('/api/portal', require('./routes/portal/portal.routes')); // Portal público porttos.co (migración 025)
+app.use('/api/dominios', require('./routes/dominios/dominios.routes')); // Dominio → aplicación (OT-012, migración 026)
 app.use("/api/historial-facturacion", require("./routes/historial-facturacion.routes"));
 app.use('/api/tipos-pago', require('./routes/tipos-pago.routes'));
 app.use('/api/tipos-paquete', require('./routes/tipos-paquete.routes'));
@@ -218,17 +224,16 @@ app.use('/api/virtual-gate', require('./routes/torre-control/virtual-gate.routes
 // Manejador central de errores: siempre después de la última ruta (JSON mal formado, next(error), etc.)
 app.use(require('./middlewares/manejador-errores'));
 
-// Simulador GNL: activo en desarrollo; en producción solo con GNL_SIMULADOR=true
-const simuladorGnlActivo = process.env.GNL_SIMULADOR
-  ? process.env.GNL_SIMULADOR === 'true'
-  : process.env.NODE_ENV !== 'production';
+// Simulador GNL (OT-009, 2026-10-29): pulso simulado en todos los puertos activos del maestro, o solo en los de
+// GNL_SIMULADOR_PUERTO (separados por coma). Corre también en producción (decisión del usuario: simulados rotulados);
+// se apaga con GNL_SIMULADOR=false o SIMULADOS_GNL=false.
+const simuladorGnlActivo = process.env.GNL_SIMULADOR !== 'false'
+  && String(process.env.SIMULADOS_GNL ?? 'true').toLowerCase() !== 'false';
 
 if (simuladorGnlActivo) {
-  // Corregido 2026-10-25: el puerto ya no va fijo en el código (regla: nada fijo a un puerto). GNL_SIMULADOR_PUERTO en .env.
-  const puertoSimuladorGnl = (process.env.GNL_SIMULADOR_PUERTO || '').trim().toUpperCase();
-  if (!puertoSimuladorGnl) console.warn('⚠️ Simulador GNL sin GNL_SIMULADOR_PUERTO en .env: no se inicia.');
-  else simuladorGNL.iniciarSimulador(puertoSimuladorGnl)
-    .then(res => console.log(res.msg))
+  const puertosGnl = (process.env.GNL_SIMULADOR_PUERTO || '').split(',').map((s) => s.trim()).filter(Boolean);
+  simuladorGNL.iniciarEnPuertos(puertosGnl)
+    .then((puertos) => console.log(`Simulador GNL transmitiendo en: ${puertos.join(', ') || 'ningún puerto'}`))
     .catch(err => console.error("❌ Error arrancando simulador GNL:", err.msg || err));
 }
 
@@ -311,6 +316,9 @@ sequelize
     const puerto = process.env.PORT || 3000;
 
     server.listen(puerto, async () => {
+      // Dominios de la plataforma (OT-012): carga al arrancar y cada 5 minutos (CORS y validarDominio)
+      Dominios.refrescar().then((i) => console.log(`🌐 [Dominios] ${i.size} dominio(s) registrados.`));
+      setInterval(() => Dominios.refrescar(), 5 * 60 * 1000).unref();
       console.log(`🚀 Ecosistema QPLUS escuchando en puerto ${puerto}`);
 
       // === SERVICIOS EN SEGUNDO PLANO ===

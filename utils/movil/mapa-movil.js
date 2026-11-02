@@ -5,7 +5,7 @@
       liviano para el teléfono. Sin base de datos ni red.
         armarMapa({ puerto, cajaMaritima, cajaTerrestre, naves, flota, eventos, ahora }) →
           { puerto, generadoEn, centro: [lon, lat] | null, limites: [[oeste, sur], [este, norte]] | null,
-            naves: FeatureCollection, camiones: FeatureCollection, eventos: FeatureCollection, conteos }
+            naves: FeatureCollection, camiones: FeatureCollection, eventos: FeatureCollection, geocercas: FeatureCollection (polígonos), senalAis, conteos }
       - Descarta coordenadas inválidas o (0, 0) y respeta un máximo por capa (MAX_*).
       - Solo lleva lo que la app muestra: sin datos personales (no viaja el conductor).
       - Estado de la nave normalizado: atracada | fondeada | movimiento | avisada | zarpada | sin_dato.
@@ -99,7 +99,14 @@ function eventosMovil(eventos) {
   }).filter(Boolean).slice(0, MAX_EVENTOS);
 }
 
-function armarMapa({ puerto, cajaMaritima = null, cajaTerrestre = null, naves, flota, eventos, ahora = new Date() }) {
+/** Solo los campos de utils/senal-ais.js que la app muestra; cualquier otra cosa → null. */
+function senalMovil(s) {
+  const estados = ['en_vivo', 'sin_senal', 'sin_registro'];
+  if (!s || !estados.includes(s.estado)) return null;
+  return { estado: s.estado, ultima: texto(s.ultima, 30), horasSinSenal: num(s.horasSinSenal) };
+}
+
+function armarMapa({ puerto, cajaMaritima = null, cajaTerrestre = null, naves, flota, eventos, geocercas = null, senalAis = null, ahora = new Date() }) {
   const n = navesMovil(naves, ahora.getTime());
   const c = camionesMovil(flota);
   const e = eventosMovil(eventos);
@@ -112,6 +119,9 @@ function armarMapa({ puerto, cajaMaritima = null, cajaTerrestre = null, naves, f
     naves: coleccion(n),
     camiones: coleccion(c),
     eventos: coleccion(e),
+    // Ya convertidas por utils/geocercas-mapa.js en el servicio (este núcleo no depende de turf)
+    geocercas: coleccion(Array.isArray(geocercas?.features) ? geocercas.features : []),
+    senalAis: senalMovil(senalAis),
     conteos: {
       naves: n.length,
       fondeadas: n.filter((f) => f.properties.estado === 'fondeada').length,
@@ -124,4 +134,4 @@ function armarMapa({ puerto, cajaMaritima = null, cajaTerrestre = null, naves, f
   };
 }
 
-module.exports = { MAX_NAVES, MAX_CAMIONES, MAX_EVENTOS, coordenadaValida, estadoNave, navesMovil, camionesMovil, eventosMovil, armarMapa };
+module.exports = { MAX_NAVES, MAX_CAMIONES, MAX_EVENTOS, coordenadaValida, estadoNave, navesMovil, camionesMovil, eventosMovil, senalMovil, armarMapa };

@@ -181,6 +181,25 @@ class MapaGeneralRepository {
     }
   }
 
+  /**
+   * Agregado 2026-10-29 (OT-007): fecha de la última posición AIS dentro de la caja del puerto, sin límite de antigüedad.
+   * La usa utils/senal-ais.js para decir «Sin señal AIS desde …» cuando la capa de naves queda vacía.
+   * @param {{caja: {sur,oeste,norte,este}}} opciones
+   * @returns {Promise<Date|string|null>}
+   */
+  async getUltimaSenalAis({ caja }) {
+    if (!caja) return null;
+    const query = `
+      SELECT MAX(TRY_CONVERT(DATETIMEOFFSET, ais.fechaModificacion, 127)) AS ultima
+      FROM TCL_AisUltimaPosicion ais WITH(NOLOCK)
+      WHERE ais.latitud IS NOT NULL AND ais.longitud IS NOT NULL
+        AND ais.mmsi NOT LIKE 'SIM%' -- OT-009: las naves simuladas no son señal AIS
+        AND CAST(ais.latitud AS FLOAT) BETWEEN :sur AND :norte
+        AND CAST(ais.longitud AS FLOAT) BETWEEN :oeste AND :este`;
+    const filas = await this.sequelize.query(query, { replacements: { ...caja }, type: this.sequelize.QueryTypes.SELECT });
+    return filas?.[0]?.ultima ?? null;
+  }
+
   async getFlotaTerrestreActiva() {
     const query = `
         SELECT placa, estado, conductor, latitud, longitud, velocidad

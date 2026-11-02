@@ -9,7 +9,9 @@ const { WidgetRoleModel, WidgetRoleDTO } = require("../models/widget-role");
 // (Por favor ajusta la ruta "../models/widget" y el nombre "WidgetMaestroModel" según como lo tengas en tu proyecto)
 const { WidgetMaestroModel } = require("../models/widget");
 
-const { getIO } = require('../helpers/socket.helper');
+// Evento que escucha la web (socket-manager: 'widgets-roles-actualizados'). Antes salía 'widgetes-roles-actualizadas' y nadie lo oía.
+const { emitir } = require('../helpers/socket.helper');
+const EVENTO_WIDGETS_ROLES = 'widgets-roles-actualizados';
 
 class WidgetesRolesService {
   constructor() {
@@ -28,6 +30,16 @@ class WidgetesRolesService {
     return await this.model.findAll();
   }
 
+  /** Relaciones de un widget (GET /api/widgets-roles/acti/:ac). El controlador la llamaba y no existía. */
+  async getWidgetByCodeWidget(codigoWidget) {
+    return await this.model.findAll({ where: { codigoWidget } });
+  }
+
+  /** Una relación por su código (la usa el controlador antes de borrar para avisar al rol). */
+  async getWidgetRoleById(codigoWidgetRole) {
+    return await this.model.findOne({ where: { codigoWidgetRole } });
+  }
+
   async getPorCodigoWidget(codigoWidget) {
     const registros = await this.model.findAll({ where: { codigoWidget } });
     if (!registros || registros.length === 0)
@@ -40,7 +52,8 @@ class WidgetesRolesService {
       const data = await this.model.findAll({
         where: {
           codigoRole: codigoRole,
-          permiso: true
+          // Corregido 2026-11-02 (admin-widgets): filtraba por 'permiso', columna que no existe en PTLWidgetsRoles.
+          estadoRelacion: true
         },
         include: [
           {
@@ -82,7 +95,7 @@ class WidgetesRolesService {
 
         const nuevaRelacion = await this.model.create(dataDTO, { transaction: t });
 
-        getIO().emit('widgetes-roles-actualizadas', {
+        emitir(EVENTO_WIDGETS_ROLES, {
           action: 'create',
           msg: `Relación creada`
         });
@@ -112,7 +125,7 @@ class WidgetesRolesService {
           transaction: t
         });
 
-        getIO().emit('widgetes-roles-actualizadas', {
+        emitir(EVENTO_WIDGETS_ROLES, {
           action: 'update',
           msg: `Relación creada`
         });
@@ -138,7 +151,7 @@ class WidgetesRolesService {
 
       if (eliminado === 0) throw { statusCode: 404, msg: "No se encontró el registro para eliminar." };
 
-      getIO().emit("widgetes-roles-actualizadas", { action: "delete", msg: "Relación eliminada" });
+      emitir(EVENTO_WIDGETS_ROLES, { action: "delete", msg: "Relación eliminada" });
 
       return true;
     });
@@ -163,9 +176,8 @@ class WidgetesRolesService {
           nuevosRegistros = await this.model.bulkCreate(dataDTOArray, { transaction: t });
         }
 
-        if (typeof io !== 'undefined') {
-          getIO().emit('widgetes-roles-actualizadas', { action: 'sync', msg: 'Sincronizado' });
-        }
+        // Antes dependía de una variable 'io' que no existe aquí: la sincronización nunca avisaba.
+        emitir(EVENTO_WIDGETS_ROLES, { action: 'sync', codigoWidget, msg: 'Sincronizado' });
 
         return nuevosRegistros;
       });

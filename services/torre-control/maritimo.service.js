@@ -135,6 +135,11 @@ class MaritimoService {
     const anio = periodoValido ? fecha.getUTCFullYear() : ahora.getFullYear();
     const mes = periodoValido ? fecha.getUTCMonth() + 1 : ahora.getMonth() + 1;
 
+    // OT-009: productividad y reportes guardan el puerto por id del maestro (GUAJIRA) o por nombre (SANTA MARTA)
+    const { contextoPuerto } = require('../../helpers/puerto-contexto.helper');
+    const ctxPuerto = await contextoPuerto(ciudadKey).catch(() => null);
+    const clavesDelPuerto = ctxPuerto ? [ciudadKey, ctxPuerto.idPuerto, ctxPuerto.nombre] : [ciudadKey];
+
     try {
       const [
         kpisOp,
@@ -180,12 +185,12 @@ class MaritimoService {
         this._obtenerMatrizCarga(ciudadKey).catch(() => ({ filas: [] })),
         this._obtenerHistoricoAnual(ciudadKey).catch(() => ({ labels: [], valores: [] })),
         this._obtenerImplicacionesOperativas(ciudadKey).catch(() => ({ insights: [] })),
-        this._obtenerWidgetProductividad(ciudadKey).catch(() => ({
+        this._obtenerWidgetProductividad(clavesDelPuerto).catch(() => ({
           titulo: 'PRODUCTIVIDAD (MOVS/H)',
           labels: [],
           datasets: []
         })),
-        MaritimoRepository.getReportesOperativos(ciudadKey).catch(() => [])
+        MaritimoRepository.getReportesOperativos(clavesDelPuerto).catch(() => [])
       ]);
 
       // KPIs de buques desde el estado AIS y los avisos DIMAR (mismo origen que los widgets "en vivo").
@@ -545,7 +550,11 @@ class MaritimoService {
     try {
       // require diferido: el repositorio carga su modelo Sequelize y aquí solo se usa para este KPI
       const bodegasRepository = require('../../repositories/torre-control/bodegas.repository');
-      bodegas = await bodegasRepository.obtenerMaestroBodegasPorPuerto(String(ciudadKey || '').toUpperCase());
+      // OT-009: también el id del maestro (el selector manda LA_GUAJIRA; las bodegas guardan GUAJIRA)
+      const { contextoPuerto } = require('../../helpers/puerto-contexto.helper');
+      const clave = String(ciudadKey || '').toUpperCase();
+      const ctx = await contextoPuerto(clave).catch(() => null);
+      bodegas = await bodegasRepository.obtenerMaestroBodegasPorPuerto(ctx ? [clave, ctx.idPuerto] : clave);
     } catch (error) {
       console.warn('⚠️ [Marítimo] KPI de bodegas sin datos:', error.message);
     }
@@ -867,9 +876,10 @@ class MaritimoService {
     try {
       const mapaCompletoBD = await MapaPortuarioService.obtenerMapaFormatoFrontend().catch(() => ({}));
       const llavesDisponibles = Object.keys(mapaCompletoBD || {});
-      const llaveReal = llavesDisponibles.find(
-        (k) => k.toUpperCase().includes(ciudadKey) || ciudadKey.includes(k.toUpperCase())
-      );
+      // OT-009: las llaves son nombres ('COVEÑAS', 'SANTA MARTA', 'LA GUAJIRA'); se comparan sin tildes y con '_' por espacio
+      const norm = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().trim().replace(/\s+/g, '_');
+      const clave = norm(ciudadKey);
+      const llaveReal = llavesDisponibles.find((k) => norm(k).includes(clave) || clave.includes(norm(k)));
       const config = llaveReal ? mapaCompletoBD[llaveReal] : null;
 
       if (!config || !config.infraestructura) {
@@ -919,65 +929,22 @@ class MaritimoService {
     }
   }
 
-  async _obtenerGraficaToneladas(ciudadKey) {
-    const data = await MaritimoRepository.getGraficaToneladas(ciudadKey).catch(() => []);
-    const lista = Array.isArray(data) ? data : [];
-    const terminales = ['SPRBUN', 'TCBUEN', 'SPIA', 'COMPASCAS', 'COMPASAGD'];
-
-    const getVal = (term, tipo) => {
-      return lista
-        .filter((r) => {
-          const dbName = (r.codigoTerminal || '').trim().toUpperCase();
-          const isMatch =
-            dbName === term ||
-            (term === 'SPRBUN' && dbName.includes('SPBUN')) ||
-            (term === 'COMPASCAS' && dbName.includes('CASCAJAL')) ||
-            (term === 'COMPASAGD' &&
-              (dbName.includes('AGUA DULCE') || dbName.includes('AGUADULCE'))) ||
-            (term === 'SPIA' && (dbName.includes('SPIA') || dbName.includes('PUERTO AGUADULCE')));
-          return isMatch && (r.tipoCarga || '').toUpperCase().includes(tipo);
-        })
-        .reduce((a, b) => a + (parseFloat(b.totalVolumen) || 0), 0);
-    };
-
-    return {
-      WDG_CHART_TONELADAS: {
-        titulo: '📊 TONELADAS MOVIDAS HOY · POR TIPO',
-        labels: terminales,
-        datasets: [
-          {
-            label: 'Contenedores',
-            data: terminales.map((t) => getVal(t, 'CONTENEDOR') || getVal(t, 'FCL')),
-            backgroundColor: '#3b82f6'
-          },
-          {
-            label: 'Granel agrícola',
-            data: terminales.map((t) => getVal(t, 'AGRICOLA')),
-            backgroundColor: '#10b981'
-          },
-          {
-            label: 'Granel mineral',
-            data: terminales.map((t) => getVal(t, 'MINERAL')),
-            backgroundColor: '#a87b51'
-          },
-          {
-            label: 'Granel líquido',
-            data: terminales.map((t) => getVal(t, 'LIQUIDO')),
-            backgroundColor: '#14b8a6'
-          },
-          {
-            label: 'Carga suelta',
-            data: terminales.map((t) => getVal(t, 'SUELTA') || getVal(t, 'BREAK')),
-            backgroundColor: '#f59e0b'
-          },
-          {
-            label: 'Vehículos',
-            data: terminales.map((t) => getVal(t, 'VEHICULO') || getVal(t, 'RO-RO')),
-            backgroundColor: '#ec4899'
-          }
-        ]
-      }
-    };
+  /**
+   * Toneladas movidas hoy por terminal y tipo (OT-009, 2026-10-29): avance de hoy de las operaciones de granel y Ro-Ro del
+   * puerto (utils/toneladas-hoy.js). Antes: cinco terminales quemadas de un solo puerto y una tabla vacía → ceros en todos.
+   */
+  async _obtenerGraficaToneladas(ciudadKey, ahora = new Date()) {
+    const OperacionRepository = require('../../repositories/torre-control/operacion-portuaria.repository');
+    const { contextoPuerto } = require('../../helpers/puerto-contexto.helper');
+    const { armarToneladasHoy } = require('../../utils/toneladas-hoy');
+    const ctx = await contextoPuerto(ciudadKey);
+    const desde = new Date(ahora.getTime() - 26 * 3600000).toISOString();
+    const leer = (promesa) => promesa.catch((e) => (e?.codigo === 'MIGRACION_PENDIENTE' ? [] : Promise.reject(e)));
+    const [opsG, opsR, avG, avR] = await Promise.all([
+      leer(OperacionRepository.operaciones(ctx.idPuerto, 'GRANEL', desde)), leer(OperacionRepository.operaciones(ctx.idPuerto, 'RORO', desde)),
+      leer(OperacionRepository.avance(ctx.idPuerto, 'GRANEL', desde)), leer(OperacionRepository.avance(ctx.idPuerto, 'RORO', desde)),
+    ]);
+    return { WDG_CHART_TONELADAS: armarToneladasHoy({ operaciones: [...opsG, ...opsR], avance: [...avG, ...avR] }, ahora) };
   }
 
   async _calcularKpiSemanalMaritimo(ciudadKey) {
@@ -1025,11 +992,28 @@ class MaritimoService {
     };
   }
 
+  /**
+   * Zona de Supertransporte del puerto (TCL_MaestroPuertos.zona_supertransporte, migración 024; OT-009): Coveñas es
+   * 'G. MORROSQUILLO', La Guajira 'GUAJIRA' y Puerto Antioquia 'TURBO'. Sin la 024 o sin puerto, la clave como antes.
+   */
+  async _zonaSupertransporte(ciudadKey) {
+    const clave = (ciudadKey || 'BUENAVENTURA').toUpperCase().trim();
+    try {
+      const { contextoPuerto } = require('../../helpers/puerto-contexto.helper');
+      const HistoricosRepository = require('../../repositories/torre-control/historicos-supertransporte.repository');
+      const ctx = await contextoPuerto(clave);
+      const p = (await HistoricosRepository.zonasPuertos()).find((x) => x.idPuerto === ctx.idPuerto);
+      return p?.zona || clave;
+    } catch {
+      return clave;
+    }
+  }
+
   async _obtenerAnalisisTrafico(ciudadKey) {
     try {
       let anioActual = new Date().getFullYear();
 
-      const respuesta = { data: await Supertransporte.traficoDesdeAnio(ciudadKey, anioActual - 2, 50000) };
+      const respuesta = { data: await Supertransporte.traficoDesdeAnio(await this._zonaSupertransporte(ciudadKey), anioActual - 2, 50000) };
 
       const datos = respuesta.data;
       if (!datos || datos.length === 0) throw new Error('API vacía');
@@ -1136,7 +1120,7 @@ class MaritimoService {
 
   async _obtenerParticipacionNacional(ciudadKey) {
     try {
-      const zonaFiltro = (ciudadKey || 'BUENAVENTURA').toUpperCase().trim();
+      const zonaFiltro = await this._zonaSupertransporte(ciudadKey);
 
       const respuesta = { data: await Supertransporte.traficoPorZona(zonaFiltro, 4000) };
       let datos = respuesta.data;
@@ -1224,7 +1208,7 @@ class MaritimoService {
   }
 
   async _obtenerTipoOperacion(ciudadKey) {
-    const zonaFiltro = (ciudadKey || 'BUENAVENTURA').toUpperCase().trim();
+    const zonaFiltro = await this._zonaSupertransporte(ciudadKey);
     try {
       const respuesta = { data: await Supertransporte.traficoPorZona(zonaFiltro, 4000) };
       let datos = respuesta.data;
@@ -1276,7 +1260,7 @@ class MaritimoService {
 
   async _obtenerMezclaCarga(ciudadKey) {
     const anioActual = new Date().getFullYear();
-    const zonaFiltro = (ciudadKey || 'BUENAVENTURA').toUpperCase().trim();
+    const zonaFiltro = await this._zonaSupertransporte(ciudadKey);
     try {
       const respuesta = { data: await Supertransporte.traficoPorZona(zonaFiltro, 4000) };
       let datos = respuesta.data;
@@ -1347,7 +1331,7 @@ class MaritimoService {
   }
 
   async _obtenerMatrizCarga(ciudadKey) {
-    const zonaFiltro = (ciudadKey || 'BUENAVENTURA').toUpperCase().trim();
+    const zonaFiltro = await this._zonaSupertransporte(ciudadKey);
     const anioActual = new Date().getFullYear();
     try {
       const res = { data: await Supertransporte.traficoPorZona(zonaFiltro, 4000) };
@@ -1458,7 +1442,7 @@ class MaritimoService {
   }
 
   async _obtenerHistoricoAnual(ciudadKey) {
-    const zonaFiltro = (ciudadKey || 'BUENAVENTURA').toUpperCase().trim();
+    const zonaFiltro = await this._zonaSupertransporte(ciudadKey);
     try {
       const res = { data: await Supertransporte.traficoPorZona(zonaFiltro, 10000) };
       if (!res.data || res.data.length === 0) throw new Error('Sin datos');
@@ -1509,7 +1493,7 @@ class MaritimoService {
   }
 
   async _obtenerImplicacionesOperativas(ciudadKey) {
-    const zonaFiltro = (ciudadKey || 'BUENAVENTURA').toUpperCase().trim();
+    const zonaFiltro = await this._zonaSupertransporte(ciudadKey);
 
     try {
       const respuesta = { data: await Supertransporte.traficoPorZona(zonaFiltro, 5000) };

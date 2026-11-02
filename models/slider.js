@@ -19,14 +19,24 @@ const SliderInicioSchema = Joi.object({
 
     estadoSlider: Joi.boolean().optional().default(true),
 
-    codigoUsuarioCreacion: Joi.string().max(200).required(),
-    fechaCreacion: Joi.string().max(100).required(),
+    // Slides por aplicación (migración 027, CC-104): NULL o vacío = slide general
+    codigoAplicacion: Joi.string().max(200).allow('', null).optional(),
+
+    // Auditoría (CC-104): la gestión de la web no manda la creación; la pone el API con el usuario de la acción
+    codigoUsuario: Joi.string().max(200).allow('', null).optional(),
+    codigoUsuarioCreacion: Joi.string().max(200).allow('', null).optional(),
+    fechaCreacion: Joi.string().max(100).allow('', null).optional(),
     codigoUsuarioModificacion: Joi.string().max(200).allow('', null).optional(),
     fechaModificacion: Joi.string().max(100).allow('', null).optional()
 });
 
-const SliderInicioDTO = (rawData) => {
-    const { error, value } = SliderInicioSchema.validate(rawData, { abortEarly: false });
+/**
+ * modo 'crear' (por defecto) arma la fila completa; 'actualizar' no toca los datos de creación.
+ * Campos que no son del slider (p. ej. los del formulario de la web) se descartan en vez de rechazar todo (CC-104:
+ * antes, codigoUsuario que agrega el controlador hacía fallar toda creación).
+ */
+const SliderInicioDTO = (rawData, modo = 'crear') => {
+    const { error, value } = SliderInicioSchema.validate(rawData, { abortEarly: false, stripUnknown: true });
 
     if (error) {
         throw {
@@ -37,22 +47,31 @@ const SliderInicioDTO = (rawData) => {
 
     const fechaActual = new Date().toISOString();
 
-    return {
+    const usuario = value.codigoUsuarioModificacion || value.codigoUsuario || value.codigoUsuarioCreacion || 'SISTEMA';
+    const dto = {
         codigoSlider: value.codigoSlider.trim(),
         nombreSlider: value.nombreSlider.trim(),
-        urlSlider: value.urlSlider.trim() || 'no-imagen.png',
+        urlSlider: (value.urlSlider || '').trim() || 'no-imagen.png',
         descripcionSlider: value.descripcionSlider.trim(),
         estadoSlider: value.estadoSlider,
-
-        codigoUsuarioCreacion: value.codigoUsuarioCreacion,
-        fechaCreacion: value.fechaCreacion || fechaActual,
-        codigoUsuarioModificacion: value.codigoUsuarioModificacion || value.codigoUsuarioCreacion,
+        codigoUsuarioModificacion: usuario,
         fechaModificacion: value.fechaModificacion || fechaActual
     };
+    if (modo !== 'actualizar') {
+        dto.codigoUsuarioCreacion = value.codigoUsuarioCreacion || value.codigoUsuario || usuario;
+        dto.fechaCreacion = value.fechaCreacion || fechaActual;
+    }
+    // Solo si vino en la petición: el servicio lo quita si la columna aún no existe (sin la 027)
+    if (Object.prototype.hasOwnProperty.call(rawData || {}, 'codigoAplicacion')) {
+        dto.codigoAplicacion = (value.codigoAplicacion || '').trim() || null;
+    }
+    return dto;
 };
 
-const SliderInicioModel = (sequelize) => {
-    return sequelize.define('PTLSliderInicio', {
+/** conAplicacion: la tabla ya tiene la columna codigoAplicacion (migración 027). Sin ella, el modelo de siempre. */
+const SliderInicioModel = (sequelize, { conAplicacion = false } = {}) => {
+    const columnaApp = conAplicacion ? { codigoAplicacion: { type: DataTypes.STRING(200), allowNull: true } } : {};
+    return sequelize.define(conAplicacion ? 'PTLSliderInicioApp' : 'PTLSliderInicio', {
         sliderId: {
             type: DataTypes.INTEGER,
             autoIncrement: true
@@ -95,7 +114,8 @@ const SliderInicioModel = (sequelize) => {
         fechaModificacion: {
             type: DataTypes.STRING(100),
             allowNull: false
-        }
+        },
+        ...columnaApp
     }, {
         tableName: 'PTLSliderInicio',
         timestamps: false

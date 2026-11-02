@@ -20,6 +20,17 @@ const { Sequelize, DataTypes } = require('sequelize');
 //   }
 // );
 
+// ------------------------------------------------------------------------------------------------------------
+// PRODUCCIÓN (https://porttosapi.porttos.co, primer despliegue 2026-10-29)
+// La conexión es la misma de abajo: cambia solo el .env DEL SERVIDOR, que nunca se sube al repositorio.
+// Aquí no van usuario ni clave reales (este archivo está en git). Llaves que debe tener el .env de producción:
+//   DB_SERVER=<servidor SQL de producción>     DB_PORT=1433
+//   DB_NAME=<base de producción>               DB_USER=<usuario de la aplicación, no sa>
+//   DB_PWD=<clave>                             DB_POOL_MAX=20        DB_LOGGING=false
+//   DB_SYNC=false   (nunca true)
+// Si el SQL de producción exige cifrado (Azure u otro con TLS obligatorio), cambiar abajo encrypt a true y
+// trustServerCertificate a false con un certificado válido.
+// ------------------------------------------------------------------------------------------------------------
 const sequelize = new Sequelize(
   process.env.DB_NAME,
   process.env.DB_USER,

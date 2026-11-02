@@ -6,16 +6,20 @@
       real, marca los campos sin dato en lugar de inventarlos y publica el origen del dato (2026-10-23).
 */
 const virtualGateRepository = require('../../repositories/torre-control/virtual-gate.repository');
+const { contextoPuerto } = require('../../helpers/puerto-contexto.helper');
 const { armarVirtualGate } = require('../../utils/virtual-gate');
 
 class VirtualGateService {
   async obtenerDashboardVirtualGate(puertoInput, ahora = new Date()) {
     const puerto = String(puertoInput || 'BUENAVENTURA').trim().toUpperCase();
+    // El selector manda 'LA_GUAJIRA' o 'PUERTO_ANTIOQUIA' y las citas se guardan con el id del maestro (GUAJIRA, TURBO):
+    // se resuelve con el contexto de puerto (OT-009). Si el puerto no está en el maestro se busca tal cual llegó.
+    const idPuerto = await contextoPuerto(puerto).then((p) => p.idPuerto.toUpperCase()).catch(() => puerto);
 
     const [tabla, filasCrudas, infoBodegas] = await Promise.all([
       virtualGateRepository.resolverTablaCitas().catch(() => null),
-      virtualGateRepository.obtenerCitasPorPuerto(puerto),
-      virtualGateRepository.obtenerSaturacionBodegasPuerto(puerto),
+      virtualGateRepository.obtenerCitasPorPuerto(idPuerto),
+      virtualGateRepository.obtenerSaturacionBodegasPuerto(idPuerto),
     ]);
 
     const virtualGate = armarVirtualGate({

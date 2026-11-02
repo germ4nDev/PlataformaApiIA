@@ -121,6 +121,14 @@ function armarNoticias({ noticias = [], trm = [], eventos = [], alertasClima = [
       lat: C.num(e.lat), lon: C.num(e.lon),
     })).sort((a, b) => String(b.desde).localeCompare(String(a.desde))),
   })).sort((a, b) => ({ rojo: 0, amarillo: 1, verde: 2 }[a.semaforo] - { rojo: 0, amarillo: 1, verde: 2 }[b.semaforo]) || b.eventos - a.eventos);
+  // OT-009: sin eventos activos en la zona del puerto se dice así (dato real de TomTom: cero eventos), no un widget vacío
+  if (!corredores.length && puerto) {
+    corredores.push({
+      // Estado y semáforo que ya pintan web y app (regla 16: todo cambio de widget se ve igual en las dos)
+      corredor: `Accesos a ${String(puerto).replace(/_/g, ' ')}`, ...estadoCorredor([]), eventos: 0,
+      detalle: 'TomTom no reporta eventos viales activos en la zona del puerto', lista: [], sinEventos: true,
+    });
+  }
 
   const severas = alertasClima.filter((a) => Number(a.nivelSeveridad) >= 3).length;
 
@@ -180,4 +188,4 @@ function serieTrm(filas = [], dias = 30) {
   return { labels: ordenados.map(([d]) => d), valores: ordenados.map(([, v]) => v), fuente: filas[0]?.fuente || 'datos.gov.co' };
 }
 
-module.exports = { serieTrm, TEMAS, RETENCION_DIAS, separarMedio, hashTitulo, prepararNoticia, sinRepetidos, estadoCorredor, armarNoticias };
+module.exports = { serieTrm, TEMAS, RETENCION_DIAS, separarMedio, hashTitulo, prepararNoticia, sinRepetidos, estadoCorredor, textoClima, armarNoticias };

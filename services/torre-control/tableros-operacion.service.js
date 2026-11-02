@@ -34,7 +34,7 @@ class TablerosOperacionService {
       this.operacion.avance(p.idPuerto, 'GRANEL', hace24),
       this.operacion.equipos(p.idPuerto, ['GRANEL', 'MULTI']),
       this.capacidadRepo.bodegas(p.idPuerto, p.clave),
-      this.operacion.historico(p.nombre, ahora.getUTCFullYear() - ANIOS_HISTORICO),
+      this.operacion.historico(p.nombre, ahora.getUTCFullYear() - ANIOS_HISTORICO, p.idPuerto),
     ]);
     return armarGranel({
       operaciones, avance, equipos, historico, puerto: p.clave,
@@ -68,7 +68,7 @@ class TablerosOperacionService {
       this.operacion.avance(p.idPuerto, 'RORO', hace24),
       this.operacion.vehiculos(p.idPuerto),
       this.capacidadRepo.nodos(p.idPuerto, 'PATIO_PDI'),
-      this.operacion.historico(p.nombre, ahora.getUTCFullYear() - ANIOS_HISTORICO),
+      this.operacion.historico(p.nombre, ahora.getUTCFullYear() - ANIOS_HISTORICO, p.idPuerto),
     ]);
     return armarCargaSuelta({ folios, roro, avanceRoro, vehiculos, patios, historico, puerto: p.clave }, ahora);
   }

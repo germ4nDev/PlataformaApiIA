@@ -10,6 +10,7 @@ const AlertasRepository = require('../../repositories/torre-control/alertas-clim
 const EventoVialService = require('./evento-vial.service');
 const { EventoVialDTO } = require('../../models/torre-control/evento-vial.model');
 const EV = require('../../utils/eventos-viales');
+const { zonasDePuertos } = require('../../utils/zonas-viales');
 
 class SincronizacionService {
 
@@ -45,7 +46,11 @@ class SincronizacionService {
   async sincronizarEventosViales(opciones = {}) {
     const { dryRun = false } = opciones;
     const ahora = new Date();
-    const { incidentes, zonas } = await FuentesExternas.getEventosVialesPorZona();
+    // OT-009: además de las zonas fijas, una zona de acceso por cada puerto activo que no cubren (utils/zonas-viales.js)
+    const MaritimoRepository = require('../../repositories/torre-control/maritimo.repository');
+    const puertos = await MaritimoRepository.getPuertosActivos().catch(() => []);
+    const zonasExtra = zonasDePuertos(puertos, FuentesExternas.ZONAS_TOMTOM || []);
+    const { incidentes, zonas } = await FuentesExternas.getEventosVialesPorZona(zonasExtra);
     const fallidas = zonas.filter((z) => !z.ok);
     if (zonas.length && fallidas.length === zonas.length) {
       throw new Error(`TomTom no respondió en ninguna zona (${fallidas[0].error}). Revisar TOMTOM_API_KEY y la cuota.`);

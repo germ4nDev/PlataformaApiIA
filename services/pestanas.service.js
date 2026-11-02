@@ -1,6 +1,8 @@
 const { sequelize } = require('../database/connection');
 const { PestanaModel, PestanaDTO } = require('../models/pestana.model');
 const { getIO } = require('../helpers/socket.helper');
+const PestanasMetadatos = require('../repositories/pestanas-metadatos.repository');
+const { conEstilo } = require('../utils/pestanas-estilo');
 
 class PestanaService {
   constructor() {
@@ -22,11 +24,38 @@ class PestanaService {
         ];
       }
 
-      return await this.model.findAll(queryOptions);
+      const pestanas = await this.model.findAll(queryOptions);
+      // OT-008: ícono, color y zona dinámica de la BD (no para la IA, que pide solo cuatro columnas)
+      if (esParaIA) return pestanas;
+      const [estilos, zonas] = await Promise.all([this.estilos(), this.zonas()]);
+      return conEstilo(pestanas, estilos, zonas);
 
     } catch (error) {
       console.error("Error en PestranasService:", error);
       throw error;
+    }
+  }
+
+  /** Ícono y color por pestaña; sin la migración 020 se avisa una vez y se sigue sin ellos (null en cada pestaña). */
+  async estilos() {
+    if (this.sinMigracion020) return {};
+    try {
+      return await PestanasMetadatos.estilos();
+    } catch (error) {
+      if (error?.codigo !== 'MIGRACION_PENDIENTE') throw error;
+      this.sinMigracion020 = true;
+      console.warn(`⚠️ [Pestañas] ${error.msg}: el ícono y el color de cada pestaña salen del código.`);
+      return {};
+    }
+  }
+
+  /** Zona dinámica por pestaña (PTLCfgZonasDinamicas): /api/layout/plantilla no la entrega bien (OT-008). */
+  async zonas() {
+    try {
+      return await PestanasMetadatos.zonas();
+    } catch (error) {
+      console.warn('⚠️ [Pestañas] Zonas dinámicas no disponibles:', error?.message || error);
+      return {};
     }
   }
 
@@ -49,7 +78,10 @@ class PestanaService {
         },
         order: [['orden', 'ASC']]
       });
-      return pestanas;
+      // OT-008 (2026-10-29): ícono y color de la BD (migración 020; sin ella, null y cada cliente usa su respaldo) y la zona
+      // dinámica, que la regla de layout de la web toma de aquí
+      const [estilos, zonas] = await Promise.all([this.estilos(), this.zonas()]);
+      return conEstilo(pestanas, estilos, zonas);
     } catch (error) {
       console.error('❌ Error en obtenerPestanasPorContexto:', error);
       throw error;

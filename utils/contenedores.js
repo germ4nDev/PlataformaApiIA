@@ -10,6 +10,7 @@
         misma fuente de la pestaña Capacidad); si la foto es simulada se dice.
       - Movimientos (TCL_MovimientosContenedor) para la tabla y como respaldo de los KPI cuando no hay inventario.
       - Sin fuente → vacío y explicado en `origen`, nunca un número inventado.
+      - Simulado (OT-009): si el inventario viene con simulado = 1, el origen lo dice y web y app lo rotulan.
 */
 const C = require('./tablero-comun');
 const { origen } = require('./origen-dato');
@@ -153,13 +154,15 @@ function armarContenedores({ movimientos = [], inventario = [], nodos = [], foto
   const movs = movimientos || [];
   const hayInv = inv.length > 0;
   const listaPatios = patios(nodos, fotos, ahoraMs);
+  const invSimulado = inv.some((c) => c.simulado === true || c.simulado === 1);
 
   const oInv = origen({
     fuente: hayInv ? 'TCL_InventarioContenedores' : 'TCL_MovimientosContenedor',
+    simulado: invSimulado,
     periodo: hayInv ? 'Inventario actual en patio' : 'Todos los movimientos registrados',
     nota: hayInv ? null : 'Sin inventario de contenedores en patio para el puerto: los KPI cuentan movimientos',
   }, ahora);
-  const oSinInv = origen({ fuente: 'TCL_InventarioContenedores', periodo: 'Inventario actual en patio', nota: hayInv ? null : 'Sin inventario en patio: no hay vencimientos que mostrar' }, ahora);
+  const oSinInv = origen({ fuente: 'TCL_InventarioContenedores', simulado: invSimulado, periodo: 'Inventario actual en patio', nota: hayInv ? null : 'Sin inventario en patio: no hay vencimientos que mostrar' }, ahora);
   const oPatios = origen({
     fuente: 'TCL_CapacidadNodos + TCL_OcupacionNodos',
     simulado: listaPatios.some((p) => p.simulado),

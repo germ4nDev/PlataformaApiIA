@@ -29,7 +29,7 @@ DECLARE @nombre NVARCHAR(150) = N'Analista IA';
 DECLARE @descripcion NVARCHAR(4000) = N'Alertas tempranas del analista IA para el puerto del filtro: qué puede pasar, en cuántas horas, con qué confianza y con qué evidencia. Tendencias, resumen del turno y botones «Útil» / «No era».';
 
 -- Pestaña → código del widget y widget de referencia (el de menor código de la pestaña, sin contar los de IA)
-DECLARE @pestanas TABLE (codigoPestana NVARCHAR(200), codigo NVARCHAR(200), referencia NVARCHAR(200), baseY INT);
+DECLARE @pestanas TABLE (codigoPestana NVARCHAR(200) COLLATE DATABASE_DEFAULT, codigo NVARCHAR(200) COLLATE DATABASE_DEFAULT, referencia NVARCHAR(200) COLLATE DATABASE_DEFAULT, baseY INT);
 INSERT INTO @pestanas (codigoPestana, codigo, referencia, baseY)
 SELECT p.codigoPestana,
        LEFT(CONCAT(N'PTT_IA_ANALISTA_', REPLACE(REPLACE(p.codigoPestana, N'TLC_', N''), N'_001', N'')), 200),

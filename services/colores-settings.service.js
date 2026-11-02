@@ -25,7 +25,9 @@ class ColoresSettingsService {
    * Crea una configuración de colores
    */
   async createColorSetting(rawData) {
+    console.log('colores service antes', rawData);
     const dataDTO = ColorSettingsDTO(rawData);
+    console.log('colores service despues', dataDTO);
 
     return await sequelize.transaction(async (t) => {
       const nuevoColor = await this.model.create(dataDTO, { transaction: t });

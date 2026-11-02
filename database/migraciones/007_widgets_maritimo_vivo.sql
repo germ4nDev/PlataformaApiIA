@@ -31,7 +31,7 @@ BEGIN
   RETURN;
 END
 
-DECLARE @nuevos TABLE (codigo NVARCHAR(200), nombre NVARCHAR(150), descripcion NVARCHAR(4000), cols INT, filas INT, x INT, y INT);
+DECLARE @nuevos TABLE (codigo NVARCHAR(200) COLLATE DATABASE_DEFAULT, nombre NVARCHAR(150) COLLATE DATABASE_DEFAULT, descripcion NVARCHAR(4000) COLLATE DATABASE_DEFAULT, cols INT, filas INT, x INT, y INT);
 INSERT INTO @nuevos VALUES
   (N'PTT_MAE_VIVO_KPIS',        N'Operación marítima en vivo',
    N'Fondeadas ahora, ocupación de muelles, llegadas 24 h, espera p90 en fondeo y naves en zona (AIS + DIMAR).', 12, 2, 0, 0),

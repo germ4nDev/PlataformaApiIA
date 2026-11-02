@@ -8,6 +8,7 @@ const path = require('path');
 const ExternalIntegrationService = require('../../adapters/fuentes-externas.adapter');
 const MaritimoRepository = require('../../repositories/torre-control/mapa-general.repository');
 const { cajaPuerto, MARGEN } = require('../../helpers/caja-puerto.helper');
+const { estadoSenalAis } = require('../../utils/senal-ais');
 
 class MapaGeneralService {
   constructor(repository) {
@@ -159,12 +160,24 @@ class MapaGeneralService {
   // ==========================================
   // 5. CAPA NAVES
   // ==========================================
-  /** @param {string} [puerto] filtro opcional del tablero (agregado 2026-10-18) */
+  /**
+   * @param {string} [puerto] filtro opcional del tablero (agregado 2026-10-18)
+   * `senal` (2026-10-29, OT-007): con puerto, si la capa sale vacía dice desde cuándo no reporta el AIS en su caja.
+   */
   async getCapaNaves(puerto) {
     try {
       const caja = await cajaPuerto(puerto, MARGEN.MARITIMO);
       const naves = await this.repository.getUltimasPosicionesNaves({ caja });
-      return { success: true, data: naves };
+      // OT-009: las naves simuladas (MMSI 'SIM…', nombre 'SIM · …') se dibujan, pero no cuentan como señal AIS en vivo
+      const esSimulada = (f) => String(f?.properties?.mmsi || '').startsWith('SIM');
+      const cuantas = (naves?.features || []).filter((f) => !esSimulada(f)).length;
+      const simuladas = (naves?.features || []).length - cuantas;
+      if (!caja) return { success: true, data: naves, senal: null };
+      let ultima = null;
+      if (cuantas === 0) {
+        try { ultima = await this.repository.getUltimaSenalAis({ caja }); } catch (e) { console.warn('⚠️ [Naves] Sin fecha de última señal AIS:', e.message); }
+      }
+      return { success: true, data: naves, senal: { ...estadoSenalAis({ naves: cuantas, ultima, ahora: new Date() }), simuladas } };
     } catch (error) {
       console.error('❌ [Naves] Error en Capa Naves:', error);
       throw new Error('Fallo al generar la capa de naves.');

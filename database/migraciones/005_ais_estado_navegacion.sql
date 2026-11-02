@@ -39,7 +39,7 @@ DECLARE @sql nvarchar(max), @tabla sysname, @columna sysname, @nulo bit, @df sys
 BEGIN TRANSACTION;
 
 -- 0. Compatibilidad: columnas DATETIMEOFFSET de la primera versión → NVARCHAR(100) ISO ----
-DECLARE @conv TABLE (tabla sysname, columna sysname, nulo bit);
+DECLARE @conv TABLE (tabla sysname COLLATE DATABASE_DEFAULT, columna sysname COLLATE DATABASE_DEFAULT, nulo bit);
 INSERT INTO @conv
 SELECT OBJECT_NAME(c.object_id), c.name, c.is_nullable
 FROM sys.columns c JOIN sys.types t ON t.user_type_id = c.user_type_id

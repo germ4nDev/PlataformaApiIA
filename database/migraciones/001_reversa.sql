@@ -12,7 +12,7 @@ BEGIN
 END
 SET XACT_ABORT ON;
 IF OBJECT_ID('tempdb..#mapeo') IS NOT NULL DROP TABLE #mapeo;
-CREATE TABLE #mapeo (anterior sysname NOT NULL, nuevo sysname NOT NULL);
+CREATE TABLE #mapeo (anterior sysname COLLATE DATABASE_DEFAULT NOT NULL, nuevo sysname COLLATE DATABASE_DEFAULT NOT NULL);
 -- Mapeo de nombres (idéntico en 001, 001_reversa y 003)
 -- Mapeo único de nombres (incluido por 001, 001_reversa y 003). Convención: Prefijo_NombreTabla en PascalCase.
 INSERT INTO #mapeo (anterior, nuevo) VALUES

@@ -5,14 +5,12 @@
       su layout guardado (dbo.PTLLayouts) o, si no tiene, el layout por defecto (dbo.PTLWidgetsMaestro inicial = 1).
       Cada código de widget de la web tiene aquí su versión para el teléfono (kpis | lista | grafica | analista | mapa),
       armada con los mismos datos que usa la web. Sin base de datos ni red.
-        ordenarLayout(filas, { zonaY })      orden de lectura (y, luego x), sin duplicados; las tarjetas de terminal
-                                             (TERM_SLOT_n) se vuelven una sola lista «Terminales»
+        codigoMovil(celda)                   código de la app para una celda (TERM_SLOT_n → TERMINAL_n)
         fuentesDeLayout(codigos)             qué fuentes hay que consultar
-        armarWidgets({ codigos, fuentes, filas, series, nombres })
-          → { widgets, soloWeb: [{ codigo, nombre }], sinDatos: [codigo] }
-          Las tarjetas KPI seguidas se agrupan en un bloque (la cuadrícula de 2 columnas del teléfono).
-      Un widget sin versión móvil va a soloWeb (la app lo dice); uno cuyo dato no llegó va a sinDatos y se pinta como
-      tarjeta `vacio` con su título (no se inventa un valor).
+        armarWidgets({ celdas, fuentes, filas, series, nombres })
+          → { widgets (uno por celda, con su celda), sinDatos: [codigo], sinVersionMovil: [codigo] }
+      Las celdas salen de utils/layout/layout-efectivo.js (la misma regla de la web, OT-008). Todo widget del layout
+      aparece: sin versión móvil o sin dato, como tarjeta `vacio` con su título (no se inventa un valor).
 */
 const { CATALOGO_KPI } = require('../ia/catalogo-kpi');
 const {
@@ -319,7 +317,12 @@ const CATALOGO = {
   ...Object.fromEntries(Object.entries(CONT_KPI).map(([cod, k]) => [cod, KPI_DE('contenedores', (f) => f.kpis?.[k])])),
   PTT_CONT_CHRT_RETIROS: W('contenedores', (c) => grafica(c.fuentes.contenedores.retirosPriorizacion, { id: c.codigo, titulo: c.nombre || 'Retiros por día', forma: 'barras', unidad: 'contenedores' })),
   PTT_CONT_CHRT_NAVIERA: W('contenedores', (c) => grafica(c.fuentes.contenedores.vaciosNaviera, { id: c.codigo, titulo: c.nombre || 'Vacíos por naviera', forma: 'barras', unidad: 'contenedores' })),
-  PTT_CONT_CHRT_FREETIME: W('contenedores', (c) => grafica(c.fuentes.contenedores.freeTimeDistribucion, { id: c.codigo, titulo: c.nombre || 'Free time', forma: 'barras', unidad: 'contenedores' })),
+  // Corregido 2026-10-29 (OT-009, regla 16): freeTimeDistribucion trae series como lista de números ({ labels, series: [n…] })
+  PTT_CONT_CHRT_FREETIME: W('contenedores', (c) => {
+    const f = c.fuentes.contenedores.freeTimeDistribucion;
+    const dato = f && Array.isArray(f.series) && f.series.every((v) => typeof v === 'number') ? { labels: f.labels, valores: f.series } : f;
+    return grafica(dato, { id: c.codigo, titulo: c.nombre || 'Free time', forma: 'barras', unidad: 'contenedores' });
+  }),
   PTT_CONT_PANEL_PATIOS: W('contenedores', (c) => lista(c.fuentes.contenedores.saturacionPatios, { id: c.codigo, titulo: c.nombre || 'Saturación de patios' })),
   PTT_CONT_TAB_MOVIMIENTOS: W('contenedores', (c) => lista(c.fuentes.contenedores.movimientos, { id: c.codigo, titulo: c.nombre || 'Movimientos' }, (m) => ({
     titulo: texto(m.contenedor), detalle: [texto(m.operacion), texto(m.naviera), texto(m.tipo)].filter(Boolean).join(' · '), valor: texto(m.estado), estado: 'neutro',
@@ -327,11 +330,18 @@ const CATALOGO = {
 
   // ---------------- Bodegas
   ...Object.fromEntries(Object.entries(BOD_KPI).map(([cod, k]) => [cod, KPI_DE('bodegas', (f) => f.kpis?.[k])])),
+  // Corregido 2026-10-29 (OT-009, regla 16): el API entrega las filas de TCL_MaestroBodegas (ocupacion_pct, nombre_bodega) y el
+  // flujo como { categorias, entradas, salidas }; la app buscaba otros nombres y estos dos widgets salían vacíos (la web sí los veía)
   PTT_BOD_PANEL_SATURACION: W('bodegas', (c) => lista(c.fuentes.bodegas.saturacionBodegas, { id: c.codigo, titulo: c.nombre || 'Ocupación de bodegas', subtitulo: 'Las más llenas primero' }, (x) => {
-    const p = num(x.ocupacionPct ?? x.porcentaje);
-    return { titulo: texto(x.nombre || x.codigo), valor: p, unidad: '%', progreso: p, estado: estadoPorPct(p) };
+    const p = num(x.ocupacion_pct ?? x.ocupacionPct ?? x.porcentaje);
+    return { titulo: texto(x.nombre_bodega || x.nombre || x.codigo_bodega || x.codigo), valor: p, unidad: '%', progreso: p, estado: estadoPorPct(p) };
   })),
-  PTT_BOD_CHRT_FLUJO: W('bodegas', (c) => grafica(c.fuentes.bodegas.flujoEntradasSalidas, { id: c.codigo, titulo: c.nombre || 'Entradas y salidas', forma: 'barras', unidad: 't' })),
+  PTT_BOD_CHRT_FLUJO: W('bodegas', (c) => {
+    const f = c.fuentes.bodegas.flujoEntradasSalidas;
+    const dato = f && Array.isArray(f.entradas)
+      ? { labels: f.categorias || f.labels, series: [{ nombre: 'Recibo', valores: f.entradas }, { nombre: 'Despacho', valores: f.salidas || [] }] } : f;
+    return grafica(dato, { id: c.codigo, titulo: c.nombre || 'Entradas y salidas', forma: 'barras', unidad: 't' });
+  }),
   PTT_BOD_CHRT_CARGA: W('bodegas', (c) => grafica(c.fuentes.bodegas.distribucionPorCarga, { id: c.codigo, titulo: c.nombre || 'Inventario por tipo de carga', forma: 'dona', unidad: 't' })),
   PTT_BOD_TAB_MOVIMIENTOS: W('bodegas', (c) => lista(c.fuentes.bodegas.movimientosBodega, { id: c.codigo, titulo: c.nombre || 'Movimientos de bodega' }, (m) => ({
     titulo: texto(m.nombre_bodega || m.bodega || m.codigo_bodega || m.id_movimiento),
@@ -347,8 +357,10 @@ const CATALOGO = {
   ...Object.fromEntries(Object.entries(GNL_COMPONENTES).map(([cod, [titulo, subtitulo]]) => [cod, W(null, (c) => ({
     tipo: 'componente', id: c.codigo, codigo: c.codigo, titulo: texto(c.nombre) || titulo, subtitulo,
   }))])),
+  // Corregido 2026-10-29 (OT-009, regla 16): las barras se recortan a 12; con la serie de 24 h quedaban las 12 más viejas
+  // y la app no veía las alarmas recientes que la web sí muestra. Se pasan las últimas 12 horas.
   PTT_GNL_CHART_ALM_EVENT: W('gnl', (c) => (Array.isArray(c.fuentes.gnl.alarmas)
-    ? grafica({ labels: c.fuentes.gnl.labels, valores: c.fuentes.gnl.alarmas }, { id: c.codigo, titulo: c.nombre || 'Alarmas por hora', forma: 'barras', unidad: 'alarmas' }) : null)),
+    ? grafica({ labels: (c.fuentes.gnl.labels || []).slice(-12), valores: c.fuentes.gnl.alarmas.slice(-12) }, { id: c.codigo, titulo: c.nombre || 'Alarmas por hora', forma: 'barras', unidad: 'alarmas' }) : null)),
 
   // ---------------- Granel · Carga suelta · Capacidad · Noticias (tableros /api/tableros; sus KPI vienen con el código)
   PTT_GRA_TAB_MOTONAVES: W('granel', (c) => lista(c.fuentes.granel.motonaves, { id: c.codigo, titulo: c.nombre || 'Motonaves de granel' }, (m) => ({
@@ -446,31 +458,6 @@ function definicion(codigo) {
 
 const tieneVersionMovil = (codigo) => definicion(codigo) !== null;
 
-/**
- * Orden de lectura del layout de la web: de arriba abajo (y) y de izquierda a derecha (x).
- * - Duplicados de un mismo código: queda el primero.
- * - TERM_SLOT_n (una tarjeta por terminal en la web) → un solo 'TERMINALES' donde estaba la primera.
- * - zonaY: en el layout por defecto de Marítimo las terminales no están en la plantilla (las arma la zona dinámica);
- *   si no hay ninguna tarjeta de terminal, «Terminales» se ubica en esa fila.
- * @param {Array<{ codigoWidget, x, y }>} filas
- * @returns {string[]} códigos en orden
- */
-function ordenarLayout(filas, { zonaY = null } = {}) {
-  const lista = (Array.isArray(filas) ? filas : [])
-    .map((f, i) => ({ codigo: resolver(f.codigoWidget), x: num(f.x) ?? 0, y: num(f.y) ?? 0, i }))
-    .filter((f) => f.codigo);
-  if (num(zonaY) !== null && lista.length && !lista.some((f) => f.codigo === 'TERMINALES')) {
-    lista.push({ codigo: 'TERMINALES', x: -1, y: num(zonaY), i: -1 });
-  }
-  lista.sort((a, b) => a.y - b.y || a.x - b.x || a.i - b.i);
-  const vistos = new Set();
-  return lista.filter((f) => {
-    if (vistos.has(f.codigo)) return false;
-    vistos.add(f.codigo);
-    return true;
-  }).map((f) => f.codigo);
-}
-
 /** Fuentes que hay que consultar para esos códigos (sin repetir). */
 function fuentesDeLayout(codigos) {
   const s = new Set();
@@ -481,80 +468,35 @@ function fuentesDeLayout(codigos) {
   return [...s];
 }
 
-/** Agrupa KPI sueltos seguidos en un solo bloque (cuadrícula). */
-function agruparKpis(widgets) {
-  const salida = [];
-  for (const w of widgets) {
-    const suelto = w.tipo === 'kpis' && !w.titulo;
-    const previo = salida[salida.length - 1];
-    if (suelto && previo?.agrupable) {
-      previo.items.push(...w.items);
-      continue;
-    }
-    salida.push(suelto ? { ...w, id: `kpis.${w.id}`, titulo: 'Indicadores', agrupable: true, items: [...w.items] } : w);
-  }
-  return salida.map(({ agrupable, ...w }) => w);
+/**
+ * Código con el que la app arma una celda del layout efectivo: las tarjetas de terminal (TERM_SLOT_n) son TERMINAL_n.
+ * @param {{ codigo: string, idClon?: string }} celda
+ */
+function codigoMovil(celda) {
+  const m = /^TERM_SLOT_(\d+)$/.exec(String(celda?.idClon || ''));
+  return m ? `TERMINAL_${m[1]}` : norm(celda?.codigo);
 }
 
 /**
- * Celdas del layout de la web (x, y, cols, rows) para la rejilla tipo gridster de la app (fase A, 2026-10-25).
- * Las tarjetas de terminal (TERM_SLOT_n en el layout del usuario, o la zona dinámica en el por defecto) se rehacen para las
- * terminales que tiene el puerto, como la web: TERMINAL_0…N-1 con el tamaño de la tarjeta y de a `maxItemsPorFila` por fila.
- * Lo que está debajo de esa zona se corre lo que crezca o se encoja. La app reparte las celdas sin dejar espacios vacíos.
- * @param {Array<{ codigoWidget, x, y, cols, rows }>} filas
- * @param {{ zona?: { inicioX, inicioY, colsPorItem, rowsPorItem, maxItemsPorFila }, terminales?: number }} opciones
- * @returns {Array<{ codigo, x, y, cols, rows }>} en orden de lectura
+ * Un widget por celda del layout efectivo (OT-008): todos aparecen en su lugar, como en la web.
+ * Sin versión para el teléfono (sinVersionMovil) o sin dato (sinDatos): tarjeta 'vacio' con su título; nunca un valor inventado.
+ * @param {{ celdas: Array<{ codigo, x, y, cols, rows }>, fuentes: Object, filas?: Array, series?: Map, nombres?: Object }} p
  */
-function celdasDeLayout(filas, { zona = null, terminales = 0 } = {}) {
-  const base = (Array.isArray(filas) ? filas : []).map((f) => ({
-    codigo: norm(f.codigoWidget), x: num(f.x) ?? 0, y: num(f.y) ?? 0, cols: Math.max(1, num(f.cols) ?? 4), rows: Math.max(1, num(f.rows) ?? 3),
-  })).filter((f) => f.codigo);
-  const vistos = new Set();
-  const unicos = base.filter((f) => (vistos.has(f.codigo) ? false : (vistos.add(f.codigo), true)));
-  const slots = unicos.filter((f) => /^TERM_SLOT_\d+$/.test(f.codigo));
-  let resto = unicos.filter((f) => !/^TERM_SLOT_\d+$/.test(f.codigo));
-  let z = null;
-  if (slots.length) {
-    const ini = Math.min(...slots.map((f) => f.y));
-    z = { x: Math.min(...slots.map((f) => f.x)), y: ini, cw: slots[0].cols, rh: slots[0].rows,
-      porFila: Math.max(1, Math.floor(12 / slots[0].cols)), alto: Math.max(...slots.map((f) => f.y + f.rows)) - ini };
-  } else if (zona && num(zona.inicioY) !== null) {
-    z = { x: num(zona.inicioX) ?? 0, y: num(zona.inicioY), cw: num(zona.colsPorItem) || 4, rh: num(zona.rowsPorItem) || 3,
-      porFila: num(zona.maxItemsPorFila) || 3, alto: 0 };
-  }
-  const tarjetas = [];
-  if (z) {
-    const n = Math.max(0, Math.floor(num(terminales) || 0));
-    const nuevoAlto = Math.ceil(n / z.porFila) * z.rh;
-    const corrimiento = nuevoAlto - z.alto;
-    resto = resto.map((f) => (f.y >= z.y + z.alto && corrimiento ? { ...f, y: f.y + corrimiento } : f));
-    for (let i = 0; i < n; i++) {
-      tarjetas.push({ codigo: `TERMINAL_${i}`, x: z.x + (i % z.porFila) * z.cw, y: z.y + Math.floor(i / z.porFila) * z.rh, cols: z.cw, rows: z.rh });
-    }
-  }
-  return [...resto, ...tarjetas].sort((a, b) => a.y - b.y || a.x - b.x);
-}
-
-/**
- * Widgets móviles de un layout.
- * @param {{ codigos: string[], fuentes: Object, filas?: Array, series?: Map, nombres?: Object<codigo, nombreWidget> }} p
- */
-function armarWidgets({ codigos = [], celdas = null, fuentes = {}, filas = [], series = new Map(), nombres = {} }) {
+function armarWidgets({ celdas = [], fuentes = {}, filas = [], series = new Map(), nombres = {} }) {
   const widgets = [];
-  const soloWeb = [];
   const sinDatos = [];
+  const sinVersionMovil = [];
   const nombreDe = (c) => texto(nombres[c]);
-  // Con celdas (rejilla tipo gridster): cada widget lleva la suya y los KPI no se agrupan (cada uno ocupa su celda, como en la web)
-  const celdaDe = new Map((celdas || []).map((c) => [c.codigo, { x: c.x, y: c.y, cols: c.cols, rows: c.rows }]));
-  const lista = celdas ? celdas.map((c) => c.codigo) : codigos;
-  for (const original of lista) {
+  for (const cel of celdas) {
+    const original = norm(cel.codigo);
+    const celda = { x: cel.x, y: cel.y, cols: cel.cols, rows: cel.rows };
     const d = definicion(original);
     if (!d) {
-      const c = norm(original);
-      soloWeb.push({ codigo: c, nombre: nombreDe(c) || c });
+      sinVersionMovil.push(original);
+      widgets.push({ tipo: 'vacio', id: original, codigo: original, titulo: nombreDe(original) || TITULO_RESPALDO[original] || humanizar(original), sinVersionMovil: true, celda });
       continue;
     }
-    const nombre = nombreDe(norm(original)) || nombreDe(d.codigo);
+    const nombre = nombreDe(original) || nombreDe(d.codigo);
     let w = null;
     if (!d.fuente || fuentes[d.fuente]) {
       try {
@@ -569,13 +511,12 @@ function armarWidgets({ codigos = [], celdas = null, fuentes = {}, filas = [], s
       sinDatos.push(d.codigo);
       w = { tipo: 'vacio', id: d.codigo, titulo: nombre || TITULO_RESPALDO[d.codigo] || humanizar(d.codigo) };
     }
-    const celda = celdaDe.get(norm(original));
-    widgets.push({ ...w, codigo: d.codigo, ...(celda ? { celda } : {}) });
+    widgets.push({ ...w, codigo: d.codigo, celda });
   }
-  return { widgets: celdas ? widgets : agruparKpis(widgets), soloWeb, sinDatos };
+  return { widgets, sinDatos, sinVersionMovil };
 }
 
 module.exports = {
   ALIAS, SERIE_DE, FOCO_ANALISTA, GNL_VIVO, GNL_COMPONENTES, CATALOGO, PREFIJO_TABLERO, MAX_ITEMS,
-  resolver, definicion, tieneVersionMovil, ordenarLayout, celdasDeLayout, fuentesDeLayout, agruparKpis, armarWidgets, itemGenerico, humanizar, TITULO_RESPALDO,
+  resolver, definicion, tieneVersionMovil, codigoMovil, fuentesDeLayout, armarWidgets, itemGenerico, humanizar, TITULO_RESPALDO,
 };

@@ -65,7 +65,7 @@ const ColorSettingsModel = (sequelize) => {
             autoIncrement: true
         },
         codigoColorSetting: {
-            type: DataTypes.STRING(50),
+            type: DataTypes.STRING(200),
             primaryKey: true,
             allowNull: false
         },

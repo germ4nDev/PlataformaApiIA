@@ -345,7 +345,7 @@ DECLARE @referencia NVARCHAR(200) = (SELECT TOP (1) codigoWidget FROM dbo.PTLWid
 IF @referencia IS NULL
   SELECT TOP (1) @referencia = codigoWidget FROM dbo.PTLWidgetsMaestro WHERE codigoWidget LIKE N'PTT[_]%' ORDER BY codigoWidget;
 
-DECLARE @w TABLE (pestana NVARCHAR(200), codigo NVARCHAR(200), nombre NVARCHAR(150), descripcion NVARCHAR(4000), cols INT, filas INT, x INT, y INT);
+DECLARE @w TABLE (pestana NVARCHAR(200) COLLATE DATABASE_DEFAULT, codigo NVARCHAR(200) COLLATE DATABASE_DEFAULT, nombre NVARCHAR(150) COLLATE DATABASE_DEFAULT, descripcion NVARCHAR(4000) COLLATE DATABASE_DEFAULT, cols INT, filas INT, x INT, y INT);
 INSERT INTO @w VALUES
   -- Granel
   (N'TLC_GRANEL_001', N'PTT_GRA_KPI_AGRICOLA', N'Granel agrícola', N'Toneladas de granel agrícola operadas hoy (maíz, soya, trigo, cebada).', 3, 2, 0, 0),

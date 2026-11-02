@@ -15,13 +15,15 @@ const MMBTU_POR_M3 = 22.4;
 const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 
 function consolidar(lecturas = []) {
+  // Por puerto y brazo (OT-009, 2026-10-29): con el pulso en varios puertos, el mismo código de brazo existe en cada uno
   const porBrazo = new Map();
   for (const l of lecturas) {
-    const k = l.codigo_segmento || 'SIN_BRAZO';
+    const k = `${l.id_puerto || ''}|${l.codigo_segmento || 'SIN_BRAZO'}`;
     if (!porBrazo.has(k)) porBrazo.set(k, []);
     porBrazo.get(k).push(l);
   }
-  return [...porBrazo.entries()].map(([codigo, ls]) => {
+  return [...porBrazo.entries()].map(([k, ls]) => {
+    const codigo = k.slice(k.indexOf('|') + 1);
     const orden = [...ls].sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp));
     let volumen = 0;
     let bog = 0;

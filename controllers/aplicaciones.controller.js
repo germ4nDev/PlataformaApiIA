@@ -51,8 +51,7 @@ const getAplicacionByCode = async (req, res = response) => {
 const createAplicacion = async (req, res = response) => {
     try {
         // QPLUS: Inyección del contexto de auditoría antes del servicio
-        const codigoUsuarioCreacion = req.body?.codigoUsuarioCreacion || 'SISTEMA';
-        const dataDTO = { ...req.body, codigoUsuarioCreacion };
+        const dataDTO = { ...req.body };
         // console.log('dataDTO', dataDTO);
 
         const aplicacionDB = await service.crearAplicacion(dataDTO);

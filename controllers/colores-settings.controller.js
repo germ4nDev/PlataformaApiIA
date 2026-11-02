@@ -35,8 +35,9 @@ const getColorSettingById = async (req, res = response) => {
 const createColorSetting = async (req, res = response) => {
   try {
     // QPLUS: Inyección de auditoría
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-    const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+    console.log('req controller', req.body);
+    const dataDTO = { ...req.body };
+    console.log('colores controller', dataDTO);
 
     const colorNav = await service.createColorSetting(dataDTO);
     return res.status(201).json({ ok: true, colorNav });

@@ -144,6 +144,9 @@ const WidgetMaestroSchema = Joi.object({
   offsetY: Joi.number().integer().min(0).max(12).required().default(0),
 
   estadoWidget: Joi.boolean().required().default(true),
+  // Widget para el teléfono (migración 028): solo lo muestra la app en el teléfono; la web y la tableta no lo ofrecen.
+  // Opcional: si no viene, al crear queda false y al actualizar no se toca (las otras aplicaciones no lo envían).
+  movil: Joi.boolean().optional(),
   codigoUsuarioCreacion: Joi.string().max(200).allow('', null).optional(),
   fechaCreacion: Joi.string().max(100).allow('', null).optional(),
   codigoUsuarioModificacion: Joi.string().max(200).allow('', null).optional(),
@@ -170,8 +173,10 @@ const WidgetMaestroDTO = (rawData, userContext = { codigoUsuario: 'SISTEMA_ADMIN
     codigoWidget: value.codigoWidget.trim().toUpperCase(),
     codigoTipo: value.codigoTipo.trim().toUpperCase(),
     codigoPestana: value.codigoPestana.trim().toUpperCase(),
-    codigoAplicacion: value.codigoAplicacion.trim().toUpperCase(),
-    codigoSuite: value.codigoSuite.trim().toUpperCase(),
+    // Identificadores (GUID) en minúsculas, como en PTLAplicaciones, PTLPestanas y PTLRolesAP: en mayúsculas el widget no
+    // coincidía con los roles de su aplicación y la asignación de roles salía vacía (OT-015, CC-113)
+    codigoAplicacion: value.codigoAplicacion.trim().toLowerCase(),
+    codigoSuite: value.codigoSuite.trim().toLowerCase(),
     nombreWidget: value.nombreWidget.trim(),
     descripcionWidget: value.descripcionWidget ? value.descripcionWidget.trim() : '',
     imagenWidget_light: value.imagenWidget_light ? value.imagenWidget_light.trim() : 'no-widget.png',
@@ -186,6 +191,7 @@ const WidgetMaestroDTO = (rawData, userContext = { codigoUsuario: 'SISTEMA_ADMIN
     anclajeTipo: value.anclajeTipo.trim().toUpperCase(),
     offsetY: value.offsetY,
     estadoWidget: value.estadoWidget,
+    ...(value.movil === undefined ? {} : { movil: value.movil }),
 
     codigoUsuarioCreacion: usuarioBase,
     fechaCreacion: value.fechaCreacion || fechaActual,
@@ -218,6 +224,8 @@ const WidgetMaestroModel = (sequelize) => {
       anclajeTipo: { type: DataTypes.STRING(100), allowNull: false },
       offsetY: { type: DataTypes.INTEGER, defaultValue: 0 },
       estadoWidget: { type: DataTypes.BOOLEAN, defaultValue: true },
+      // Migración 028 (requisito: correrla ANTES de desplegar este API; sin la columna fallan las consultas del maestro).
+      movil: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
 
       codigoUsuarioCreacion: { type: DataTypes.STRING(200), allowNull: true },
       fechaCreacion: { type: DataTypes.STRING(100), allowNull: true },

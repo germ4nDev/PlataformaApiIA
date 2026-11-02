@@ -25,7 +25,7 @@ const obtenerCapaClima = manejar('Mapa.clima', async (req, res) => {
 
 const obtenerCapaNaves = manejar('Mapa.naves', async (req, res) => {
   const resultado = await servicio().getCapaNaves(req.query.puerto);
-  res.status(200).json({ success: true, data: resultado.data });
+  res.status(200).json({ success: true, data: resultado.data, senal: resultado.senal ?? null });
 });
 
 const diagnosticarEsquemas = manejar('Mapa.diagnostico', async (req, res) => {

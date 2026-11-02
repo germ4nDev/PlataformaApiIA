@@ -70,7 +70,8 @@ const verificarClaveActual = async (req, res = response) => {
 
 const renewToken = async (req, res = response) => {
   try {
-    const uid = req.uid; // Asumiendo que viene de un middleware previo que valida el JWT
+    // validarJWT deja req.codigoUsuario (antes se leía req.uid, que no existe: renew respondía 500; OT-014)
+    const uid = req.codigoUsuario;
     const { usuario, token } = await service.renovarToken(uid);
 
     return res.status(200).json({

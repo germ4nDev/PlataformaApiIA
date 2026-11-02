@@ -168,7 +168,9 @@ class FuentesExternasAdapter {
 
       const resultado = {
         nivel: proximaPleamar.height.toFixed(2) + ' m',
-        hora: new Date(proximaPleamar.dt * 1000).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+        hora: new Date(proximaPleamar.dt * 1000).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
+        // OT-011: los extremos con fecha ISO y tipo, para que el portal elija la pleamar que aún no pasa (la caché dura 6 h)
+        extremos: data.map((e) => ({ tipo: e.type, fechaIso: new Date(e.dt * 1000).toISOString(), altura: e.height })),
       };
 
       apiCache.set(cacheKey, resultado, 21600);
@@ -186,13 +188,14 @@ class FuentesExternasAdapter {
    * Incidentes vigentes de TomTom por zona logística (cajas < 10.000 km²), con el resultado de cada zona.
    * El ciclo de vida (utils/eventos-viales.js) solo cierra eventos de las zonas que respondieron bien.
    * Pide startTime, endTime, lastReportTime y delay; timeValidityFilter=present (solo lo vigente ahora).
+   * zonasExtra (OT-009): zonas de acceso de los puertos que las fijas no cubren (utils/zonas-viales.js, las arma el servicio).
    * @returns {Promise<{incidentes: Array<{zona: object, item: object}>, zonas: Array<{nombre, bbox, corredor, ok, error}>}>}
    */
-  static async getEventosVialesPorZona() {
-    const cacheKey = 'vias_tomtom_por_zona';
+  static async getEventosVialesPorZona(zonasExtra = []) {
+    const cacheKey = `vias_tomtom_por_zona_${zonasExtra.map((z) => z.nombre).join('|')}`;
     if (apiCache.has(cacheKey)) return apiCache.get(cacheKey);
 
-    const resultados = await Promise.all(ZONAS_TOMTOM.map((zona) =>
+    const resultados = await Promise.all([...ZONAS_TOMTOM, ...zonasExtra].map((zona) =>
       http.get('https://api.tomtom.com/traffic/services/5/incidentDetails', {
         params: {
           key: process.env.TOMTOM_API_KEY,

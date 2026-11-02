@@ -21,6 +21,7 @@ const AlertasMapaService = require('../services/torre-control/alertas-mapa.servi
 const RecorridoMapaService = require('../services/torre-control/recorrido-mapa.service');
 const SimuladorFlotaService = require('../services/torre-control/simulador-flota.service');
 const SimuladorOperacionService = require('../services/torre-control/simulador-operacion.service');
+const HistoricosSupertransporteService = require('../services/torre-control/historicos-supertransporte.service');
 const NoticiasService = require('../services/torre-control/noticias.service');
 const FotoOperativaService = require('../services/ia/foto-operativa.service');
 const AnalistaService = require('../services/ia/analista.service');
@@ -146,10 +147,18 @@ const JOBS = [
     tarea: async () => { await NoticiasService.limpiar(); await SimuladorOperacionService.limpiar(); return 0; },
   },
   {
-    // Operación simulada de granel, Ro-Ro, vehículos, carga suelta y capacidad mientras no llegue la ingesta real
-    // (SIMULADOR_OPERACION_PUERTOS, por defecto BUENAVENTURA). Apagado en producción por defecto.
+    // Históricos mensuales de Supertransporte (datos.gov.co, dato real oficial; OT-009): toneladas por tipo de carga de cada
+    // puerto activo de los últimos 3 años en TCL_HistoricosSupertransporte. La fuente publica con rezago: una vez al día basta.
+    clave: 'historicos-supertransporte', nombre: '📚 Históricos de Supertransporte', horario: '20 4 * * *',
+    activo: true, timeoutMs: 10 * MINUTO,
+    tarea: async () => (await HistoricosSupertransporteService.sincronizar()).filas,
+  },
+  {
+    // Operación simulada de granel, Ro-Ro, vehículos, carga suelta, capacidad y citas del gate mientras no llegue la
+    // ingesta real, en todos los puertos activos (o SIMULADOR_OPERACION_PUERTOS). Encendido también en producción
+    // (OT-009, decisión del usuario 2026-10-29): se apaga por dominio con SIMULADOS_<DOMINIO>=false.
     clave: 'simulador-operacion', nombre: '🔄 Simulación de operación portuaria', horario: '*/5 * * * *',
-    activo: !esProduccion, timeoutMs: 4 * MINUTO, soloFallos: true,
+    activo: true, timeoutMs: 4 * MINUTO, soloFallos: true,
     tarea: () => SimuladorOperacionService.ciclo(),
   },
   {

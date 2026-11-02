@@ -8,7 +8,18 @@ const { MovimientoBodegaDTO } = require('../../models/torre-control/movimientos-
 const { crearError, noEncontrado } = require('../../helpers/errores.helper');
 const { armarBodegas, DIAS_FLUJO, serieOcupacionBodegas, movimientosConEstadia } = require('../../utils/bodegas');
 
+const { contextoPuerto } = require('../../helpers/puerto-contexto.helper');
+
 const normalizarPuertoBodega = (puerto) => String(puerto || 'BUENAVENTURA').trim().toUpperCase();
+/**
+ * Claves con las que se buscan las filas del puerto: la del selector y el id del maestro (OT-009). Las tablas de bodegas
+ * guardan el puerto como lo escribió quien cargó ('SANTA MARTA', 'GUAJIRA'); el selector manda 'SANTA_MARTA', 'LA_GUAJIRA'.
+ */
+const puertosDe = async (puerto) => {
+  const clave = normalizarPuertoBodega(puerto);
+  const ctx = await contextoPuerto(clave).catch(() => null);
+  return ctx ? [clave, ctx.idPuerto] : [clave];
+};
 const redondear2 = (n) => Math.round(Number(n) * 100) / 100;
 
 /** Efecto de cada operación sobre el inventario de la bodega (toneladas con signo). */
@@ -25,12 +36,13 @@ class BodegasBackendService {
    */
   async obtenerDashboardBodegasPorPuerto(puerto = 'BUENAVENTURA', ahora = new Date()) {
     const puertoNormalizado = String(puerto || 'BUENAVENTURA').trim().toUpperCase();
+    const puertos = await puertosDe(puertoNormalizado);
     // Ventana real de movimientos (Fase 1, 2026-10-23): los del rango del flujo, no los últimos 50 sin fecha
     const desde = new Date(ahora.getTime() - DIAS_FLUJO * 86400000).toISOString();
     const [bodegas, movimientos, resumenCarga] = await Promise.all([
-      bodegasRepository.obtenerMaestroBodegasPorPuerto(puertoNormalizado),
-      bodegasRepository.obtenerMovimientosBodegaDesde(puertoNormalizado, desde),
-      bodegasRepository.obtenerResumenPorTipoCarga(puertoNormalizado)
+      bodegasRepository.obtenerMaestroBodegasPorPuerto(puertos),
+      bodegasRepository.obtenerMovimientosBodegaDesde(puertos, desde),
+      bodegasRepository.obtenerResumenPorTipoCarga(puertos)
     ]);
     return armarBodegas({ bodegas, movimientos, resumenCarga, puerto: puertoNormalizado }, ahora);
   }
@@ -40,13 +52,12 @@ class BodegasBackendService {
   // ================================================================
   /** Serie de ocupación de cada bodega del puerto (fotos de TCL_OcupacionNodos). */
   async ocupacionBodegas(puerto, horas = 24, ahora = new Date()) {
-    // require diferido: helpers y repositorio de capacidad solo se usan en este detalle
-    const { contextoPuerto } = require('../../helpers/puerto-contexto.helper');
+    // require diferido: el repositorio de capacidad solo se usa en este detalle
     const CapacidadRepository = require('../../repositories/torre-control/capacidad.repository');
     const clave = normalizarPuertoBodega(puerto);
     const ctx = await contextoPuerto(clave);
     const [bodegas, fotos] = await Promise.all([
-      bodegasRepository.obtenerMaestroBodegasPorPuerto(clave),
+      bodegasRepository.obtenerMaestroBodegasPorPuerto([clave, ctx.idPuerto]),
       CapacidadRepository.ocupaciones(ctx.idPuerto, new Date(ahora.getTime() - horas * 3600000).toISOString()),
     ]);
     return serieOcupacionBodegas({ bodegas, fotos: fotos.filter((f) => String(f.id_nodo).startsWith('BOD-')), horas }, ahora);
@@ -55,7 +66,7 @@ class BodegasBackendService {
   /** Movimientos de los últimos `dias` días (hasta 2.000) con la estadía calculada. */
   async movimientosRango(puerto, dias = 30, ahora = new Date()) {
     const desde = new Date(ahora.getTime() - dias * 86400000).toISOString();
-    const movimientos = await bodegasRepository.obtenerMovimientosBodegaDesde(normalizarPuertoBodega(puerto), desde, 2000);
+    const movimientos = await bodegasRepository.obtenerMovimientosBodegaDesde(await puertosDe(puerto), desde, 2000);
     return movimientosConEstadia(movimientos, dias, ahora);
   }
 
@@ -63,12 +74,12 @@ class BodegasBackendService {
   // CRUD (agregado 2026-10-17: el controlador ya los exponía pero no existían → 500)
   // ================================================================
 
-  listarMaestroBodegas(puerto) {
-    return bodegasRepository.obtenerMaestroBodegasPorPuerto(normalizarPuertoBodega(puerto));
+  async listarMaestroBodegas(puerto) {
+    return bodegasRepository.obtenerMaestroBodegasPorPuerto(await puertosDe(puerto));
   }
 
-  listarMovimientosBodega(puerto) {
-    return bodegasRepository.obtenerMovimientosBodegaPorPuerto(normalizarPuertoBodega(puerto));
+  async listarMovimientosBodega(puerto) {
+    return bodegasRepository.obtenerMovimientosBodegaPorPuerto(await puertosDe(puerto));
   }
 
   async crearBodega(rawData, userContext) {
