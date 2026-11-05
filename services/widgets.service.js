@@ -56,10 +56,11 @@ class WidgetsService {
 
       const widgetDB = await this.model.create(dataDTO, { transaction: t });
 
-      emitir("widgets-actualizados", {
+      // Después del commit: dentro de la transacción la web releía el maestro viejo (regla 18, fase 2)
+      t.afterCommit(() => emitir("widgets-actualizados", {
         action: "create",
         msg: `Nuevo widget disponible: ${widgetDB.nombreWidget}`
-      });
+      }));
 
       return widgetDB;
     });
@@ -102,11 +103,11 @@ class WidgetsService {
       });
 
       try {
-        emitir("widgets-actualizados", {
+        t.afterCommit(() => emitir("widgets-actualizados", {
           action: dataDTO.estadoWidget ? "update" : "inactivado",
           codigoWidget: codigoWidget,
           msg: `Widget ${dataDTO.estadoWidget ? 'actualizado' : 'inactivado'}: ${widgetActualizado.nombreWidget}`
-        });
+        }));
       } catch (errorSocket) {
         console.warn("⚠️ Advertencia: No se pudo emitir por socket:", errorSocket.message);
       }
@@ -135,11 +136,11 @@ class WidgetsService {
 
       await this.limpiarWidgetDeLayouts(codigoWidget, t);
 
-      emitir("widgets-actualizados", {
+      t.afterCommit(() => emitir("widgets-actualizados", {
         action: "inactivado",
         codigoWidget: codigoWidget,
         msg: `Widget retirado del catálogo: ${nombreWidget}`
-      });
+      }));
 
       return { codigoWidget, estadoWidget: false };
     });

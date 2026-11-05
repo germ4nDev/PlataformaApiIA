@@ -30,6 +30,7 @@ const { extraerKpis } = require('../../utils/ia/catalogo-kpi');
 const { moduloDePestana } = require('../../utils/movil/tablero-movil');
 const { fuentesDeLayout, armarWidgets, codigoMovil } = require('../../utils/movil/widgets-movil');
 const { layoutEfectivo } = require('../../utils/layout/layout-efectivo');
+const { permisosDeWidgets, separarPorPermiso } = require('../../utils/layout/widgets-visibles');
 
 const CACHE_MS = 60000;
 const TIEMPO_FUENTE_MS = 20000;
@@ -139,13 +140,27 @@ class TableroMovilService {
           zonaDinamica: zonas[clave] || plantilla?.configuracion?.zonaDinamica || null,
         },
         estados: maestro.estados, nombres: maestro.nombres,
+        permisos: await this._permisos(usuario, pestana),
       };
     } catch (error) {
       console.warn('[MÓVIL] Layout no disponible:', error?.message || error);
-      valor = { usuario: [], plantilla: null, estados: {}, nombres: {}, error: true };
+      valor = { usuario: [], plantilla: null, estados: {}, nombres: {}, permisos: null, error: true };
     }
     guardarEn(this.cacheLayouts, llave, { en: ahora.getTime(), valor });
     return valor;
+  }
+
+  /**
+   * Widgets por rol (regla 18, fase 2): los que permiten los roles del usuario en la pestaña. Si no se pueden leer, null
+   * (sin permiso = no lo ve: la pestaña sale sin widgets y con 'permisos' en fallidos).
+   */
+  async _permisos(codigoUsuario, pestana) {
+    try {
+      return permisosDeWidgets(await this.layouts.permitidosDeUsuario(codigoUsuario, pestana));
+    } catch (error) {
+      console.warn('[MÓVIL] Permisos de widgets no disponibles:', error?.message || error);
+      return null;
+    }
   }
 
   async tablero(params, query = {}, ahora = new Date(), codigoUsuario = null) {
@@ -154,9 +169,12 @@ class TableroMovilService {
     const p = await this.puertos.resolver(puerto);         // 404 si el puerto no existe
     const datos = await this._datosLayout(codigoUsuario, pestana, ahora, fresco);
     const modulo = moduloDePestana(pestana);
+    // Regla 18: en el teléfono solo lo que permite el rol del usuario (los de teléfono, movil = 1, sí entran)
+    const permitidas = (celdas) => separarPorPermiso(celdas, datos.permisos, 'telefono').visibles;
 
     // 1.ª pasada sin terminales: qué widgets hay y qué fuentes piden (las tarjetas de terminal piden el resumen marítimo)
     const previo = layoutEfectivo({ ...datos, terminales: null });
+    previo.celdas = permitidas(previo.celdas);
     const codigos = previo.celdas.map(codigoMovil);
     // Una pestaña con zona de terminales (o tarjetas guardadas) necesita saber cuántas tiene el puerto aunque la plantilla
     // aún no traiga ninguna tarjeta: el resumen marítimo las cuenta
@@ -170,7 +188,8 @@ class TableroMovilService {
     // 2.ª pasada con las terminales del puerto (null si el resumen no llegó: entonces el layout queda como está)
     const resumen = fuentes.maritimoResumen;
     const terminales = resumen ? (resumen.WDG_TERMINALES || []).length : null;
-    const { origen, celdas } = layoutEfectivo({ ...datos, terminales });
+    const { origen, celdas: todas } = layoutEfectivo({ ...datos, terminales });
+    const celdas = permitidas(todas);
     const { widgets, sinDatos, sinVersionMovil } = armarWidgets({
       celdas: celdas.map((c) => ({ ...c, codigo: codigoMovil(c) })), fuentes, filas, series, nombres: datos.nombres,
     });
@@ -178,7 +197,8 @@ class TableroMovilService {
       || Object.values(fuentes).some((f) => f && (f.simulado || f.origen?.simulado));
     return {
       puerto: p.clave, nombrePuerto: p.nombre, pestana, modulo, generadoEn: ahora.toISOString(), simulado: !!simulado,
-      widgets, fallidos: datos.error ? [...fallidos, 'layout'] : fallidos, layout: origen, sinDatos, sinVersionMovil, rejilla: true,
+      widgets, fallidos: [...fallidos, ...(datos.error ? ['layout'] : []), ...(!datos.error && !datos.permisos ? ['permisos'] : [])],
+      layout: origen, sinDatos, sinVersionMovil, ocultosPorPermiso: todas.length - celdas.length, rejilla: true,
     };
   }
 }

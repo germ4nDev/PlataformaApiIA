@@ -1,7 +1,7 @@
 /*
     Author: German Valencia
     Pattern: PORTTOS Adapter - Envío de correo por SMTP (portal, 2026-10-30)
-    Description: Correo de texto plano con nodemailer. Toda la configuración sale del .env (nunca del código):
+    Description: Correo de texto plano o HTML con nodemailer (también lo usa services/email.service, 2026-11-05). Toda la configuración sale del .env (nunca del código):
       SMTP_HOST, SMTP_PORT (587 por defecto), SMTP_SECURE ('true' para 465), SMTP_USER, SMTP_PWD, SMTP_FROM.
       Sin SMTP_HOST no envía nada: configurado() = false y enviar() responde { enviado: false, razon }.
       No escribe en la base (regla de adaptadores).
@@ -23,10 +23,10 @@ function obtenerTransporte() {
   return transporte;
 }
 
-/** @param {{ para: string, asunto: string, texto: string, responderA?: string }} c */
-async function enviar({ para, asunto, texto, responderA }) {
+/** @param {{ para: string, asunto: string, texto?: string, html?: string, responderA?: string }} c */
+async function enviar({ para, asunto, texto, html, responderA }) {
   if (!configurado()) return { enviado: false, razon: 'SMTP sin configurar (SMTP_HOST / SMTP_FROM en el .env)' };
-  await obtenerTransporte().sendMail({ from: process.env.SMTP_FROM, to: para, subject: asunto, text: texto, replyTo: responderA });
+  await obtenerTransporte().sendMail({ from: process.env.SMTP_FROM, to: para, subject: asunto, text: texto, html, replyTo: responderA });
   return { enviado: true, razon: null };
 }
 

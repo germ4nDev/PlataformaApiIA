@@ -95,10 +95,11 @@ class WidgetesRolesService {
 
         const nuevaRelacion = await this.model.create(dataDTO, { transaction: t });
 
-        emitir(EVENTO_WIDGETS_ROLES, {
+        // Después del commit: antes avisaba dentro de la transacción y la web releía la lista vieja (regla 18, fase 2)
+        t.afterCommit(() => emitir(EVENTO_WIDGETS_ROLES, {
           action: 'create',
           msg: `Relación creada`
-        });
+        }));
 
         return nuevaRelacion;
       });
@@ -125,10 +126,10 @@ class WidgetesRolesService {
           transaction: t
         });
 
-        emitir(EVENTO_WIDGETS_ROLES, {
+        t.afterCommit(() => emitir(EVENTO_WIDGETS_ROLES, {
           action: 'update',
-          msg: `Relación creada`
-        });
+          msg: `Relación actualizada`
+        }));
 
         return await this.model.findOne({
           where: { codigoWidgetRole: id },
@@ -151,7 +152,7 @@ class WidgetesRolesService {
 
       if (eliminado === 0) throw { statusCode: 404, msg: "No se encontró el registro para eliminar." };
 
-      emitir(EVENTO_WIDGETS_ROLES, { action: "delete", msg: "Relación eliminada" });
+      t.afterCommit(() => emitir(EVENTO_WIDGETS_ROLES, { action: "delete", msg: "Relación eliminada" }));
 
       return true;
     });
@@ -177,7 +178,7 @@ class WidgetesRolesService {
         }
 
         // Antes dependía de una variable 'io' que no existe aquí: la sincronización nunca avisaba.
-        emitir(EVENTO_WIDGETS_ROLES, { action: 'sync', codigoWidget, msg: 'Sincronizado' });
+        t.afterCommit(() => emitir(EVENTO_WIDGETS_ROLES, { action: 'sync', codigoWidget, msg: 'Sincronizado' }));
 
         return nuevosRegistros;
       });

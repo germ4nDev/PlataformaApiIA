@@ -1,19 +1,15 @@
-const nodemailer = require('nodemailer');
 const handlebars = require('handlebars');
 const fs = require('fs').promises;
 const path = require('path');
 
-class EmailService {
-  constructor() {
-    this.transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: 'g3rman.dev3loper@gmail.com',
-        pass: 'vcprvrzjfhwfzsxv'
-      }
-    });
-  }
+const correo = require('../adapters/correo.adapter');
 
+/*
+    Correos de clave (NUEVA_CLAVE, CAMBIO_CLAVE) con plantilla Handlebars.
+    El envío va por adapters/correo.adapter: servidor, cuenta, clave y remitente salen del .env (SMTP_*), nunca del código
+    (2026-11-05; antes la cuenta y la clave estaban escritas aquí).
+*/
+class EmailService {
   async despacharCorreo(destinatario, tipoCorreo, datos) {
     let asunto = '';
     let nombreArchivoTemplate = '';
@@ -38,12 +34,10 @@ class EmailService {
       const templateCompilado = handlebars.compile(archivoHtml);
       const htmlFinal = templateCompilado(datos);
 
-      return await this.transporter.sendMail({
-        from: '"Plataforma 2.0" <g3rman.dev3loper@gmail.com>',
-        to: destinatario,
-        subject: asunto,
-        html: htmlFinal
-      });
+      if (!correo.configurado()) {
+        throw new Error('El envío de correo no está configurado (SMTP_HOST / SMTP_FROM en el .env).');
+      }
+      return await correo.enviar({ para: destinatario, asunto, html: htmlFinal });
 
     } catch (error) {
       console.error(`Error al procesar la plantilla ${nombreArchivoTemplate}:`, error);
