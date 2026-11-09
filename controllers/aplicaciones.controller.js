@@ -23,7 +23,7 @@ const getAplicacionById = async (req, res = response) => {
     try {
         const { id } = req.params;
         // Corrección: Asumiendo que el servicio tiene un método específico para ID
-        const aplicacion = await service.getAplicacionById(id);
+        const aplicacion = await service.getAplicacionByCode(id);
 
         return res.status(200).json({ ok: true, aplicacion });
     } catch (error) {

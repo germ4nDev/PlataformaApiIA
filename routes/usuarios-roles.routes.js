@@ -15,6 +15,7 @@ const {
   sincronizarUsuariosRole,
   deleteUsuarioRole,
 } = require("../controllers/usuarios-roles.controller");
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 
@@ -25,14 +26,14 @@ router.get("/", getUsuariosRoles);
 
 router.get("/:id", getUsuarioRoleById);
 
-router.post('/sincronizar', [validarJWT, validarSesion], sincronizarRoles);
+router.post('/sincronizar', [validarJWT, validarSesion, validarPermiso('ACT_USUSC_ROLES')], sincronizarRoles);
 
-router.post('/sincronizar-usuarios', [validarJWT, validarSesion], sincronizarUsuariosRole);
+router.post('/sincronizar-usuarios', [validarJWT, validarSesion, validarPermiso('ACT_USUSC_ROLES')], sincronizarUsuariosRole);
 
-router.post("/", [validarJWT, validarSesion], createUsuarioRole);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_USUSC_ROLES')], createUsuarioRole);
 
-router.put("/:id", [validarJWT, validarSesion], updateUsuarioRole);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_USUSC_ROLES')], updateUsuarioRole);
 
-router.delete("/:id", [validarJWT, validarSesion], deleteUsuarioRole);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_USUSC_ROLES')], deleteUsuarioRole);
 
 module.exports = router;

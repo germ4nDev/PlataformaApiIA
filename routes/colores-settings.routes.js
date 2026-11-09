@@ -15,6 +15,7 @@ const {
     updateColorSetting,
     deleteColorSetting
 } = require("../controllers/colores-settings.controller");
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 
@@ -25,10 +26,10 @@ router.get("/", getColoresSettings);
 
 router.get("/:id", getColorSettingById);
 
-router.post("/", [validarJWT, validarSesion], createColorSetting);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_COLORES_CREAR')], createColorSetting);
 
-router.put("/:id", [validarJWT, validarSesion], updateColorSetting);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_COLORES_MODIFICAR')], updateColorSetting);
 
-router.delete("/:id", [validarJWT, validarSesion], deleteColorSetting);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_COLORES_ELIMINAR')], deleteColorSetting);
 
 module.exports = router;

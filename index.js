@@ -97,6 +97,8 @@ app.use(cors(corsOptions));
 // ================================================
 // === MIDDLEWARES ===
 // ================================================
+// OT-027: sembrar un idioma manda el JSON completo (más de los 100 KB por defecto); solo en /api/traducciones
+app.use('/api/traducciones', express.json({ limit: '5mb' }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(fileUpload({ useTempFiles: false }));
@@ -133,6 +135,7 @@ app.use("/api/analisis-ia", require("./routes/ia/analisis-ia.routes"));
 app.use("/api/movil", require("./routes/movil/movil.routes")); // App móvil (PorttosMovil)
 app.use('/api/portal', require('./routes/portal/portal.routes')); // Portal público porttos.co (migración 025)
 app.use('/api/dominios', require('./routes/dominios/dominios.routes')); // Dominio → aplicación (OT-012, migración 026)
+app.use('/api/layout-telefono', require('./routes/layout-telefono/layout-telefono.routes')); // Layout de la web embebida en el teléfono (OT-017, migración 031)
 app.use("/api/historial-facturacion", require("./routes/historial-facturacion.routes"));
 app.use('/api/tipos-pago', require('./routes/tipos-pago.routes'));
 app.use('/api/tipos-paquete', require('./routes/tipos-paquete.routes'));
@@ -186,9 +189,13 @@ app.use("/api/enlaces-st", require("./routes/enlaces-st"));
 // IDIOMAS
 app.use("/api/idiomas", require("./routes/idiomas"));
 app.use("/api/textos-id", require("./routes/textos-id"));
+// OT-027: llaves de traducción (Utilidades › Traducciones)
+app.use("/api/traducciones", require("./routes/traducciones"));
 
 // LOGS
 app.use("/api/tios-logs", require("./routes/tipos-logs"));
+// OT-021: la web llama /api/tipos-logs; /api/tios-logs (errata) queda por compatibilidad
+app.use("/api/tipos-logs", require("./routes/tipos-logs"));
 app.use("/api/logs-actividades", require("./routes/logs-actividades"));
 app.use("/api/logs-actualizaciones", require("./routes/logs-actualizaciones"));
 app.use("/api/logs-transacciones", require("./routes/logs-transacciones"));

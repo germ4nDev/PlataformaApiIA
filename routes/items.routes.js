@@ -13,6 +13,7 @@ const {
   updateItem,
   deleteItem
 } = require("../controllers/items.controller");
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 
@@ -23,10 +24,10 @@ router.get("/", getItems);
 
 router.get("/:id", getItemById);
 
-router.post("/", [validarJWT, validarSesion], createItem);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_ITEMS_CREAR')], createItem);
 
-router.put("/:id", [validarJWT, validarSesion], updateItem);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_ITEMS_MODIFICAR')], updateItem);
 
-router.delete("/:id", [validarJWT, validarSesion], deleteItem);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_ITEMS_ELIMINAR')], deleteItem);
 
 module.exports = router;

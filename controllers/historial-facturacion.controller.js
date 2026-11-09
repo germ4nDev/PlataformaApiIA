@@ -54,7 +54,7 @@ const createHistorial = async (req, res = response) => {
 const updateHistorial = async (req, res = response) => {
     try {
         const { id } = req.params;
-        const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
+        const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
 
         const dataDTO = {
             ...req.body,
@@ -116,7 +116,7 @@ const createHistorialManual = async (req, res = response) => {
 // Cobra a través de Mercado Pago y, si es aprobado, crea el registro en la BD
 const procesarPagoCrear = async (req, res = response) => {
     try {
-        const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
+        const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
 
         // Angular envía: facturaData (info BD) y formData (token de tarjeta)
         const { facturaData, formData } = req.body;

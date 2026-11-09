@@ -14,7 +14,8 @@ const getPaquetes = async (req, res = response) => {
     } catch (error) {
         return res.status(error.statusCode || 500).json({
             ok: false,
-            msg: error.msg || "Error interno al obtener los paquetes."
+            msg: error.msg || "Error interno al obtener los paquetes.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
@@ -27,7 +28,8 @@ const getPaqueteById = async (req, res = response) => {
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al obtener el paquete solicitado."
+            msg: error.msg || "Error al obtener el paquete solicitado.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
@@ -41,7 +43,8 @@ const createPaquete = async (req, res = response) => {
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al crear el paquete."
+            msg: error.msg || "Error al crear el paquete.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
@@ -51,15 +54,16 @@ const updatePaquete = async (req, res = response) => {
         const { id } = req.params;
 
         // QPLUS: Hidratación del payload de auditoría
-        const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-        const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+        const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
+        const dataDTO = { ...req.body, codigoUsuarioModificacion: usuarioAccion };
 
         const paquete = await service.updatePaquete(id, dataDTO);
         return res.status(200).json({ ok: true, paquete });
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al actualizar el paquete."
+            msg: error.msg || "Error al actualizar el paquete.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
@@ -76,7 +80,8 @@ const deletePaquete = async (req, res = response) => {
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al eliminar el paquete."
+            msg: error.msg || "Error al eliminar el paquete.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };

@@ -14,7 +14,8 @@ const getSitios = async (req, res = response) => {
   } catch (error) {
     return res.status(error.statusCode || 500).json({
       ok: false,
-      msg: error.msg || "Error interno al obtener los sitios."
+      msg: error.msg || "Error interno al obtener los sitios.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -27,7 +28,8 @@ const getSitioById = async (req, res = response) => {
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al obtener el sitio solicitado."
+      msg: error.msg || "Error al obtener el sitio solicitado.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -35,15 +37,16 @@ const getSitioById = async (req, res = response) => {
 const createSitio = async (req, res = response) => {
   try {
     // QPLUS: Inyección de auditoría
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-    const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+    const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
+    const dataDTO = { ...req.body, codigoUsuarioCreacion: usuarioAccion, codigoUsuarioModificacion: usuarioAccion };
 
     const sitio = await service.createSitio(dataDTO);
     return res.status(201).json({ ok: true, sitio });
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al crear el sitio."
+      msg: error.msg || "Error al crear el sitio.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -53,15 +56,16 @@ const updateSitio = async (req, res = response) => {
     const { id } = req.params;
 
     // QPLUS: Hidratación del payload de auditoría
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-    const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+    const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
+    const dataDTO = { ...req.body, codigoUsuarioModificacion: usuarioAccion };
 
     const sitio = await service.updateSitio(id, dataDTO);
     return res.status(200).json({ ok: true, sitio });
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al actualizar el sitio."
+      msg: error.msg || "Error al actualizar el sitio.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -78,7 +82,8 @@ const deleteSitio = async (req, res = response) => {
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al eliminar el sitio."
+      msg: error.msg || "Error al eliminar el sitio.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };

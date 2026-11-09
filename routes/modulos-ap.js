@@ -13,6 +13,7 @@ const {
     updateModulo,
     deleteModulo
 } = require("../controllers/modulos-ap");
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 
@@ -23,10 +24,10 @@ router.get("/", getModulos);
 
 router.get("/:id", validarJWT, getModuloById);
 
-router.post("/", [validarJWT, validarSesion], createModulo);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_MODULOS_CREAR')], createModulo);
 
-router.put("/:id", [validarJWT, validarSesion], updateModulo);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_MODULOS_MODIFICAR')], updateModulo);
 
-router.delete("/:id", [validarJWT, validarSesion], deleteModulo);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_MODULOS_ELIMINAR')], deleteModulo);
 
 module.exports = router;

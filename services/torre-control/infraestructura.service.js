@@ -36,7 +36,7 @@ class InfraestructuraService {
   }
 
   async crearInfraestructura(rawData, userContext = { codigoUsuario: 'SISTEMA_ADMIN' }) {
-    const dto = InfraestructuraDTO(rawData, userContext);
+    const dto = fechaIso(InfraestructuraDTO(rawData, userContext)); // CC-137: fecha_cargue es STRING en el modelo (como al editar)
     const nueva = await conTransaccion((t) => repositorio.crear(dto, { transaction: t }));
     emitir(EVENTO, { action: 'create' });
     return nueva;

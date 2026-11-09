@@ -13,6 +13,7 @@ const {
   updateTipoLog,
   deleteTipoLog
 } = require("../controllers/tipos-logs");
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 
@@ -23,10 +24,10 @@ router.get("/", getTiposLogs);
 
 router.get("/:id", getTipoLogById);
 
-router.post("/", [validarJWT, validarSesion], createTipoLog);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_TIPOSLOG_CREAR')], createTipoLog);
 
-router.put("/:id", [validarJWT, validarSesion], updateTipoLog);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_TIPOSLOG_MODIFICAR')], updateTipoLog);
 
-router.delete("/:id", [validarJWT, validarSesion], deleteTipoLog);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_TIPOSLOG_ELIMINAR')], deleteTipoLog);
 
 module.exports = router;

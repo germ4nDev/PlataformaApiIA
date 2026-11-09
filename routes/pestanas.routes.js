@@ -28,13 +28,10 @@ router.get("/:id", getPestanaById);
 
 router.get("/app/:id", getPestanaByCodeAplicacion);
 
-router.post("/", [validarJWT, validarSesion
-], createPestana);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_PESTANAS_CREAR')], createPestana);
 
-router.put("/:id", [validarJWT, validarSesion
-], updatePestana);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_PESTANAS_MODIFICAR')], updatePestana);
 
-router.delete("/:id", [validarJWT, validarSesion
-], deletePestana);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_PESTANAS_ELIMINAR')], deletePestana);
 
 module.exports = router;

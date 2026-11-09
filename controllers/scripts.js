@@ -14,7 +14,8 @@ const getScripts = async (req, res = response) => {
     } catch (error) {
         return res.status(error.statusCode || 500).json({
             ok: false,
-            msg: error.msg || "Error interno al obtener los scripts."
+            msg: error.msg || "Error interno al obtener los scripts.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
@@ -27,7 +28,8 @@ const getScriptById = async (req, res = response) => {
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al obtener el script solicitado."
+            msg: error.msg || "Error al obtener el script solicitado.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
@@ -35,15 +37,16 @@ const getScriptById = async (req, res = response) => {
 const createScript = async (req, res = response) => {
     try {
         // QPLUS: Inyección de auditoría con fallback a SISTEMA
-        const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-        const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+        const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
+        const dataDTO = { ...req.body, codigoUsuarioCreacion: usuarioAccion, codigoUsuarioModificacion: usuarioAccion };
 
         const script = await service.createScript(dataDTO);
         return res.status(201).json({ ok: true, script });
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al crear el script."
+            msg: error.msg || "Error al crear el script.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
@@ -53,15 +56,16 @@ const updateScript = async (req, res = response) => {
         const { id } = req.params;
 
         // QPLUS: Hidratación del payload de auditoría
-        const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-        const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+        const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
+        const dataDTO = { ...req.body, codigoUsuarioModificacion: usuarioAccion };
 
         const script = await service.updateScript(id, dataDTO);
         return res.status(200).json({ ok: true, script });
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al actualizar el script."
+            msg: error.msg || "Error al actualizar el script.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
@@ -78,7 +82,8 @@ const deleteScript = async (req, res = response) => {
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al eliminar el script."
+            msg: error.msg || "Error al eliminar el script.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };

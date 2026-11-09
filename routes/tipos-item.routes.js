@@ -13,6 +13,7 @@ const {
   updateTipoItem,
   deleteTipoItem
 } = require("../controllers/tipos-item.controller");
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 
@@ -23,10 +24,10 @@ router.get("/", getTiposItem);
 
 router.get("/:id", getTipoItemById);
 
-router.post("/", [validarJWT, validarSesion], createTipoItem);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_TIPOS_ITEM_CREAR')], createTipoItem);
 
-router.put("/:id", [validarJWT, validarSesion], updateTipoItem);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_TIPOS_ITEM_MODIFICAR')], updateTipoItem);
 
-router.delete("/:id", [validarJWT, validarSesion], deleteTipoItem);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_TIPOS_ITEM_ELIMINAR')], deleteTipoItem);
 
 module.exports = router;

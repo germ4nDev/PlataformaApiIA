@@ -1,5 +1,6 @@
 const TiposRoleService = require('../services/tipos-role.service');
 const { TipoRoleSchema } = require('../models/tipo-role.model');
+const { responderError } = require('../helpers/errores.helper');
 
 const service = new TiposRoleService();
 
@@ -24,13 +25,14 @@ const getTipoRoleById = async (req, res) => {
     const tipoRole = await service.obtenerTipoRolePorId(req.params.id);
     return res.status(200).json({ ok: true, tipoRole });
   } catch (error) {
-    return res.status(error.statusCode || 500).json({ ok: false, msg: error.msg || 'Error interno' });
+    return responderError(res, error, 'tipos-roles'); // CC-141: registra los 5xx y traduce los de la base
   }
 };
 
 const crearTipoRole = async (req, res) => {
   try {
-    const { error, value } = TipoRoleSchema.validate(req.body);
+    const usuario = req.codigoUsuario || req.body.codigoUsuarioCreacion; // CC-141: auditoría del token
+    const { error, value } = TipoRoleSchema.validate({ ...req.body, codigoUsuarioCreacion: usuario, codigoUsuarioModificacion: usuario }, { stripUnknown: true }); // sin campos de la lista (idTipo…)
     if (error) {
       return res.status(400).json({ ok: false, msg: error.details[0].message });
     }
@@ -38,13 +40,13 @@ const crearTipoRole = async (req, res) => {
     const tipoRole = await service.crearTipoRole(value);
     return res.status(201).json({ ok: true, tipoRole });
   } catch (error) {
-    return res.status(error.statusCode || 500).json({ ok: false, msg: error.msg || 'Error interno' });
+    return responderError(res, error, 'tipos-roles'); // CC-141: registra los 5xx y traduce los de la base
   }
 };
 
 const actualizarTipoRole = async (req, res) => {
   try {
-    const { error, value } = TipoRoleSchema.validate(req.body);
+    const { error, value } = TipoRoleSchema.validate({ ...req.body, codigoUsuarioModificacion: req.codigoUsuario || req.body.codigoUsuarioModificacion }, { stripUnknown: true }); // CC-141: auditoría del token
     if (error) {
       return res.status(400).json({ ok: false, msg: error.details[0].message });
     }
@@ -52,7 +54,7 @@ const actualizarTipoRole = async (req, res) => {
     const tipoRole = await service.actualizarTipoRole(req.params.id, value);
     return res.status(200).json({ ok: true, tipoRole });
   } catch (error) {
-    return res.status(error.statusCode || 500).json({ ok: false, msg: error.msg || 'Error interno' });
+    return responderError(res, error, 'tipos-roles'); // CC-141: registra los 5xx y traduce los de la base
   }
 };
 
@@ -61,7 +63,7 @@ const eliminarTipoRole = async (req, res) => {
     const result = await service.eliminarTipoRole(req.params.id);
     return res.status(200).json({ ok: true, msg: result.msg });
   } catch (error) {
-    return res.status(error.statusCode || 500).json({ ok: false, msg: error.msg || 'Error interno' });
+    return responderError(res, error, 'tipos-roles'); // CC-141: registra los 5xx y traduce los de la base
   }
 };
 

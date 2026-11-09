@@ -14,7 +14,8 @@ const getItemsPaquete = async (req, res = response) => {
     } catch (error) {
         return res.status(error.statusCode || 500).json({
             ok: false,
-            msg: error.msg || "Error interno al obtener los items del paquete."
+            msg: error.msg || "Error interno al obtener los items del paquete.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
@@ -27,7 +28,8 @@ const getItemsByPaqueteCode = async (req, res = response) => {
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al obtener los items por código de paquete."
+            msg: error.msg || "Error al obtener los items por código de paquete.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
@@ -40,7 +42,8 @@ const getItemPaqueteById = async (req, res = response) => {
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al obtener el item solicitado."
+            msg: error.msg || "Error al obtener el item solicitado.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
@@ -48,15 +51,16 @@ const getItemPaqueteById = async (req, res = response) => {
 const createItemPaquete = async (req, res = response) => {
     try {
         // QPLUS: Inyección de contexto de auditoría
-        const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-        const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+        const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
+        const dataDTO = { ...req.body, codigoUsuarioCreacion: usuarioAccion, codigoUsuarioModificacion: usuarioAccion };
 
         const item = await service.createItemPaquete(dataDTO);
         return res.status(201).json({ ok: true, item });
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al crear el item del paquete."
+            msg: error.msg || "Error al crear el item del paquete.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
@@ -66,15 +70,16 @@ const updateItemPaquete = async (req, res = response) => {
         const { id } = req.params;
 
         // QPLUS: Hidratación del payload de auditoría
-        const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-        const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+        const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
+        const dataDTO = { ...req.body, codigoUsuarioModificacion: usuarioAccion };
 
         const item = await service.updateItemPaquete(id, dataDTO);
         return res.status(200).json({ ok: true, item });
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al actualizar el item del paquete."
+            msg: error.msg || "Error al actualizar el item del paquete.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
@@ -91,7 +96,8 @@ const deleteItemPaquete = async (req, res = response) => {
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al eliminar el item del paquete."
+            msg: error.msg || "Error al eliminar el item del paquete.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };

@@ -11,6 +11,7 @@ const {
     updateConexion,
     deleteConexion
 } = require("../controllers/conexiones-bd");
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 
@@ -21,10 +22,10 @@ router.get("/", getConexiones);
 
 router.get("/:id", getConexionById);
 
-router.post("/", [validarJWT, validarSesion], createConexion);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_CONEXIONES_CREAR')], createConexion);
 
-router.put("/:id", [validarJWT, validarSesion], updateConexion);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_CONEXIONES_MODIFICAR')], updateConexion);
 
-router.delete("/:id", [validarJWT, validarSesion], deleteConexion);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_CONEXIONES_ELIMINAR')], deleteConexion);
 
 module.exports = router;

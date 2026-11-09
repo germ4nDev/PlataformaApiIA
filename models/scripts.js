@@ -20,6 +20,7 @@ const ScriptSchema = Joi.object({
         .messages({ 'any.required': 'El nombre del script es obligatorio.' }),
 
     descripcionScript: Joi.string().max(4000).allow('', null).optional(),
+    rutaArchivo: Joi.string().max(500).allow('', null).optional().default(''), // CC-138: NOT NULL en la tabla; la web lo manda
 
     estadoScript: Joi.boolean().optional().default(true),
 
@@ -47,6 +48,7 @@ const ScriptDTO = (rawData) => {
         codigoAplicacion: value.codigoAplicacion.trim(),
         nombreScript: value.nombreScript.trim(),
         descripcionScript: value.descripcionScript || '',
+        rutaArchivo: value.rutaArchivo || '',
         estadoScript: value.estadoScript,
 
         codigoUsuarioCreacion: value.codigoUsuarioCreacion,
@@ -69,6 +71,7 @@ const ScriptModel = (sequelize) => {
             allowNull: false
         },
         codigoTipoScript: {
+          field: 'codigoTipo', // CC-138: nombre real de la columna (errata o nombre distinto en la tabla; ver OT-022)
             type: DataTypes.STRING(200),
             allowNull: false
         },
@@ -80,7 +83,13 @@ const ScriptModel = (sequelize) => {
             type: DataTypes.STRING(100),
             allowNull: false
         },
+        rutaArchivo: { // CC-138: existe en la tabla (NOT NULL)
+            type: DataTypes.STRING(500),
+            allowNull: false,
+            defaultValue: ''
+        },
         descripcionScript: {
+          field: 'descripconScript', // CC-138: nombre real de la columna (errata o nombre distinto en la tabla; ver OT-022)
             type: DataTypes.STRING(4000),
             allowNull: true
         },

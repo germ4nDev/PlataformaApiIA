@@ -13,6 +13,7 @@ const {
   updateSuite,
   deleteSuite
 } = require("../controllers/suites-ap");
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 
@@ -23,10 +24,10 @@ router.get("/", getSuites);
 
 router.get("/:id", getSuiteById);
 
-router.post("/", [validarJWT, validarSesion], createSuite);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_SUITES_CREAR')], createSuite);
 
-router.put("/:id", [validarJWT, validarSesion], updateSuite);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_SUITES_MODIFICAR')], updateSuite);
 
-router.delete("/:id", [validarJWT, validarSesion], deleteSuite);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_SUITES_ELIMINAR')], deleteSuite);
 
 module.exports = router;

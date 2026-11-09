@@ -13,6 +13,7 @@ const {
     updateSuscriptorPaquete,
     deleteSuscriptorPaquete,
 } = require("../controllers/suscriptor-paquetes");
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 // router.use(validarSesion);
@@ -21,10 +22,10 @@ router.get("/", getSuscriptoresPaquetes);
 
 router.get("/:id", getSuscriptoresPaquetesById);
 
-router.post("/", [validarJWT, validarSesion], createSuscriptorPaquete);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_SUSCPAQ_CREAR')], createSuscriptorPaquete);
 
-router.put("/:id", [validarJWT, validarSesion], updateSuscriptorPaquete);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_SUSCPAQ_MODIFICAR')], updateSuscriptorPaquete);
 
-router.delete("/:id", [validarJWT, validarSesion], deleteSuscriptorPaquete);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_SUSCPAQ_ELIMINAR')], deleteSuscriptorPaquete);
 
 module.exports = router;

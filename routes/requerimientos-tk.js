@@ -14,6 +14,7 @@ const {
     updateRequerimiento,
     deleteRequerimiento
 } = require("../controllers/requerimientos-tk");
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 
@@ -24,10 +25,10 @@ router.get("/", getRequerimientos);
 
 router.get("/:id", getRequerimientoById);
 
-router.post("/", [validarJWT, validarSesion], createRequerimiento);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_REQUERIMIENTOS_CREAR')], createRequerimiento);
 
-router.put("/:id", [validarJWT, validarSesion], updateRequerimiento);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_REQUERIMIENTOS_MODIFICAR')], updateRequerimiento);
 
-router.delete("/:id", [validarJWT, validarSesion], deleteRequerimiento);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_REQUERIMIENTOS_ELIMINAR')], deleteRequerimiento);
 
 module.exports = router;

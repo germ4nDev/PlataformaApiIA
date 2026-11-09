@@ -9,22 +9,23 @@ const {
     updateDetalle,
     deleteDetalle
 } = require('../controllers/lista-precios.controller');
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 
 router.get('/', getListas);
 
-router.post('/', [validarJWT, validarSesion], createLista);
+router.post('/', [validarJWT, validarSesion, validarPermiso('ACT_PRECIO_CREAR')], createLista);
 
-router.put('/:id', [validarJWT, validarSesion], updateLista);
+router.put('/:id', [validarJWT, validarSesion, validarPermiso('ACT_PRECIO_MODIFICAR')], updateLista);
 
 // ==========================================
 // 🟢 RUTAS DE DETALLE (Precios de Paquetes/Items)
 // ==========================================
-router.post('/:codigoLista/detalles', [validarJWT, validarSesion], addDetalle);
+router.post('/:codigoLista/detalles', [validarJWT, validarSesion, validarPermiso('ACT_PRECIO_CREAR')], addDetalle);
 
-router.put('/detalles/:codigoDetalle', [validarJWT, validarSesion], updateDetalle);
+router.put('/detalles/:codigoDetalle', [validarJWT, validarSesion, validarPermiso('ACT_PRECIO_MODIFICAR')], updateDetalle);
 
-router.delete('/detalles/:codigoDetalle', [validarJWT, validarSesion], deleteDetalle);
+router.delete('/detalles/:codigoDetalle', [validarJWT, validarSesion, validarPermiso('ACT_PRECIO_ELIMINAR')], deleteDetalle);
 
 module.exports = router;

@@ -82,6 +82,10 @@ function configurarSockets(io) {
           camposAActualizar.codigoSuite = data.codigoSuite;
         }
 
+        if (data.codigoEmpresaSC !== undefined) {
+          camposAActualizar.codigoEmpresaSC = data.codigoEmpresaSC;
+        }
+
         if (data.codigoModulo !== undefined) {
           camposAActualizar.codigoModulo = data.codigoModulo;
         }

@@ -14,6 +14,7 @@ const {
   updateItemPaquete,
   deleteItemPaquete
 } = require("../controllers/items-paquete");
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 
@@ -26,10 +27,10 @@ router.get("/:id", getItemPaqueteById);
 
 router.get("/paquete/:codigoPaquete", getItemsByPaqueteCode);
 
-router.post("/", [validarJWT, validarSesion], createItemPaquete);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_ITEMPQ_CREAR')], createItemPaquete);
 
-router.put("/:id", [validarJWT, validarSesion], updateItemPaquete);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_ITEMPQ_MODIFICAR')], updateItemPaquete);
 
-router.delete("/:id", [validarJWT, validarSesion], deleteItemPaquete);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_ITEMPQ_ELIMINAR')], deleteItemPaquete);
 
 module.exports = router;

@@ -3,6 +3,8 @@ const MotonaveOperacionController = require('../../controllers/torre-control/mot
 const MaritimoController = require('../../controllers/torre-control/maritimo.controller');
 
 const { validarJWT } = require("../../middlewares/validar-jwt");
+const { validarSesion } = require('../../middlewares/validar-sesion');
+const { validarPermiso } = require('../../middlewares/validar-permiso');
 
 const router = Router();
 
@@ -14,7 +16,7 @@ router.get('/posiciones', MaritimoController.obtenerPosicionesAis);
 // 2. VINCULAR MOTONAVE (POST)
 // Guarda la relación entre MMSI y el ID de DIMAR enviada desde el popup.
 // Protegido con JWT porque la acción la realiza un operador logueado.
-router.post('/vincular', MaritimoController.vincularNave);
+router.post('/vincular', [validarJWT, validarSesion, validarPermiso('ACT_MOTONAVES_VINCULAR')], MaritimoController.vincularNave);
 // Nota: Asegúrate de que el método en tu controlador se llame 'vincularNave' o cámbialo aquí a 'vincularMotonave' según lo hayas dejado.
 
 // 3. RECIBIR DATA DE LA ANTENA (POST)

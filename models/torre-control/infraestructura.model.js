@@ -68,7 +68,8 @@ const InfraestructuraDTO = (rawData, userContext = { codigoUsuario: 'SISTEMA_ADM
     estado: value.estado,
 
     usuario_cargue: userContext.codigoUsuario,
-    fecha_cargue: rawData.fecha_cargue ? new Date(rawData.fecha_cargue) : new Date()
+    // CC-138: la lista la devuelve como «Jun 28 2026  6:21PM» (Invalid Date → toISOString lanzaba RangeError): si no se entiende, ahora
+    fecha_cargue: ((f) => (f && !isNaN(f) ? f : new Date()))(rawData.fecha_cargue ? new Date(rawData.fecha_cargue) : null)
   };
 };
 

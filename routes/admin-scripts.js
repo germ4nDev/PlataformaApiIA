@@ -8,12 +8,13 @@ const {
     ejecutarScript,
     ejecutarScriptMultiDb
 } = require('../controllers/admin-scripts');
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 // router.use(validarSesion);
 
-router.post('/', [validarJWT, validarSesion], ejecutarScript);
+router.post('/', [validarJWT, validarSesion, validarPermiso('ACT_SCRIPTS_EJECUTAR')], ejecutarScript);
 
-router.post('/multi/', [validarJWT, validarSesion], ejecutarScriptMultiDb);
+router.post('/multi/', [validarJWT, validarSesion, validarPermiso('ACT_SCRIPTS_EJECUTAR')], ejecutarScriptMultiDb);
 
 module.exports = router;

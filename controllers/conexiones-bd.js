@@ -14,7 +14,8 @@ const getConexiones = async (req, res = response) => {
   } catch (error) {
     return res.status(error.statusCode || 500).json({
       ok: false,
-      msg: error.msg || "Error interno al obtener conexiones de base de datos."
+      msg: error.msg || "Error interno al obtener conexiones de base de datos.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -27,7 +28,8 @@ const getConexionById = async (req, res = response) => {
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al obtener la conexión solicitada."
+      msg: error.msg || "Error al obtener la conexión solicitada.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -35,15 +37,16 @@ const getConexionById = async (req, res = response) => {
 const createConexion = async (req, res = response) => {
   try {
     // QPLUS: Inyección de auditoría
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-    const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+    const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
+    const dataDTO = { ...req.body, codigoUsuarioCreacion: usuarioAccion, codigoUsuarioModificacion: usuarioAccion };
 
     const conexion = await service.createConexion(dataDTO);
     return res.status(201).json({ ok: true, conexion });
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al crear la conexión."
+      msg: error.msg || "Error al crear la conexión.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -53,15 +56,16 @@ const updateConexion = async (req, res = response) => {
     const { id } = req.params;
 
     // QPLUS: Hidratación del payload
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-    const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+    const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
+    const dataDTO = { ...req.body, codigoUsuarioModificacion: usuarioAccion };
 
-    const conexion = await service.actualizarConexion(id, dataDTO);
+    const conexion = await service.updateConexion(id, dataDTO);
     return res.status(200).json({ ok: true, conexion });
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al actualizar la conexión."
+      msg: error.msg || "Error al actualizar la conexión.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -69,7 +73,7 @@ const updateConexion = async (req, res = response) => {
 const deleteConexion = async (req, res = response) => {
   try {
     const { id } = req.params;
-    await service.eliminarConexion(id);
+    await service.deleteConexion(id);
 
     return res.status(200).json({
       ok: true,
@@ -78,7 +82,8 @@ const deleteConexion = async (req, res = response) => {
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al eliminar la conexión."
+      msg: error.msg || "Error al eliminar la conexión.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };

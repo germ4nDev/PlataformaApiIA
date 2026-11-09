@@ -4,7 +4,7 @@
     Description:
       contexto({ host }, origen)        contexto del dominio para la web (público). Desconocido → neutro, nunca la consola
       contextoDeOrigen(origin, referer) igual, desde los encabezados de la petición (lo usa el middleware validarDominio)
-      usuarioPuedeEntrar(ctx, cod)      consola/neutro: sí; aplicación: solo con un rol activo en ella
+      usuarioPuedeEntrar(ctx, cod)      consola/neutro: sí; aplicación: solo si su suscriptor se la asigna (CC-145)
       origenPermitido(origin)           ¿el origen es https://<un dominio activo>? (CORS); síncrono, sobre la caché
       refrescar()                       recarga la caché de dominios (al arrancar y cada 5 minutos)
     Cachés: dominios 5 minutos; aplicaciones de cada usuario 5 minutos. Si la base falla, se conserva la última lista buena.

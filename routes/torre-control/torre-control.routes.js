@@ -20,6 +20,8 @@ const {
   obtenerMovimientosBodega,
   registrarMovimientoBodega
 } = require('../../controllers/torre-control/bodegas.controller');
+const { validarSesion } = require('../../middlewares/validar-sesion');
+const { validarPermiso } = require('../../middlewares/validar-permiso');
 
 // =========================================================================
 // RUTAS EXISTENTES DE TORRE DE CONTROL
@@ -28,7 +30,11 @@ const {
 router.get('/kpis', KpisController.obtenerDashboard);
 router.get('/lineup', validarJWT, consultarLineUp);
 router.get('/estado-tuneles', obtenerBitacora);
-router.post('/forzar-sincronizacion', ejecutarSincronizacionManual);
+router.post('/forzar-sincronizacion', [
+  validarJWT,
+  validarSesion,
+  validarPermiso('ACT_INGESTA_SINCRONIZAR')
+], ejecutarSincronizacionManual);
 router.get('/virtual-gate', getCitasVirtualGate);
 
 // =========================================================================
@@ -40,11 +46,15 @@ router.get('/bodegas', obtenerDashboardBodegas);
 
 // 2. Endpoints de Maestro y Movimientos (CRUD con DTOs Joi):
 router.get('/bodegas/maestro', obtenerMaestroBodegas);
-router.post('/bodegas/maestro', validarJWT, crearBodega);
-router.put('/bodegas/maestro/:idBodega', validarJWT, actualizarBodega);
+router.post('/bodegas/maestro', [validarJWT, validarSesion, validarPermiso('ACT_BODEGAS_CREAR')], crearBodega);
+router.put('/bodegas/maestro/:idBodega', [validarJWT, validarSesion, validarPermiso('ACT_BODEGAS_MODIFICAR')], actualizarBodega);
 
 router.get('/bodegas/movimientos', obtenerMovimientosBodega);
-router.post('/bodegas/movimientos', validarJWT, registrarMovimientoBodega);
+router.post('/bodegas/movimientos', [
+  validarJWT,
+  validarSesion,
+  validarPermiso('ACT_BODEGAS_MOVIMIENTO')
+], registrarMovimientoBodega);
 
 // 3. Fallback por parámetro de URL: GET /api/torre-control/bodegas/BUENAVENTURA
 router.get('/bodegas/:puerto', obtenerDashboardBodegas);

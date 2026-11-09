@@ -52,7 +52,7 @@ const updateSuscriptor = async (req, res = response) => {
     const { id } = req.params;
 
     // QPLUS: Hidratación del payload de auditoría
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
+    const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
     const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
 
     const suscriptor = await service.updateSuscriptor(id, dataDTO);

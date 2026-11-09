@@ -43,7 +43,8 @@ class SliderService {
 
   async getSliderById(sliderId) {
     await this.modelo();
-    const registro = await this.model.findOne({ where: { sliderId } });
+    // CC-141: la web y la gestión leen por codigoSlider (texto); por número, sliderId
+    const registro = await this.model.findOne({ where: /^\d+$/.test(String(sliderId)) ? { sliderId: Number(sliderId) } : { codigoSlider: String(sliderId) } });
     if (!registro) throw { statusCode: 404, msg: "No existe el slider solicitado." };
     return registro;
   }

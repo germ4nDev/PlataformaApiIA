@@ -10,7 +10,7 @@ const service = new ScriptsService();
 const ejecutarScript = async (req, res = response) => {
     try {
         // QPLUS: Inyección de contexto de auditoría (quién ejecuta el script)
-        const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
+        const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
 
         const rawData = {
             nombreArchivo: req.body.archivo,
@@ -38,7 +38,7 @@ const ejecutarScript = async (req, res = response) => {
 
 const ejecutarScriptMultiDb = async (req, res = response) => {
     try {
-        const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
+        const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
 
         const rawData = {
             nombreArchivo: req.body.archivo,

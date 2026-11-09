@@ -13,6 +13,7 @@ const {
     updateServidor,
     deleteServidor
 } = require("../controllers/servidores");
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 
@@ -23,10 +24,10 @@ router.get("/", getServidores);
 
 router.get("/:id", getServidorById);
 
-router.post("/", [validarJWT, validarSesion], createServidor);
+router.post("/", [validarJWT, validarPermiso('ACT_SERVIDORES_CREAR')], createServidor);
 
-router.put("/:id", [validarJWT, validarSesion], updateServidor);
+router.put("/:id", [validarJWT, validarPermiso('ACT_SERVIDORES_MODIFICAR')], updateServidor);
 
-router.delete("/:id", [validarJWT, validarSesion], deleteServidor);
+router.delete("/:id", [validarJWT, validarPermiso('ACT_SERVIDORES_ELIMINAR')], deleteServidor);
 
 module.exports = router;

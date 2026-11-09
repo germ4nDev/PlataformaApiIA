@@ -9,7 +9,7 @@ const TextoIDSchema = Joi.object({
   codigoTexto: Joi.string().max(200).required()
     .messages({ 'any.required': 'El código único del texto es obligatorio.' }),
 
-  idiomaId: Joi.number().integer().positive().required()
+  codigoIdioma: Joi.string().max(200).required() // CC-138: la tabla tiene codigoIdioma (nvarchar), no idiomaId
     .messages({ 'any.required': 'El ID del idioma es obligatorio para asociar la traducción.' }),
 
   anclaTexto: Joi.string().max(100).required()
@@ -63,8 +63,8 @@ const TextoIDModel = (sequelize) => {
       primaryKey: true,
       allowNull: false
     },
-    idiomaId: {
-      type: DataTypes.INTEGER,
+    codigoIdioma: { // CC-138: antes idiomaId (no existe en la tabla)
+      type: DataTypes.STRING(200),
       allowNull: false
     },
     anclaTexto: {

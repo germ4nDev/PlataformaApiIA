@@ -23,28 +23,12 @@ router.get("/", getInventarios);
 
 router.get("/:id", getInventarioById);
 
-router.post('/cargue-masivo', [
-  validarJWT,
-  validarSesion,
-  validarPermiso('ACT_INV_CARGUE')
-], uploadMasivoInventario);
+router.post('/cargue-masivo', [validarJWT, validarSesion, validarPermiso('ACT_INV_CARGUE')], uploadMasivoInventario);
 
-router.post("/", [
-  validarJWT,
-  validarSesion,
-  validarPermiso('ACT_INV_CREAR')
-], createInventario);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_INV_CREAR')], createInventario);
 
-router.put("/:id", [
-  validarJWT,
-  validarSesion,
-  validarPermiso('ACT_INV_ACTUALIZAR')
-], updateInventario);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_INV_ACTUALIZAR')], updateInventario);
 
-router.delete("/:id", [
-  validarJWT,
-  validarSesion,
-  validarPermiso('ACT_INV_ELIMINAR')
-], deleteInventario);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_INV_ELIMINAR')], deleteInventario);
 
 module.exports = router;

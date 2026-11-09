@@ -14,7 +14,8 @@ const getEnlaces = async (req, res = response) => {
   } catch (error) {
     return res.status(error.statusCode || 500).json({
       ok: false,
-      msg: error.msg || "Error interno al obtener los enlaces."
+      msg: error.msg || "Error interno al obtener los enlaces.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -27,7 +28,8 @@ const getEnlaceById = async (req, res = response) => {
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al obtener el enlace solicitado."
+      msg: error.msg || "Error al obtener el enlace solicitado.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -35,15 +37,16 @@ const getEnlaceById = async (req, res = response) => {
 const createEnlace = async (req, res = response) => {
   try {
     // QPLUS: Inyección de auditoría
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-    const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+    const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
+    const dataDTO = { ...req.body, codigoUsuarioCreacion: usuarioAccion, codigoUsuarioModificacion: usuarioAccion };
 
     const enlace = await service.createEnlace(dataDTO);
     return res.status(201).json({ ok: true, enlace });
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al crear el enlace."
+      msg: error.msg || "Error al crear el enlace.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -53,15 +56,16 @@ const updateEnlace = async (req, res = response) => {
     const { id } = req.params;
 
     // QPLUS: Hidratación del payload
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-    const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+    const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
+    const dataDTO = { ...req.body, codigoUsuarioModificacion: usuarioAccion };
 
     const enlace = await service.updateEnlace(id, dataDTO);
     return res.status(200).json({ ok: true, enlace });
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al actualizar el enlace."
+      msg: error.msg || "Error al actualizar el enlace.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -78,7 +82,8 @@ const deleteEnlace = async (req, res = response) => {
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al eliminar el enlace."
+      msg: error.msg || "Error al eliminar el enlace.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };

@@ -48,7 +48,7 @@ const getActividadesRoles = async (req, res = response) => {
 const getActividadByCodeActividad = async (req, res = response) => {
   try {
     const { ac } = req.params;
-    const data = await service.getActividadByCodeActividad(ac);
+    const data = await service.getPorCodigoActividad(ac);
     return res.status(200).json({ ok: true, data });
   } catch (error) {
     return res.status(error.statusCode || 400).json({
@@ -78,7 +78,7 @@ const getActividadByCodeRole = async (req, res = response) => {
 
 const createActividadRole = async (req, res = response) => {
   try {
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
+    const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
     const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
 
     // Guarda en la base de datos

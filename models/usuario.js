@@ -78,7 +78,7 @@ const UsuarioModel = (sequelize) => {
     isOnline: {
       type: DataTypes.BOOLEAN,
       allowNull: true,
-      defaultValue: false
+      defaultValue: true
     },
     ultimaConexion: {
       type: DataTypes.STRING(100),

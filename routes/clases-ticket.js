@@ -11,6 +11,7 @@ const {
     updateClaseTicket,
     deleteClaseTicket
 } = require("../controllers/clases-ticket");
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 
@@ -21,10 +22,10 @@ router.get("/", getClasesTickets);
 
 router.get("/:id", getClaseTicketById);
 
-router.post("/", [validarJWT, validarSesion], createClaseTicket);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_CLASESTK_CREAR')], createClaseTicket);
 
-router.put("/:id", [validarJWT, validarSesion], updateClaseTicket);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_CLASESTK_MODIFICAR')], updateClaseTicket);
 
-router.delete("/:id", [validarJWT, validarSesion], deleteClaseTicket);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_CLASESTK_ELIMINAR')], deleteClaseTicket);
 
 module.exports = router;

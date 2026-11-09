@@ -20,7 +20,8 @@ const FaroSchema = Joi.object({
 
   radio_metros: Joi.number().allow(null),
   color_ui: Joi.string().max(20).allow('', null),
-  metadata_extra: Joi.object().allow(null), // Validamos que entre como objeto JSON
+  // CC-137: la lista lo devuelve como texto JSON; se acepta objeto o texto
+  metadata_extra: Joi.alternatives().try(Joi.object(), Joi.string().allow('')).allow(null),
 
   // SOLUCIÓN: Permitimos cualquier objeto en la geometría para que el DTO lo procese
   geocerca_geo: Joi.object().unknown(true).allow(null),
@@ -68,7 +69,7 @@ const FaroDTO = (rawData, userContext = { codigoUsuario: 'SISTEMA_ADMIN' }) => {
     tipo_faro: value.tipo_faro.trim().toUpperCase(),
     radio_metros: value.radio_metros,
     color_ui: value.color_ui ? value.color_ui.trim() : null,
-    metadata_extra: value.metadata_extra ? JSON.stringify(value.metadata_extra) : null,
+    metadata_extra: !value.metadata_extra ? null : typeof value.metadata_extra === 'string' ? value.metadata_extra : JSON.stringify(value.metadata_extra),
 
     // 🔥 Extraemos la geometría limpia y corregimos el nombre de la variable
     geocerca_geo: extractGeometry(rawData.geocerca_geo),

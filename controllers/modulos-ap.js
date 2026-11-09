@@ -14,7 +14,8 @@ const getModulos = async (req, res = response) => {
     } catch (error) {
         return res.status(error.statusCode || 500).json({
             ok: false,
-            msg: error.msg || "Error interno al obtener los módulos."
+            msg: error.msg || "Error interno al obtener los módulos.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
@@ -27,7 +28,8 @@ const getModuloById = async (req, res = response) => {
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al obtener el módulo solicitado."
+            msg: error.msg || "Error al obtener el módulo solicitado.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
@@ -41,7 +43,8 @@ const createModulo = async (req, res = response) => {
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al crear el módulo."
+            msg: error.msg || "Error al crear el módulo.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
@@ -51,15 +54,16 @@ const updateModulo = async (req, res = response) => {
         const { id } = req.params;
 
         // QPLUS: Hidratación del payload de auditoría
-        const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-        const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+        const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
+        const dataDTO = { ...req.body, codigoUsuarioModificacion: usuarioAccion };
 
         const modulo = await service.updateModulo(id, dataDTO);
         return res.status(200).json({ ok: true, modulo });
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al actualizar el módulo."
+            msg: error.msg || "Error al actualizar el módulo.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
@@ -76,7 +80,8 @@ const deleteModulo = async (req, res = response) => {
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al eliminar el módulo."
+            msg: error.msg || "Error al eliminar el módulo.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };

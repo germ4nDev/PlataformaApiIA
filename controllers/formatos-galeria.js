@@ -14,7 +14,8 @@ const getFormatosGaleria = async (req, res = response) => {
     } catch (error) {
         return res.status(error.statusCode || 500).json({
             ok: false,
-            msg: error.msg || "Error interno al obtener los formatos de galería."
+            msg: error.msg || "Error interno al obtener los formatos de galería.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
@@ -27,7 +28,8 @@ const getFormatoGaleriaById = async (req, res = response) => {
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al obtener el formato solicitado."
+            msg: error.msg || "Error al obtener el formato solicitado.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
@@ -35,15 +37,16 @@ const getFormatoGaleriaById = async (req, res = response) => {
 const createFormatoGaleria = async (req, res = response) => {
     try {
         // QPLUS: Inyección de auditoría
-        const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-        const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+        const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
+        const dataDTO = { ...req.body, codigoUsuarioCreacion: usuarioAccion, codigoUsuarioModificacion: usuarioAccion };
 
         const formatoGaleria = await service.createFormatoGaleria(dataDTO);
         return res.status(201).json({ ok: true, formatoGaleria });
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al crear el formato de galería."
+            msg: error.msg || "Error al crear el formato de galería.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
@@ -53,15 +56,16 @@ const updateFormatoGaleria = async (req, res = response) => {
         const { id } = req.params;
 
         // QPLUS: Hidratación del payload de auditoría
-        const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-        const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+        const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
+        const dataDTO = { ...req.body, codigoUsuarioModificacion: usuarioAccion };
 
         const formatoGaleria = await service.updateFormatoGaleria(id, dataDTO);
         return res.status(200).json({ ok: true, formatoGaleria });
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al actualizar el formato de galería."
+            msg: error.msg || "Error al actualizar el formato de galería.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
@@ -78,7 +82,8 @@ const deleteFormatoGaleria = async (req, res = response) => {
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al eliminar el formato de galería."
+            msg: error.msg || "Error al eliminar el formato de galería.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };

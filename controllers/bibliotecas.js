@@ -14,7 +14,8 @@ const getBibliotecas = async (req, res = response) => {
     } catch (error) {
         return res.status(error.statusCode || 500).json({
             ok: false,
-            msg: error.msg || "Error interno al obtener bibliotecas."
+            msg: error.msg || "Error interno al obtener bibliotecas.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
@@ -28,7 +29,8 @@ const getBibliotecaByCode = async (req, res = response) => {
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al obtener la biblioteca."
+            msg: error.msg || "Error al obtener la biblioteca.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
@@ -36,8 +38,8 @@ const getBibliotecaByCode = async (req, res = response) => {
 const createBiblioteca = async (req, res = response) => {
     try {
         // QPLUS: Inyección de contexto de auditoría
-        const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-        const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+        const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
+        const dataDTO = { ...req.body, codigoUsuarioCreacion: usuarioAccion, codigoUsuarioModificacion: usuarioAccion };
 
         const bibliotecaDB = await service.createBiblioteca(dataDTO);
 
@@ -45,18 +47,21 @@ const createBiblioteca = async (req, res = response) => {
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al crear la biblioteca."
+            msg: error.msg || "Error al crear la biblioteca.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
 
 const updateBiblioteca = async (req, res = response) => {
     try {
-        const { codigoBiblioteca, ...data } = req.body;
+        // CC-138: el DTO exige codigoBiblioteca; antes se quitaba del cuerpo (400). La ruta es PUT /:id
+        const codigoBiblioteca = req.params.id || req.body.codigoBiblioteca;
+        const data = { ...req.body, codigoBiblioteca };
 
         // QPLUS: Hidratación del payload de auditoría
-        const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-        const dataDTO = { ...data, codigoUsuario: usuarioAccion };
+        const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
+        const dataDTO = { ...data, codigoUsuarioModificacion: usuarioAccion };
 
         const bibliotecaActualizada = await service.updateBiblioteca(codigoBiblioteca, dataDTO);
 
@@ -64,7 +69,8 @@ const updateBiblioteca = async (req, res = response) => {
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al actualizar la biblioteca."
+            msg: error.msg || "Error al actualizar la biblioteca.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
@@ -81,7 +87,8 @@ const deleteBiblioteca = async (req, res = response) => {
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al eliminar la biblioteca."
+            msg: error.msg || "Error al eliminar la biblioteca.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };

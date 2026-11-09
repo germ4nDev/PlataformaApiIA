@@ -2,8 +2,9 @@
     Author: German Valencia
     Pattern: PLATAFORMA Repository - Dominios de la plataforma (OT-012, migración 026)
       dominios()                  filas de PTLDominiosAP (todas: el núcleo descarta las inactivas). Sin la 026 → [] (todo neutro, como hoy)
-      aplicacionesDeUsuario(cod)  códigos de aplicación en los que el usuario tiene un rol activo
-                                  (PTLUsuariosSC → PTLUsuariosRole → PTLRolesAP, los mismos modelos de la plataforma)
+      aplicacionesDeUsuario(cod)  códigos de aplicación que el suscriptor le asigna al usuario: las de los paquetes con licencia activa
+                                  de sus vínculos (PTLUsuariosSC → PTLPaquetesSC → PTLModulosPQ), lo mismo que lista la web al entrar.
+                                  CC-145 (usuario, 2026-11-08): el acceso lo da el suscriptor, no el rol; sin permisos entra pero no hace nada.
 */
 const { QueryTypes } = require('sequelize');
 const { db } = require('../../database/connection');
@@ -20,16 +21,7 @@ async function dominios() {
   }
 }
 
-async function aplicacionesDeUsuario(codigoUsuario) {
-  const filas = await db.sequelize.query(`
-    SELECT DISTINCT r.codigoAplicacion
-    FROM dbo.PTLUsuariosSC u
-    INNER JOIN dbo.PTLUsuariosRole ur ON ur.codigoUsuarioSC = u.codigoUsuarioSC
-    INNER JOIN dbo.PTLRolesAP r ON r.codigoRole = ur.codigoRole
-    WHERE u.codigoUsuario = :codigoUsuario
-      AND COALESCE(ur.estadoUsuarioRole, 1) = 1
-      AND COALESCE(r.estadoRole, 1) = 1`, { replacements: { codigoUsuario }, type: QueryTypes.SELECT });
-  return filas.map((f) => f.codigoAplicacion).filter(Boolean);
-}
+// OT-026: la regla de «aplicación asignada» vive en un solo lugar (aplicaciones-suscriptor.repository)
+const { aplicacionesDeUsuario } = require('../plataforma/aplicaciones-suscriptor.repository');
 
 module.exports = { dominios, aplicacionesDeUsuario };

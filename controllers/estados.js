@@ -14,7 +14,8 @@ const getEstados = async (req, res = response) => {
   } catch (error) {
     return res.status(error.statusCode || 500).json({
       ok: false,
-      msg: error.msg || "Error interno al obtener los estados."
+      msg: error.msg || "Error interno al obtener los estados.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -27,7 +28,8 @@ const getEstadoById = async (req, res = response) => {
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al obtener el estado solicitado."
+      msg: error.msg || "Error al obtener el estado solicitado.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -35,15 +37,16 @@ const getEstadoById = async (req, res = response) => {
 const createEstado = async (req, res = response) => {
   try {
     // QPLUS: Inyección de auditoría para trazabilidad
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-    const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+    const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
+    const dataDTO = { ...req.body, codigoUsuarioCreacion: usuarioAccion, codigoUsuarioModificacion: usuarioAccion };
 
     const estado = await service.createEstado(dataDTO);
     return res.status(201).json({ ok: true, estado });
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al crear el estado."
+      msg: error.msg || "Error al crear el estado.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -53,15 +56,16 @@ const updateEstado = async (req, res = response) => {
     const { id } = req.params;
 
     // QPLUS: Hidratación del payload de auditoría
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-    const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+    const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
+    const dataDTO = { ...req.body, codigoUsuarioModificacion: usuarioAccion };
 
     const estado = await service.updateEstado(id, dataDTO);
     return res.status(200).json({ ok: true, estado });
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al actualizar el estado."
+      msg: error.msg || "Error al actualizar el estado.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -78,7 +82,8 @@ const deleteEstado = async (req, res = response) => {
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al eliminar el estado."
+      msg: error.msg || "Error al eliminar el estado.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };

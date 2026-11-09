@@ -15,11 +15,14 @@ const TipoRoleSchema = Joi.object({
   codigoUsuarioCreacion: Joi.string().max(200).required().messages({
     'any.required': 'El código del usuario creador es obligatorio.'
   }),
-  codigoUsuarioModificacion: Joi.string().max(200).allow('', null)
+  codigoUsuarioModificacion: Joi.string().max(200).allow('', null),
+  // CC-141: la web manda las fechas de auditoría y el DTO las usa; antes «"fechaModificacion" is not allowed»
+  fechaCreacion: Joi.string().max(100).allow('', null).optional(),
+  fechaModificacion: Joi.string().max(100).allow('', null).optional()
 })
 
 const TipoRoleDTO = (rawData) => {
-  const { error, value } = TipoPagoSchema.validate(rawData, { abortEarly: false });
+  const { error, value } = TipoRoleSchema.validate(rawData, { abortEarly: false });
 
   if (error) {
     throw {
@@ -31,15 +34,15 @@ const TipoRoleDTO = (rawData) => {
   const fechaActual = new Date().toISOString();
 
   return {
-    tipoRoleId: data.tipoRoleId,
-    codigoTipoRole: data.codigoTipoRole.trim(),
-    nombreTipoRole: data.nombreTipoRole.trim().toUpperCase(),
-    descripcionTipoRole: data.descripcionTipoRole.trim(),
-    estadoTipoRole: data.estadoTipoRole,
-    codigoUsuarioCreacion: data.codigoUsuarioCreacion,
-    fechaCreacion: data.fechaCreacion || fechaActual,
-    codigoUsuarioModificacion: data.codigoUsuarioModificacion,
-    fechaModificacion: data.fechaModificacion || fechaActual
+    tipoRoleId: value.tipoRoleId,
+    codigoTipoRole: value.codigoTipoRole.trim(),
+    nombreTipoRole: value.nombreTipoRole.trim().toUpperCase(),
+    descripcionTipoRole: value.descripcionTipoRole.trim(),
+    estadoTipoRole: value.estadoTipoRole,
+    codigoUsuarioCreacion: value.codigoUsuarioCreacion,
+    fechaCreacion: value.fechaCreacion || fechaActual,
+    codigoUsuarioModificacion: value.codigoUsuarioModificacion,
+    fechaModificacion: value.fechaModificacion || fechaActual
   };
 };
 

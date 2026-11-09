@@ -11,7 +11,7 @@ const generatePdf = async (req, res = response) => {
     try {
         // QPLUS: El controlador prepara el payload. 
         // Si el servicio requiere auditoría, inyectamos el contexto aquí.
-        const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
+        const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
         const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
 
         // Delegación de validación y lógica al servicio

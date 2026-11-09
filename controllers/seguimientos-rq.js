@@ -14,7 +14,8 @@ const getSeguimientos = async (req, res = response) => {
   } catch (error) {
     return res.status(error.statusCode || 500).json({
       ok: false,
-      msg: error.msg || "Error interno al obtener los seguimientos."
+      msg: error.msg || "Error interno al obtener los seguimientos.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -27,7 +28,8 @@ const getSeguimientoById = async (req, res = response) => {
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al obtener el seguimiento solicitado."
+      msg: error.msg || "Error al obtener el seguimiento solicitado.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -40,7 +42,8 @@ const getSeguimientosByTicket = async (req, res = response) => {
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al obtener seguimientos por ticket."
+      msg: error.msg || "Error al obtener seguimientos por ticket.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -48,15 +51,16 @@ const getSeguimientosByTicket = async (req, res = response) => {
 const createSeguimiento = async (req, res = response) => {
   try {
     // QPLUS: Inyección de contexto de auditoría con fallback
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-    const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+    const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
+    const dataDTO = { ...req.body, codigoUsuarioCreacion: usuarioAccion, codigoUsuarioModificacion: usuarioAccion };
 
     const seguimiento = await service.createSeguimiento(dataDTO);
     return res.status(201).json({ ok: true, seguimiento });
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al registrar el seguimiento."
+      msg: error.msg || "Error al registrar el seguimiento.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -66,15 +70,16 @@ const updateSeguimiento = async (req, res = response) => {
     const { id } = req.params;
 
     // QPLUS: Hidratación del payload de auditoría
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-    const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+    const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
+    const dataDTO = { ...req.body, codigoUsuarioModificacion: usuarioAccion };
 
     const seguimiento = await service.updateSeguimiento(id, dataDTO);
     return res.status(200).json({ ok: true, seguimiento });
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al actualizar el seguimiento."
+      msg: error.msg || "Error al actualizar el seguimiento.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -91,7 +96,8 @@ const deleteSeguimiento = async (req, res = response) => {
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al eliminar el seguimiento."
+      msg: error.msg || "Error al eliminar el seguimiento.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };

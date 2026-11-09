@@ -14,7 +14,8 @@ const getColoresSettings = async (req, res = response) => {
   } catch (error) {
     return res.status(error.statusCode || 500).json({
       ok: false,
-      msg: error.msg || "Error interno al obtener configuraciones de color."
+      msg: error.msg || "Error interno al obtener configuraciones de color.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -27,7 +28,8 @@ const getColorSettingById = async (req, res = response) => {
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al obtener la configuración de color."
+      msg: error.msg || "Error al obtener la configuración de color.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -35,16 +37,15 @@ const getColorSettingById = async (req, res = response) => {
 const createColorSetting = async (req, res = response) => {
   try {
     // QPLUS: Inyección de auditoría
-    console.log('req controller', req.body);
     const dataDTO = { ...req.body };
-    console.log('colores controller', dataDTO);
 
     const colorNav = await service.createColorSetting(dataDTO);
     return res.status(201).json({ ok: true, colorNav });
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al crear la configuración de color."
+      msg: error.msg || "Error al crear la configuración de color.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -54,15 +55,16 @@ const updateColorSetting = async (req, res = response) => {
     const { id } = req.params;
 
     // QPLUS: Hidratación del payload de auditoría
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-    const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+    const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
+    const dataDTO = { ...req.body, codigoUsuarioModificacion: usuarioAccion };
 
     const colorNav = await service.updateColorSetting(id, dataDTO);
     return res.status(200).json({ ok: true, colorNav });
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al actualizar la configuración de color."
+      msg: error.msg || "Error al actualizar la configuración de color.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -79,7 +81,8 @@ const deleteColorSetting = async (req, res = response) => {
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al eliminar la configuración de color."
+      msg: error.msg || "Error al eliminar la configuración de color.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };

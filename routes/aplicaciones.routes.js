@@ -15,6 +15,7 @@ const {
     updateAplicacion,
     deleteAplicacion,
 } = require("../controllers/aplicaciones.controller");
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 // router.use(validarSesion);
@@ -23,10 +24,10 @@ router.get("/", getAplicaciones);
 
 router.get("/:code", getAplicacionByCode);
 
-router.post("/", [validarJWT, validarSesion], createAplicacion);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_APP_CREAR')], createAplicacion);
 
-router.put("/:id", [validarJWT, validarSesion], updateAplicacion);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_APP_MODIFICAR')], updateAplicacion);
 
-router.delete("/:id", [validarJWT, validarSesion], deleteAplicacion);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_APP_ELIMINAR')], deleteAplicacion);
 
 module.exports = router;

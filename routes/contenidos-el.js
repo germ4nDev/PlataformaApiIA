@@ -15,6 +15,7 @@ const {
     updateContenido,
     deleteContenido,
 } = require("../controllers/contenidos-el");
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 // router.use(validarSesion);
@@ -23,10 +24,10 @@ router.get("/", validarJWT, getContenidos);
 
 router.get("/:id", validarJWT, getContenidoByCode);
 
-router.post("/", [validarJWT, validarSesion], createContenido);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_CONTENIDOS_CREAR')], createContenido);
 
-router.put("/:id", [validarJWT, validarSesion], updateContenido);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_CONTENIDOS_MODIFICAR')], updateContenido);
 
-router.delete("/:id", [validarJWT, validarSesion], validarJWT, deleteContenido);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_CONTENIDOS_ELIMINAR')], deleteContenido);
 
 module.exports = router;

@@ -9,12 +9,13 @@ const service = new ClasesTicketService();
 
 const getClasesTickets = async (req, res = response) => {
   try {
-    const clasesTicket = await service.getClasesTicket();
+    const clasesTicket = await service.obtenerClasesTicket();
     return res.status(200).json({ ok: true, clasesTicket });
   } catch (error) {
     return res.status(error.statusCode || 500).json({
       ok: false,
-      msg: error.msg || "Error interno al obtener clases de ticket."
+      msg: error.msg || "Error interno al obtener clases de ticket.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -22,12 +23,13 @@ const getClasesTickets = async (req, res = response) => {
 const getClaseTicketById = async (req, res = response) => {
   try {
     const { id } = req.params;
-    const claseTicket = await service.getClaseTicketPorId(id);
+    const claseTicket = await service.obtenerClaseTicketPorId(id);
     return res.status(200).json({ ok: true, claseTicket });
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al obtener la clase de ticket."
+      msg: error.msg || "Error al obtener la clase de ticket.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -35,15 +37,16 @@ const getClaseTicketById = async (req, res = response) => {
 const createClaseTicket = async (req, res = response) => {
   try {
     // QPLUS: Inyección de auditoría para el DTO
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-    const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+    const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
+    const dataDTO = { ...req.body, codigoUsuarioCreacion: usuarioAccion, codigoUsuarioModificacion: usuarioAccion };
 
-    const claseTicket = await service.createClaseTicket(dataDTO);
+    const claseTicket = await service.crearClaseTicket(dataDTO);
     return res.status(201).json({ ok: true, claseTicket });
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al crear la clase de ticket."
+      msg: error.msg || "Error al crear la clase de ticket.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -53,15 +56,16 @@ const updateClaseTicket = async (req, res = response) => {
     const { id } = req.params;
 
     // QPLUS: Hidratación del payload de auditoría
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-    const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+    const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
+    const dataDTO = { ...req.body, codigoUsuarioModificacion: usuarioAccion };
 
-    const claseTicket = await service.updateClaseTicket(id, dataDTO);
+    const claseTicket = await service.actualizarClaseTicket(id, dataDTO);
     return res.status(200).json({ ok: true, claseTicket });
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al actualizar la clase de ticket."
+      msg: error.msg || "Error al actualizar la clase de ticket.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -69,12 +73,13 @@ const updateClaseTicket = async (req, res = response) => {
 const deleteClaseTicket = async (req, res = response) => {
   try {
     const { id } = req.params;
-    await service.deleteClaseTicket(id);
+    await service.eliminarClaseTicket(id);
     return res.status(200).json({ ok: true, msg: "Registro eliminado correctamente." });
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al eliminar la clase de ticket."
+      msg: error.msg || "Error al eliminar la clase de ticket.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };

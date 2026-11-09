@@ -14,7 +14,8 @@ const getModulosPaquete = async (req, res = response) => {
     } catch (error) {
         return res.status(error.statusCode || 500).json({
             ok: false,
-            msg: error.msg || "Error interno al obtener los módulos del paquete."
+            msg: error.msg || "Error interno al obtener los módulos del paquete.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
@@ -27,7 +28,8 @@ const getModulosPaqueteById = async (req, res = response) => {
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al obtener el módulo de paquete solicitado."
+            msg: error.msg || "Error al obtener el módulo de paquete solicitado.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
@@ -40,7 +42,8 @@ const getModulosPaqueteByCode = async (req, res = response) => {
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al obtener módulos por código de paquete."
+            msg: error.msg || "Error al obtener módulos por código de paquete.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
@@ -54,7 +57,8 @@ const createModulosPaquete = async (req, res = response) => {
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al crear la relación módulo-paquete."
+            msg: error.msg || "Error al crear la relación módulo-paquete.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
@@ -64,15 +68,16 @@ const updateModulosPaquete = async (req, res = response) => {
         const { id } = req.params;
 
         // QPLUS: Hidratación del payload
-        const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-        const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+        const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
+        const dataDTO = { ...req.body, codigoUsuarioModificacion: usuarioAccion };
 
         const modulo = await service.updateModulosPaquete(id, dataDTO);
         return res.status(200).json({ ok: true, modulo });
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al actualizar la relación módulo-paquete."
+            msg: error.msg || "Error al actualizar la relación módulo-paquete.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
@@ -89,7 +94,8 @@ const deleteModulosPaquete = async (req, res = response) => {
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al eliminar la relación módulo-paquete."
+            msg: error.msg || "Error al eliminar la relación módulo-paquete.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };

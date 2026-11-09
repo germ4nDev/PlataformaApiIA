@@ -51,6 +51,7 @@ const SuitePQDTO = (rawData) => {
 const SuitePQModel = (sequelize) => {
   return sequelize.define("PTLSuitesPQ", {
     suitePaqueteId: {
+      field: 'suitePqueteId', // CC-138: nombre real de la columna (errata o nombre distinto en la tabla; ver OT-022)
       type: DataTypes.INTEGER,
       autoIncrement: true,
       allowNull: false

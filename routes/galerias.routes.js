@@ -13,6 +13,7 @@ const {
     updateGaleria,
     deleteGaleria
 } = require("../controllers/galerias");
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 
@@ -23,10 +24,10 @@ router.get("/", getGalerias);
 
 router.get("/:id", getGaleriaById);
 
-router.post("/", [validarJWT, validarSesion], createGaleria);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_GALERIAS_CREAR')], createGaleria);
 
-router.put("/:id", [validarJWT, validarSesion], updateGaleria);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_GALERIAS_MODIFICAR')], updateGaleria);
 
-router.delete("/:id", [validarJWT, validarSesion], deleteGaleria);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_GALERIAS_ELIMINAR')], deleteGaleria);
 
 module.exports = router;

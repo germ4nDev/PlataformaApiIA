@@ -14,7 +14,8 @@ const getTickets = async (req, res = response) => {
     } catch (error) {
         return res.status(error.statusCode || 500).json({
             ok: false,
-            msg: error.msg || "Error interno al obtener los tickets."
+            msg: error.msg || "Error interno al obtener los tickets.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
@@ -27,7 +28,8 @@ const getTicketById = async (req, res = response) => {
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al obtener el ticket solicitado."
+            msg: error.msg || "Error al obtener el ticket solicitado.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
@@ -35,15 +37,16 @@ const getTicketById = async (req, res = response) => {
 const createTicket = async (req, res = response) => {
     try {
         // QPLUS: Inyección de auditoría para trazabilidad del ticket
-        const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-        const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+        const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
+        const dataDTO = { ...req.body, codigoUsuarioCreacion: usuarioAccion, codigoUsuarioModificacion: usuarioAccion };
 
         const ticket = await service.createTicket(dataDTO);
         return res.status(201).json({ ok: true, ticket });
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al crear el ticket."
+            msg: error.msg || "Error al crear el ticket.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
@@ -53,15 +56,16 @@ const updateTicket = async (req, res = response) => {
         const { id } = req.params;
 
         // QPLUS: Hidratación del payload de auditoría
-        const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-        const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+        const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
+        const dataDTO = { ...req.body, codigoUsuarioModificacion: usuarioAccion };
 
         const ticket = await service.updateTicket(id, dataDTO);
         return res.status(200).json({ ok: true, ticket });
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al actualizar el ticket."
+            msg: error.msg || "Error al actualizar el ticket.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
@@ -78,7 +82,8 @@ const deleteTicket = async (req, res = response) => {
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al eliminar el ticket."
+            msg: error.msg || "Error al eliminar el ticket.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };

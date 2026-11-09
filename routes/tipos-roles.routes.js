@@ -8,6 +8,7 @@ const {
   crearTipoRole,
   actualizarTipoRole,
   eliminarTipoRole } = require('../controllers/tipos-roles.controller');
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 
@@ -18,10 +19,10 @@ router.get("/", getTiposRole);
 
 router.get("/:id", getTipoRoleById);
 
-router.post("/", [validarJWT, validarSesion], crearTipoRole);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_TIPOSROLE_CREAR')], crearTipoRole);
 
-router.put("/:id", [validarJWT, validarSesion], actualizarTipoRole);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_TIPOSROLE_MODIFICAR')], actualizarTipoRole);
 
-router.delete("/:id", [validarJWT, validarSesion], eliminarTipoRole);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_TIPOSROLE_ELIMINAR')], eliminarTipoRole);
 
 module.exports = router;

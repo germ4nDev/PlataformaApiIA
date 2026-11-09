@@ -13,6 +13,7 @@ const {
     updateEnlace,
     deleteEnlace
 } = require("../controllers/enlaces-st");
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 //router.use(validarSesion);
@@ -22,10 +23,10 @@ router.get("/", getEnlaces);
 
 router.get("/:id", getEnlaceById);
 
-router.post("/", [validarJWT, validarSesion], createEnlace);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_ENLACES_CREAR')], createEnlace);
 
-router.put("/:id", [validarJWT, validarSesion], updateEnlace);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_ENLACES_MODIFICAR')], updateEnlace);
 
-router.delete("/:id", [validarJWT, validarSesion], deleteEnlace);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_ENLACES_ELIMINAR')], deleteEnlace);
 
 module.exports = router;

@@ -14,6 +14,7 @@ const {
     updateTicket,
     deleteTicket
 } = require("../controllers/tickets-ap");
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 
@@ -24,10 +25,10 @@ router.get("/", getTickets);
 
 router.get("/:id", getTicketById);
 
-router.post("/", [validarJWT, validarSesion], createTicket);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_TICKETS_CREAR')], createTicket);
 
-router.put("/:id", [validarJWT, validarSesion], updateTicket);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_TICKETS_MODIFICAR')], updateTicket);
 
-router.delete("/:id", [validarJWT, validarSesion], deleteTicket);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_TICKETS_ELIMINAR')], deleteTicket);
 
 module.exports = router;

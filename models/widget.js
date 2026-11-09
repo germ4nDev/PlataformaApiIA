@@ -147,11 +147,21 @@ const WidgetMaestroSchema = Joi.object({
   // Widget para el teléfono (migración 028): solo lo muestra la app en el teléfono; la web y la tableta no lo ofrecen.
   // Opcional: si no viene, al crear queda false y al actualizar no se toca (las otras aplicaciones no lo envían).
   movil: Joi.boolean().optional(),
+  // Canal (migración 030, OT-017): web (web y tableta) | telefono (solo teléfono) | ambos. Opcional como movil; si vienen los
+  // dos, manda canal. movil se guarda igual a (canal = 'telefono') para compatibilidad.
+  canal: Joi.string().trim().lowercase().valid('web', 'telefono', 'ambos').optional(),
   codigoUsuarioCreacion: Joi.string().max(200).allow('', null).optional(),
   fechaCreacion: Joi.string().max(100).allow('', null).optional(),
   codigoUsuarioModificacion: Joi.string().max(200).allow('', null).optional(),
   fechaModificacion: Joi.string().max(100).allow('', null).optional()
 });
+
+/** canal manda; sin canal, movil decide (clientes anteriores a la 030). Sin ninguno no se toca nada al actualizar. */
+function canalYMovil(value) {
+  if (value.canal !== undefined) return { canal: value.canal, movil: value.canal === 'telefono' };
+  if (value.movil !== undefined) return { movil: value.movil, canal: value.movil ? 'telefono' : 'web' };
+  return {};
+}
 
 const WidgetMaestroDTO = (rawData, userContext = { codigoUsuario: 'SISTEMA_ADMIN' }) => {
   const { error, value } = WidgetMaestroSchema.validate(rawData, {
@@ -191,7 +201,7 @@ const WidgetMaestroDTO = (rawData, userContext = { codigoUsuario: 'SISTEMA_ADMIN
     anclajeTipo: value.anclajeTipo.trim().toUpperCase(),
     offsetY: value.offsetY,
     estadoWidget: value.estadoWidget,
-    ...(value.movil === undefined ? {} : { movil: value.movil }),
+    ...canalYMovil(value),
 
     codigoUsuarioCreacion: usuarioBase,
     fechaCreacion: value.fechaCreacion || fechaActual,
@@ -226,6 +236,8 @@ const WidgetMaestroModel = (sequelize) => {
       estadoWidget: { type: DataTypes.BOOLEAN, defaultValue: true },
       // Migración 028 (requisito: correrla ANTES de desplegar este API; sin la columna fallan las consultas del maestro).
       movil: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+      // Migración 030 (requisito: correrla ANTES de desplegar este API). web | telefono | ambos.
+      canal: { type: DataTypes.STRING(10), allowNull: false, defaultValue: 'web' },
 
       codigoUsuarioCreacion: { type: DataTypes.STRING(200), allowNull: true },
       fechaCreacion: { type: DataTypes.STRING(100), allowNull: true },

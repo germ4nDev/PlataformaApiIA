@@ -13,6 +13,7 @@ const {
   updateWidget,
   deleteWidget
 } = require('../controllers/widgets.controller');
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 // router.use(validarSesion);
@@ -24,10 +25,10 @@ router.get('/activos', getWidgetsActivos);
 
 router.get('/:id', getWidgetById);
 
-router.post('/', [validarJWT, validarSesion], createWidget);
+router.post('/', [validarJWT, validarSesion, validarPermiso('ACT_WDGT_CREAR')], createWidget);
 
-router.put('/:id', [validarJWT, validarSesion], updateWidget);
+router.put('/:id', [validarJWT, validarSesion, validarPermiso('ACT_WDGT_MODIFICAR')], updateWidget);
 
-router.delete('/:id', [validarJWT, validarSesion], deleteWidget);
+router.delete('/:id', [validarJWT, validarSesion, validarPermiso('ACT_WDGT_ELIMINAR')], deleteWidget);
 
 module.exports = router;

@@ -11,6 +11,7 @@ const {
   updateWidgetRole,
   deleteWidgetRole,
 } = require("../controllers/widget-roles.controller");
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 //router.use(validarJWT);
@@ -22,12 +23,12 @@ router.get("/acti/:ac", getWidgetByCodeWidget);
 
 router.get("/role/:ro", getWidgetByCodeRole);
 
-router.post("/bulk/:id", [validarJWT, validarSesion], createBulkWidgetsRoles);
+router.post("/bulk/:id", [validarJWT, validarSesion, validarPermiso('ACT_WDGT_ROLES')], createBulkWidgetsRoles);
 
-router.post("/", [validarJWT, validarSesion], createWidgetRole);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_WDGT_ROLES')], createWidgetRole);
 
-router.put("/:id", [validarJWT, validarSesion], updateWidgetRole);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_WDGT_ROLES')], updateWidgetRole);
 
-router.delete("/:id", [validarJWT, validarSesion], deleteWidgetRole);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_WDGT_ROLES')], deleteWidgetRole);
 
 module.exports = router;

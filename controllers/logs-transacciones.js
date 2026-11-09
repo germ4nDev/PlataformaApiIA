@@ -35,7 +35,7 @@ const getLogById = async (req, res = response) => {
 const createLog = async (req, res = response) => {
   try {
     // QPLUS: Inyección de contexto de auditoría (quién genera la transacción)
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
+    const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
     const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
 
     const log = await service.createLogTransaccion(dataDTO);

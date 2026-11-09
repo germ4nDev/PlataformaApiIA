@@ -14,7 +14,8 @@ const getRequerimientos = async (req, res = response) => {
   } catch (error) {
     return res.status(error.statusCode || 500).json({
       ok: false,
-      msg: error.msg || "Error interno al obtener los requerimientos."
+      msg: error.msg || "Error interno al obtener los requerimientos.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -27,7 +28,8 @@ const getRequerimientoById = async (req, res = response) => {
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al obtener el requerimiento solicitado."
+      msg: error.msg || "Error al obtener el requerimiento solicitado.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -35,15 +37,16 @@ const getRequerimientoById = async (req, res = response) => {
 const createRequerimiento = async (req, res = response) => {
   try {
     // QPLUS: Inyección de auditoría
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-    const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+    const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
+    const dataDTO = { ...req.body, codigoUsuarioCreacion: usuarioAccion, codigoUsuarioModificacion: usuarioAccion };
 
     const requerimiento = await service.createRequerimiento(dataDTO);
     return res.status(201).json({ ok: true, requerimiento });
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al crear el requerimiento."
+      msg: error.msg || "Error al crear el requerimiento.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -53,15 +56,16 @@ const updateRequerimiento = async (req, res = response) => {
     const { id } = req.params;
 
     // QPLUS: Hidratación del payload de auditoría
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-    const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+    const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
+    const dataDTO = { ...req.body, codigoUsuarioModificacion: usuarioAccion };
 
     const requerimiento = await service.updateRequerimiento(id, dataDTO);
     return res.status(200).json({ ok: true, requerimiento });
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al actualizar el requerimiento."
+      msg: error.msg || "Error al actualizar el requerimiento.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -78,7 +82,8 @@ const deleteRequerimiento = async (req, res = response) => {
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al eliminar el requerimiento."
+      msg: error.msg || "Error al eliminar el requerimiento.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };

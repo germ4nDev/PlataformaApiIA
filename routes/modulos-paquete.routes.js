@@ -14,6 +14,7 @@ const {
   updateModulosPaquete,
   deleteModulosPaquete
 } = require("../controllers/modulos-paquete.controller");
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 
@@ -26,10 +27,10 @@ router.get("/:id", getModulosPaqueteById);
 
 router.get("/paquete/:codigoPaquete", getModulosPaqueteByCode);
 
-router.post("/", [validarJWT, validarSesion], createModulosPaquete);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_MODPQ_CREAR')], createModulosPaquete);
 
-router.put("/:id", [validarJWT, validarSesion], updateModulosPaquete);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_MODPQ_MODIFICAR')], updateModulosPaquete);
 
-router.delete("/:id", [validarJWT, validarSesion], deleteModulosPaquete);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_MODPQ_ELIMINAR')], deleteModulosPaquete);
 
 module.exports = router;

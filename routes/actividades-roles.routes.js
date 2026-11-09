@@ -12,6 +12,7 @@ const {
   updateActividadRole,
   deleteActividadRole,
 } = require("../controllers/actividades-roles.controller");
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 //router.use(validarJWT);
@@ -23,12 +24,12 @@ router.get("/acti/:ac", getActividadByCodeActividad);
 
 router.get("/role/:ro", getActividadByCodeRole);
 
-router.post("/bulk/:id", [validarJWT, validarSesion], createBulkActividadesRoles);
+router.post("/bulk/:id", [validarJWT, validarSesion, validarPermiso('ACT_ROLES_PERMISOS')], createBulkActividadesRoles);
 
-router.post("/", [validarJWT, validarSesion], createActividadRole);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_ROLES_PERMISOS')], createActividadRole);
 
-router.put("/:id", [validarJWT, validarSesion], updateActividadRole);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_ROLES_PERMISOS')], updateActividadRole);
 
-router.delete("/:id", [validarJWT, validarSesion], deleteActividadRole);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_ROLES_PERMISOS')], deleteActividadRole);
 
 module.exports = router;

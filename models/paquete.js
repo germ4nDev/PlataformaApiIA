@@ -16,7 +16,7 @@ const PaqueteSchema = Joi.object({
 
   descripcionPaquete: Joi.string().max(4000).allow('', null).optional(),
   acuerdoLicencia: Joi.string().max(4000).allow('', null).optional(),
-  // costoPaquete: Joi.number().precision(2).min(0).optional().default(0.00),
+  costoPaquete: Joi.number().precision(2).min(0).allow(null).optional().default(0.00), // CC-138: NOT NULL en la tabla
   // precioPaquete: Joi.number().precision(2).min(0).optional().default(0.00),
   // precioPromocion: Joi.number().precision(2).min(0).optional().default(0.00),
   // valorAnual: Joi.number().precision(2).min(0).optional().default(0.00),
@@ -51,7 +51,7 @@ const PaqueteDTO = (rawData) => {
     nombrePaquete: value.nombrePaquete.trim(),
     descripcionPaquete: value.descripcionPaquete.trim(),
     acuerdoLicencia: value.acuerdoLicencia.trim(),
-    // costoPaquete: value.costoPaquete,
+    costoPaquete: value.costoPaquete ?? 0,
     // precioPaquete: value.precioPaquete,
     // precioPromocion: value.precioPromocion,
     // valorAnual: value.valorAnual,
@@ -98,11 +98,11 @@ const PaqueteModel = (sequelize) => {
       type: DataTypes.STRING(4000),
       allowNull: true
     },
-    // costoPaquete: {
-    //   type: DataTypes.DECIMAL(18, 2),
-    //   allowNull: false,
-    //   defaultValue: 0.00
-    // },
+    costoPaquete: { // CC-138: la tabla solo tiene costoPaquete (precios y promoción no existen)
+      type: DataTypes.DECIMAL(18, 2),
+      allowNull: false,
+      defaultValue: 0.00
+    },
     // precioPaquete: {
     //   type: DataTypes.DECIMAL(18, 2),
     //   allowNull: false,

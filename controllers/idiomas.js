@@ -14,7 +14,8 @@ const getIdiomas = async (req, res = response) => {
     } catch (error) {
         return res.status(error.statusCode || 500).json({
             ok: false,
-            msg: error.msg || "Error interno al obtener los idiomas."
+            msg: error.msg || "Error interno al obtener los idiomas.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
@@ -22,12 +23,13 @@ const getIdiomas = async (req, res = response) => {
 const getIdiomaById = async (req, res = response) => {
     try {
         const { id } = req.params;
-        const idioma = await service.getIdiomaById(id);
+        const idioma = await service.getIdiomaPorId(id);
         return res.status(200).json({ ok: true, idioma });
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al obtener el idioma solicitado."
+            msg: error.msg || "Error al obtener el idioma solicitado.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
@@ -35,15 +37,16 @@ const getIdiomaById = async (req, res = response) => {
 const createIdioma = async (req, res = response) => {
     try {
         // QPLUS: Inyección de auditoría
-        const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-        const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+        const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
+        const dataDTO = { ...req.body, codigoUsuarioCreacion: usuarioAccion, codigoUsuarioModificacion: usuarioAccion };
 
         const idioma = await service.createIdioma(dataDTO);
         return res.status(201).json({ ok: true, idioma });
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al crear el idioma."
+            msg: error.msg || "Error al crear el idioma.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
@@ -53,15 +56,16 @@ const updateIdioma = async (req, res = response) => {
         const { id } = req.params;
 
         // QPLUS: Hidratación del payload
-        const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-        const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+        const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
+        const dataDTO = { ...req.body, codigoUsuarioModificacion: usuarioAccion };
 
         const idioma = await service.updateIdioma(id, dataDTO);
         return res.status(200).json({ ok: true, idioma });
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al actualizar el idioma."
+            msg: error.msg || "Error al actualizar el idioma.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };
@@ -78,7 +82,8 @@ const deleteIdioma = async (req, res = response) => {
     } catch (error) {
         return res.status(error.statusCode || 400).json({
             ok: false,
-            msg: error.msg || "Error al eliminar el idioma."
+            msg: error.msg || "Error al eliminar el idioma.",
+            errores: error.details // CC-137: detalle del Joi
         });
     }
 };

@@ -80,8 +80,8 @@ const updateMuelle = async (req, res = response) => {
 
 const deleteMuelle = async (req, res = response) => {
   try {
-    const { id_muelle } = req.params;
-    const muelleEliminado = await muellesService.deleteMuelle(id_muelle);
+    const { id } = req.params; // CC-139: la ruta es DELETE /:id (antes leía id_muelle → undefined)
+    const muelleEliminado = await muellesService.deleteMuelle(id);
 
     res.json({
       ok: true,

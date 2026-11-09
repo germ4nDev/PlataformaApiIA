@@ -14,6 +14,7 @@ const {
     updateVersionAP,
     deleteVersionAP
 } = require("../controllers/versiones-ap.controller");
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 
@@ -24,10 +25,10 @@ router.get("/", getVersionesAP);
 
 router.get("/:id", getVersionAPById);
 
-router.post("/", [validarJWT, validarSesion], createVersionAP);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_VERSIONES_CREAR')], createVersionAP);
 
-router.put("/:id", [validarJWT, validarSesion], updateVersionAP);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_VERSIONES_MODIFICAR')], updateVersionAP);
 
-router.delete("/:id", [validarJWT, validarSesion], deleteVersionAP);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_VERSIONES_ELIMINAR')], deleteVersionAP);
 
 module.exports = router;

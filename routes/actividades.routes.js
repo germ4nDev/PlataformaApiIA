@@ -17,6 +17,7 @@ const {
   updateActividad,
   deleteActividad,
 } = require("../controllers/actividades.controller");
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 //router.use(validarJWT);
@@ -32,10 +33,10 @@ router.get("/suite/:id", getActividadByCodeSuite);
 
 router.get("/modulo/:id", getActividadByCodeModulo);
 
-router.post("/", [validarJWT, validarSesion], createActividad);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_ACT_CREAR')], createActividad);
 
-router.put("/:id", [validarJWT, validarSesion], updateActividad)
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_ACT_MODIFICAR')], updateActividad)
 
-router.delete("/:id", [validarJWT, validarSesion], deleteActividad);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_ACT_ELIMINAR')], deleteActividad);
 
 module.exports = router;

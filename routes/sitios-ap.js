@@ -13,6 +13,7 @@ const {
     updateSitio,
     deleteSitio
 } = require("../controllers/sitios-ap");
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 
@@ -23,10 +24,10 @@ router.get("/", getSitios);
 
 router.get("/:id", getSitioById);
 
-router.post("/", [validarJWT, validarSesion], createSitio);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_SITIOS_CREAR')], createSitio);
 
-router.put("/:id", [validarJWT, validarSesion], updateSitio);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_SITIOS_MODIFICAR')], updateSitio);
 
-router.delete("/:id", [validarJWT, validarSesion], deleteSitio);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_SITIOS_ELIMINAR')], deleteSitio);
 
 module.exports = router;

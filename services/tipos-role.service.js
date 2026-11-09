@@ -33,10 +33,10 @@ class TiposRoleService {
   async obtenerTipoRolePorId(codigo) {
     const registro = await this.model.findByPk(codigo);
     if (!registro) throw { statusCode: 404, msg: 'Tipo de rol no encontrado' };
-    return TipoRoleDTO(registro);
+    return registro; // CC-141: antes pasaba el registro de la base por el DTO (500)
   }
 
-  async crearTipoRole(data) {
+  async crearTipoRole(rawData) { // CC-139: recibía data y usaba rawData (ReferenceError → 500)
     const dataDTO = TipoRoleDTO(rawData);
 
     return await sequelize.transaction(async (t) => {
@@ -59,7 +59,7 @@ class TiposRoleService {
     });
   }
 
-  async actualizarTipoRole(codigo, rawData) {
+  async actualizarTipoRole(codigoTipoRole, rawData) { // CC-141: el cuerpo usaba codigoTipoRole (ReferenceError)
     const dataDTO = TipoRoleDTO(rawData);
 
     return await sequelize.transaction(async (t) => {

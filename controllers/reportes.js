@@ -10,7 +10,7 @@ const service = new PdfService();
 const generarReportePdf = async (req, res = response) => {
   try {
     // QPLUS: Preparación del DTO con contexto de auditoría
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
+    const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
     const dataDTO = {
       html: req.body.html,
       codigoUsuario: usuarioAccion

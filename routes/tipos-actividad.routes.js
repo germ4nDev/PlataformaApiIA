@@ -9,6 +9,7 @@ const {
   putTipoActividad,
   deleteTipoActividad
 } = require('../controllers/tipos-actividad.controller');
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 // router.use(validarSesion);
@@ -17,10 +18,10 @@ router.get("/", getTiposActividades);
 
 router.get("/:id", getTipoActividad);
 
-router.post("/", [validarJWT, validarSesion], postTipoActividad);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_TIPOSACT_CREAR')], postTipoActividad);
 
-router.put("/:id", [validarJWT, validarSesion], putTipoActividad);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_TIPOSACT_MODIFICAR')], putTipoActividad);
 
-router.delete("/:id", [validarJWT, validarSesion], deleteTipoActividad);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_TIPOSACT_ELIMINAR')], deleteTipoActividad);
 
 module.exports = router;

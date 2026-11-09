@@ -15,7 +15,8 @@ const getUsuariosEmpresas = async (req, res = response) => {
   } catch (error) {
     return res.status(error.statusCode || 500).json({
       ok: false,
-      msg: error.msg || "Error interno al obtener los usuariosSC de usuarios-empresas."
+      msg: error.msg || "Error interno al obtener los usuariosSC de usuarios-empresas.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -28,7 +29,8 @@ const getUsuarioEmpresaById = async (req, res = response) => {
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al obtener la relación solicitada."
+      msg: error.msg || "Error al obtener la relación solicitada.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -36,15 +38,16 @@ const getUsuarioEmpresaById = async (req, res = response) => {
 const createUsuarioEmpresa = async (req, res = response) => {
   try {
     // QPLUS: Inyección de auditoría
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-    const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+    const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
+    const dataDTO = { ...req.body, codigoUsuarioCreacion: usuarioAccion, codigoUsuarioModificacion: usuarioAccion };
 
     const usuarioSC = await service.createUsuarioEmpresa(dataDTO);
     return res.status(201).json({ ok: true, usuarioSC });
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al crear la relación usuario-empresa."
+      msg: error.msg || "Error al crear la relación usuario-empresa.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -54,15 +57,16 @@ const updateUsuarioEmpresa = async (req, res = response) => {
     const { id } = req.params;
 
     // QPLUS: Hidratación del payload de auditoría
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-    const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+    const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
+    const dataDTO = { ...req.body, codigoUsuarioModificacion: usuarioAccion };
 
     const usuarioSC = await service.updateUsuarioEmpresa(id, dataDTO);
     return res.status(200).json({ ok: true, usuarioSC });
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al actualizar la relación usuario-empresa."
+      msg: error.msg || "Error al actualizar la relación usuario-empresa.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -79,7 +83,8 @@ const deleteUsuarioEmpresa = async (req, res = response) => {
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al eliminar la relación."
+      msg: error.msg || "Error al eliminar la relación.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };

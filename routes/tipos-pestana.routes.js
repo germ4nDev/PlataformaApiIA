@@ -9,6 +9,7 @@ const {
   actualizarTipoPestana,
   eliminarTipoPestana
 } = require('../controllers/tipos-pestana.controller');
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 
@@ -19,10 +20,10 @@ router.get("/", getTiposPestana);
 
 router.get("/:id", getTipoPestanaById);
 
-router.post("/", [validarJWT, validarSesion], crearTipoPestana);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_TIPOSPEST_CREAR')], crearTipoPestana);
 
-router.put("/:id", [validarJWT, validarSesion], actualizarTipoPestana);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_TIPOSPEST_MODIFICAR')], actualizarTipoPestana);
 
-router.delete("/:id", [validarJWT, validarSesion], eliminarTipoPestana);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_TIPOSPEST_ELIMINAR')], eliminarTipoPestana);
 
 module.exports = router;

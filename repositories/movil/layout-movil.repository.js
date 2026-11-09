@@ -25,13 +25,14 @@ async function maestro(codigoPestana) {
 
 /**
  * Widgets de la pestaña que permiten los roles del usuario (regla 18, fase 2): relaciones activas de PTLWidgetsRoles de sus
- * roles activos (PTLUsuariosSC → PTLUsuariosRole → PTLRolesAP), con la marca de teléfono del maestro (movil, migración 028).
+ * roles activos (PTLUsuariosSC → PTLUsuariosRole → PTLRolesAP), con el canal del maestro (canal, migración 030; movil, 028).
  * Lo mismo que arma la web al entrar (rolesYWidgetsDeAplicacion). Solo lectura.
- * @returns {Promise<Array<{ codigoWidget: string, movil: boolean }>>}
+ * @returns {Promise<Array<{ codigoWidget: string, movil: boolean, canal: string }>>}
  */
 async function permitidosDeUsuario(codigoUsuario, codigoPestana) {
   return consultar(`
-    SELECT DISTINCT UPPER(LTRIM(RTRIM(w.codigoWidget))) AS codigoWidget, CAST(ISNULL(w.movil, 0) AS BIT) AS movil
+    SELECT DISTINCT UPPER(LTRIM(RTRIM(w.codigoWidget))) AS codigoWidget, CAST(ISNULL(w.movil, 0) AS BIT) AS movil,
+           w.canal
     FROM dbo.PTLUsuariosSC u
     JOIN dbo.PTLUsuariosRole ur ON ur.codigoUsuarioSC = u.codigoUsuarioSC AND ISNULL(ur.estadoUsuarioRole, 1) = 1
     JOIN dbo.PTLRolesAP r ON r.codigoRole = ur.codigoRole AND ISNULL(r.estadoRole, 1) = 1

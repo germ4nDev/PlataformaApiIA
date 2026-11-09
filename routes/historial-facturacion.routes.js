@@ -16,6 +16,7 @@ const {
   procesarPagoCrear,
   createHistorialManual
 } = require("../controllers/historial-facturacion.controller");
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 
@@ -28,18 +29,18 @@ router.post('/webhook', recibirWebhookMP);
 // router.use(validarJWT);
 // router.use(validarSesion);
 
-router.post("/procesar-crear", [validarJWT, validarSesion], procesarPagoCrear);
+router.post("/procesar-crear", [validarJWT, validarSesion, validarPermiso('ACT_FACTURACION_CREAR')], procesarPagoCrear);
 
-router.post("/manual", [validarJWT, validarSesion], createHistorialManual);
+router.post("/manual", [validarJWT, validarSesion, validarPermiso('ACT_FACTURACION_CREAR')], createHistorialManual);
 
 router.get("/", getHistoriales);
 
 router.get("/:id", getHistorialById);
 
-router.post("/", [validarJWT, validarSesion], createHistorial);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_FACTURACION_CREAR')], createHistorial);
 
-router.put("/:id", [validarJWT, validarSesion], updateHistorial);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_FACTURACION_MODIFICAR')], updateHistorial);
 
-router.delete("/:id", [validarJWT, validarSesion], deleteHistorial);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_FACTURACION_ELIMINAR')], deleteHistorial);
 
 module.exports = router;

@@ -12,6 +12,7 @@ const {
     updateTipoScript,
     deleteTipoScript
 } = require("../controllers/tipos-scripts.controller");
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 
@@ -22,10 +23,10 @@ router.get("/", getTiposScripts);
 
 router.get("/:id", getTipoScriptById);
 
-router.post("/", [validarJWT, validarSesion], createTipoScript);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_TIPOSSCRIPT_CREAR')], createTipoScript);
 
-router.put("/:id", [validarJWT, validarSesion], updateTipoScript);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_TIPOSSCRIPT_MODIFICAR')], updateTipoScript);
 
-router.delete("/:id", [validarJWT, validarSesion], deleteTipoScript);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_TIPOSSCRIPT_ELIMINAR')], deleteTipoScript);
 
 module.exports = router;

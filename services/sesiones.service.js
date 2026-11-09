@@ -123,6 +123,7 @@ class SesionesService {
 
       if (datosContexto.codigoSuscriptor !== undefined) camposActualizables.codigoSuscriptor = datosContexto.codigoSuscriptor;
       if (datosContexto.codigoSuite !== undefined) camposActualizables.codigoSuite = datosContexto.codigoSuite;
+      if (datosContexto.codigoEmpresaSC !== undefined) camposActualizables.codigoEmpresaSC = datosContexto.codigoEmpresaSC;
       if (datosContexto.codigoAplicacion !== undefined) camposActualizables.codigoAplicacion = datosContexto.codigoAplicacion;
       if (datosContexto.codigoModulo !== undefined) camposActualizables.codigoModulo = datosContexto.codigoModulo;
 

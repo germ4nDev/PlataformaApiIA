@@ -112,7 +112,7 @@ const updatePestana = async (req, res = response) => {
     const dataDTO = { ...req.body };
     // console.log('rawDta conbtroller', dataDTO);
 
-    const tipo = await service.acturlzarPestana(id, dataDTO);
+    const tipo = await service.actualizarPestana(id, dataDTO);
     return res.status(200).json({ ok: true, tipo });
   } catch (error) {
     // 🟢 AGREGA ESTA LÍNEA PARA VER EL VERDADERO ERROR:

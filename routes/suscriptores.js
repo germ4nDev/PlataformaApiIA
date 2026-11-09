@@ -13,6 +13,8 @@ const {
     updateSuscriptor,
     deleteSuscriptor
 } = require("../controllers/suscriptores");
+const { validarPermiso } = require('../middlewares/validar-permiso');
+const { getAplicacionesSuscriptor } = require('../controllers/plataforma/aplicaciones-suscriptor.controller');
 
 const router = Router();
 
@@ -23,10 +25,13 @@ router.get("/", getSuscriptores);
 
 router.get("/:id", [validarJWT, validarSesion], getSuscriptorById);
 
-router.post("/", [validarJWT, validarSesion], createSuscriptor);
+// OT-026: aplicaciones con licencia del suscriptor (asignación de roles del usuario: suscriptor → empresa → aplicación → roles)
+router.get('/:codigoSuscriptor/aplicaciones', [validarJWT, validarSesion], getAplicacionesSuscriptor);
 
-router.put("/:id", [validarJWT, validarSesion], updateSuscriptor);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_SUSC_CREAR')], createSuscriptor);
 
-router.delete("/:id", [validarJWT, validarSesion], deleteSuscriptor);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_SUSC_MODIFICAR')], updateSuscriptor);
+
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_SUSC_ELIMINAR')], deleteSuscriptor);
 
 module.exports = router;

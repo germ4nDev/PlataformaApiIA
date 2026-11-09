@@ -13,6 +13,7 @@ const {
   updateTexto,
   deleteTexto
 } = require("../controllers/textos-id");
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 
@@ -23,10 +24,10 @@ router.get("/", getTextos);
 
 router.get("/:id", getTextoById);
 
-router.post("/", [validarJWT, validarSesion], createTexto);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_TEXTOS_CREAR')], createTexto);
 
-router.put("/:id", [validarJWT, validarSesion], updateTexto);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_TEXTOS_MODIFICAR')], updateTexto);
 
-router.delete("/:id", [validarJWT, validarSesion], deleteTexto);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_TEXTOS_ELIMINAR')], deleteTexto);
 
 module.exports = router;

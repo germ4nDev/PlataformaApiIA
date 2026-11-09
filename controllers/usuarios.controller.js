@@ -47,12 +47,10 @@ const validatePassword = async (req, res = response) => {
 
 const createUsuario = async (req, res = response) => {
   try {
-    // QPLUS: Auditoría inicial
-    const dataDTO = { ...req.body };
-    // console.log('usuario dto', dataDTO);
+    // Auditoría desde el token (CC-128), no desde el cuerpo
+    const dataDTO = { ...req.body, codigoUsuarioCreacion: req.codigoUsuario || req.body.codigoUsuarioCreacion };
 
     const usuario = await service.createUsuario(dataDTO);
-    // console.log('usuario creado', usuario);
     return res.status(201).json({ ok: true, usuario });
   } catch (error) {
     return res.status(error.statusCode || 400).json({
@@ -74,7 +72,7 @@ const uploadMasivoUsuarios = async (req, res) => {
     const archivoBuffer = req.files.archivoExcel.data;
 
     // express-fileupload manda los campos de texto normales en req.body
-    const usuarioCreador = req.body.usuarioLogueado || 'SISTEMA';
+    const usuarioCreador = req.codigoUsuario || 'SISTEMA';
 
     // 3. Enviamos el Buffer al servicio que ya tenías programado
     const resultado = await service.cargueMasivoExcel(archivoBuffer, usuarioCreador);
@@ -99,8 +97,8 @@ const updateUsuario = async (req, res = response) => {
   try {
     const { id } = req.params;
 
-    // QPLUS: Hidratación del payload de auditoría
-    const dataDTO = { ...req.body };
+    // Auditoría desde el token (CC-128)
+    const dataDTO = { ...req.body, codigoUsuarioModificacion: req.codigoUsuario || req.body.codigoUsuarioModificacion };
 
     const usuario = await service.updateUsuario(id, dataDTO);
     return res.status(200).json({ ok: true, usuario });

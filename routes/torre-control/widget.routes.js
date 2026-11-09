@@ -16,6 +16,8 @@ const {
   obtenerTablero,
   guardarTablero
 } = require('../../controllers/torre-control/layout.controller');
+const { validarSesion } = require('../../middlewares/validar-sesion');
+const { validarPermiso } = require('../../middlewares/validar-permiso');
 
 router.get('/kpis', KpisController.obtenerDashboard);
 
@@ -25,14 +27,14 @@ router.get('/', getWidgets);
 
 router.get('/:codigo_widget', getWidgetByCode);
 
-router.post('/', crearWidget);
+router.post('/', [validarJWT, validarSesion, validarPermiso('ACT_WDGT_CREAR')], crearWidget);
 
 router.get('/obtener/:codigo_usuario', obtenerTablero);
 
 router.post('/layout', guardarTablero);
 
-router.put('/:codigo_widget', updateWidget);
+router.put('/:codigo_widget', [validarJWT, validarSesion, validarPermiso('ACT_WDGT_MODIFICAR')], updateWidget);
 
-router.delete('/:codigo_widget', deleteWidget);
+router.delete('/:codigo_widget', [validarJWT, validarSesion, validarPermiso('ACT_WDGT_ELIMINAR')], deleteWidget);
 
 module.exports = router;

@@ -5,7 +5,7 @@
 const { sequelize } = require('../database/connection');
 const bcrypt = require("bcryptjs");
 const { UsuarioModel, UsuarioDTO } = require('../models/usuario');
-const { getIO } = require('../helpers/socket.helper');
+const { emitir } = require('../helpers/socket.helper');
 const xlsx = require('xlsx');
 const crypto = require('crypto');
 
@@ -91,7 +91,7 @@ class UsuariosService {
 
       const usuarioDB = await this.model.create(dataDTO, { transaction: t });
 
-      getIO().emit("usuarios-actualizados", {
+      emitir("usuarios-actualizados", {
         action: "create",
         msg: `Usuario creado: ${usuarioDB.nombreUsuario}`
       });
@@ -152,7 +152,7 @@ class UsuariosService {
     });
 
     // 🟢 3. Emitir el evento de actualización a todas las interfaces conectadas
-    getIO().emit('usuarios-actualizados', {
+    emitir('usuarios-actualizados', {
       action: "update",
       msg: 'Cargue masivo completado. Refrescando tabla...'
     });
@@ -164,6 +164,7 @@ class UsuariosService {
     if (rawData.fotoUsuario == "") (
       rawData.fotoUsuario = 'mantenerFoto'
     )
+
     const dataDTO = UsuarioDTO(rawData);
 
     return await sequelize.transaction(async (t) => {
@@ -198,7 +199,7 @@ class UsuariosService {
         transaction: t
       });
 
-      getIO().emit("usuarios-actualizados", {
+      emitir("usuarios-actualizados", {
         action: "update",
         msg: `Usuario actualizado: ${usuarioActualizado.nombreUsuario}`
       });
@@ -231,7 +232,7 @@ class UsuariosService {
         transaction: t
       });
 
-      getIO().emit("usuarios-actualizados", {
+      emitir("usuarios-actualizados", {
         action: "update",
         msg: `Clave de usuario actualizada: ${usuarioActualizado.nombreUsuario}`
       });
@@ -258,7 +259,7 @@ class UsuariosService {
         transaction: t
       });
 
-      getIO().emit("usuarios-actualizados", {
+      emitir("usuarios-actualizados", {
         action: "delete",
         msg: `Usuario eliminado: ${nombreUsuario}`
       });

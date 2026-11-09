@@ -37,7 +37,7 @@ const getSliderById = async (req, res = response) => {
 const createSlider = async (req, res = response) => {
   try {
     // QPLUS: Inyección de auditoría
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
+    const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
     const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
 
     const sliderInicio = await service.createSlider(dataDTO);

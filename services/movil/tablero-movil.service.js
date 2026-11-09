@@ -170,7 +170,8 @@ class TableroMovilService {
     const datos = await this._datosLayout(codigoUsuario, pestana, ahora, fresco);
     const modulo = moduloDePestana(pestana);
     // Regla 18: en el teléfono solo lo que permite el rol del usuario (los de teléfono, movil = 1, sí entran)
-    const permitidas = (celdas) => separarPorPermiso(celdas, datos.permisos, 'telefono').visibles;
+    // Vista nativa de la app (respaldo sin conexión desde OT-017): todo lo permitido, como en CC-115. El canal 'telefono' estricto es el de la web embebida.
+    const permitidas = (celdas) => separarPorPermiso(celdas, datos.permisos, 'nativo').visibles;
 
     // 1.ª pasada sin terminales: qué widgets hay y qué fuentes piden (las tarjetas de terminal piden el resumen marítimo)
     const previo = layoutEfectivo({ ...datos, terminales: null });

@@ -13,6 +13,7 @@ const {
     updateTipoEstado,
     deleteTipoEstado
 } = require("../controllers/tipos-estados");
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 
@@ -23,10 +24,10 @@ router.get("/", getTiposEstados);
 
 router.get("/:id", getTipoEstadoById);
 
-router.post("/", [validarJWT, validarSesion], createTipoEstado);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_TIPOSEST_CREAR')], createTipoEstado);
 
-router.put("/:id", [validarJWT, validarSesion], updateTipoEstado);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_TIPOSEST_MODIFICAR')], updateTipoEstado);
 
-router.delete("/:id", [validarJWT, validarSesion], deleteTipoEstado);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_TIPOSEST_ELIMINAR')], deleteTipoEstado);
 
 module.exports = router;

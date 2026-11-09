@@ -86,7 +86,7 @@ const getRolesByUser = async (req, res = response) => {
 
 const createUsuarioRole = async (req, res = response) => {
   try {
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
+    const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
     const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
 
     const usuarioRoles = await service.createUsuarioRole(dataDTO);
@@ -139,7 +139,7 @@ const updateUsuarioRole = async (req, res = response) => {
 const syncRoleUsers = async (req, res = response) => {
   try {
     const { id } = req.params;
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
+    const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
 
     // Hidratación del DTO para operaciones masivas
     const dataDTO = {
@@ -160,7 +160,7 @@ const syncRoleUsers = async (req, res = response) => {
 const syncUserRoles = async (req, res = response) => {
   try {
     const { id } = req.params;
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
+    const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
 
     const dataDTO = {
       ...req.body,

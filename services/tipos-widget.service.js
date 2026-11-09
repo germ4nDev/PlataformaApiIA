@@ -33,10 +33,10 @@ class TiposWidgetService {
   async obtenerTipoWidgetPorId(codigo) {
     const registro = await this.model.findByPk(codigo);
     if (!registro) throw { statusCode: 404, msg: 'Tipo de widget no encontrado' };
-    return TipoWidgetDTO(registro);
+    return registro; // CC-141: antes pasaba el registro de la base por el DTO (500)
   }
 
-  async crearTipoWidget(data) {
+  async crearTipoWidget(rawData) { // CC-139: recibía data y usaba rawData (ReferenceError → 500)
     const dataDTO = TipoWidgetDTO(rawData);
 
     return await sequelize.transaction(async (t) => {
@@ -59,7 +59,7 @@ class TiposWidgetService {
     });
   }
 
-  async actualizarTipoWidget(codigo, rawData) {
+  async actualizarTipoWidget(codigoTipo, rawData) { // CC-141: el cuerpo usaba codigoTipo (ReferenceError)
     const dataDTO = TipoWidgetDTO(rawData);
 
     return await sequelize.transaction(async (t) => {

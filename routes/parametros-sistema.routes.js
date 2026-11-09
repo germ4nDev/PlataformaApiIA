@@ -25,15 +25,12 @@ router.get("/", getParametros);
 router.get("/:id", getParametroByCodigo);
 
 // 🟢 Crear un nuevo parámetro  , validarPermiso('ACT_SYST_CREAR') , validarPermiso('ACT_SYST_ACTUALIZAR') , validarPermiso('ACT_SYST_ELIMINAR')
-router.post("/", [validarJWT, validarSesion
-], createParametro);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_SYST_CREAR')], createParametro);
 
 // 🟢 Actualizar un parámetro existente
-router.put("/:id", [validarJWT, validarSesion
-], updateParametro);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_SYST_ACTUALIZAR')], updateParametro);
 
 // 🟢 Eliminar un parámetro
-router.delete("/:id", [validarJWT, validarSesion
-], deleteParametro);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_SYST_ELIMINAR')], deleteParametro);
 
 module.exports = router;

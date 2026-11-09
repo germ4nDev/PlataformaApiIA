@@ -88,7 +88,7 @@ class PestanaService {
     }
   }
 
-  async crearPestana(data) {
+  async crearPestana(rawData) { // CC-139: recibía data y usaba rawData (ReferenceError → 500)
     const dataDTO = PestanaDTO(rawData);
 
     return await sequelize.transaction(async (t) => {

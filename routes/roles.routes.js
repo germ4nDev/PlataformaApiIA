@@ -14,6 +14,7 @@ const {
     updateRole,
     deleteRole
 } = require("../controllers/roles.controller");
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 
@@ -26,10 +27,10 @@ router.get("/:id", getRoleById);
 
 router.get("/app/:appCode", getRolesByApp);
 
-router.post("/", [validarJWT, validarSesion], createRole);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_ROLES_CREAR')], createRole);
 
-router.put("/:id", [validarJWT, validarSesion], updateRole);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_ROLES_MODIFICAR')], updateRole);
 
-router.delete("/:id", [validarJWT, validarSesion], deleteRole);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_ROLES_ELIMINAR')], deleteRole);
 
 module.exports = router;

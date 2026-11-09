@@ -22,28 +22,36 @@ const {
 
 const router = Router();
 
-router.get("/", getUsuarios);
+// Lectura: JWT y sesión (catálogo compartido por varios módulos de la plataforma; sin llave propia por ahora, CC-128)
+router.get("/", [validarJWT, validarSesion], getUsuarios);
 
-router.get("/:id", getUsuarioById);
+router.get("/:id", [validarJWT, validarSesion], getUsuarioById);
 
-router.post('/cargue-masivo', [validarJWT, validarSesion,
-  validarPermiso('ACT_USR_CARGUE')
-], uploadMasivoUsuarios);
+router.post('/cargue-masivo', [validarJWT, validarSesion, validarPermiso('ACT_USR_CARGUE')], uploadMasivoUsuarios);
 
-router.post("/validate-password", [validarJWT, validarSesion], validatePassword);
+// Verificar la propia clave: cualquier usuario; la de otro exige ACT_USR_ACTUALIZAR
+router.post("/validate-password", [
+  validarJWT,
+  validarSesion,
+  validarPermiso('ACT_USR_ACTUALIZAR', { propio: (req) => req.body?.codigoAdministrador })
+], validatePassword);
 
-router.post("/", [validarJWT, validarSesion,
-  validarPermiso('ACT_USR_CREAR')
-], createUsuario);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_USR_CREAR')], createUsuario);
 
-router.put("/:id", [validarJWT, validarSesion,
-  validarPermiso('ACT_USR_ACTUALIZAR')
+// Sus propios datos (perfil) los actualiza cualquier usuario; los de otro exigen ACT_USR_ACTUALIZAR
+router.put("/:id", [
+  validarJWT,
+  validarSesion,
+  validarPermiso('ACT_USR_ACTUALIZAR', { propio: (req) => req.params.id })
 ], updateUsuario);
 
-router.put("/password/:id", [validarJWT, validarSesion], updateUsuarioPassword);
+// La propia clave la cambia cualquier usuario; la de otro exige ACT_USR_ACTUALIZAR
+router.put("/password/:id", [
+  validarJWT,
+  validarSesion,
+  validarPermiso('ACT_USR_ACTUALIZAR', { propio: (req) => req.params.id })
+], updateUsuarioPassword);
 
-router.delete("/:id", [validarJWT, validarSesion,
-  validarPermiso('ACT_USR_ELIMINAR')
-], deleteUsuario);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_USR_ELIMINAR')], deleteUsuario);
 
 module.exports = router;

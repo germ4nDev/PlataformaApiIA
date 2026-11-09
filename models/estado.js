@@ -6,7 +6,7 @@ const Joi = require('joi');
 const { DataTypes } = require('sequelize');
 
 const EstadoSchema = Joi.object({
-  codigoTipoEstado: Joi.string().max(200).required()
+  codigoTipoEstado: Joi.alternatives().try(Joi.number().integer(), Joi.string().pattern(/^\d+$/)).required() // CC-138: tipoEstado es int en la tabla
     .messages({ 'any.required': 'El código del estado de multimedia es obligatorio.' }),
 
   nombreEstado: Joi.string().max(100).required()
@@ -34,7 +34,7 @@ const EstadoDTO = (rawData) => {
   const fechaActual = new Date().toISOString();
 
   return {
-    codigoTipoEstado: value.codigoTipoEstado,
+    codigoTipoEstado: Number(value.codigoTipoEstado),
     tipoEstado: value.tipoEstado,
     nombreEstado: value.nombreEstado.trim(),
     siglaEstado: value.siglaEstado.trim().toUpperCase(), // Estandarización estricta a mayúsculas
@@ -53,7 +53,8 @@ const EstadoModel = (sequelize) => {
       autoIncrement: true
     },
     codigoTipoEstado: {
-      type: DataTypes.STRING,
+      field: 'tipoEstado', // CC-138: nombre real de la columna (errata o nombre distinto en la tabla; ver OT-022)
+      type: DataTypes.INTEGER,
       primaryKey: true,
       allowNull: false
     },

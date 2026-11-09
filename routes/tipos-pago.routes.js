@@ -13,6 +13,7 @@ const {
   updateTipoPago,
   deleteTipoPago
 } = require("../controllers/tipos-pago.controller");
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 
@@ -25,10 +26,10 @@ router.get("/", getTiposPago);
 
 router.get("/:id", getTipoPagoById);
 
-router.post("/", [validarJWT, validarSesion], createTipoPago);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_TIPOSPAGO_CREAR')], createTipoPago);
 
-router.put("/:id", [validarJWT, validarSesion], updateTipoPago);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_TIPOSPAGO_MODIFICAR')], updateTipoPago);
 
-router.delete("/:id", [validarJWT, validarSesion], deleteTipoPago);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_TIPOSPAGO_ELIMINAR')], deleteTipoPago);
 
 module.exports = router;

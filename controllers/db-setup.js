@@ -9,7 +9,7 @@ const service = new DbInitService();
 
 const inicializarBaseDeDatos = async (req, res = response) => {
     try {
-        const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
+        const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
 
         const resultado = await service.ejecutarScriptBD({ codigoUsuario: usuarioAccion });
 

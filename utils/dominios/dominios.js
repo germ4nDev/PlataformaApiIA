@@ -8,7 +8,7 @@
       indexar(filas)                      Map dominio → fila activa y válida (las inactivas o mal formadas no entran)
       contextoDe(host, indice)            { tipo: 'consola' | 'aplicacion' | 'neutro', dominio, codigoAplicacion, codigoSuite,
                                             rutaPortal, rutaInicio, marca: { nombre, logo } }. Desconocido → neutro (nunca consola)
-      puedeEntrar(contexto, appsUsuario)  consola y neutro: sí (como hoy); aplicación: solo si el usuario tiene rol en ella
+      puedeEntrar(contexto, appsUsuario)  consola y neutro: sí (como hoy); aplicación: solo si su suscriptor se la asigna (CC-145)
       origenesPermitidos(indice)          'https://<dominio>' de cada dominio activo, para CORS
 */
 const TIPOS = new Set(['consola', 'aplicacion']);

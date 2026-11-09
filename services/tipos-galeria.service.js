@@ -16,7 +16,7 @@ class TipoGaleriaService {
   }
 
   async getTipoGaleriaById(codigoTipo) {
-    const registro = await this.model.findOne({ where: { codigoTipo } });
+    const registro = await this.model.findOne({ where: { codigoTipoGaleria: codigoTipo } /* CC-139: la columna es codigoTipoGaleria */ });
     if (!registro) throw { statusCode: 404, msg: "No existe el tipo de galería solicitado." };
     return registro;
   }
@@ -48,19 +48,19 @@ class TipoGaleriaService {
 
     return await sequelize.transaction(async (t) => {
       const registroDB = await this.model.findOne({
-        where: { codigoTipo },
+        where: { codigoTipoGaleria: codigoTipo } /* CC-139: la columna es codigoTipoGaleria */,
         transaction: t
       });
 
       if (!registroDB) throw { statusCode: 404, msg: "No existe el tipo de galería para actualizar." };
 
       await this.model.update(dataDTO, {
-        where: { codigoTipo },
+        where: { codigoTipoGaleria: codigoTipo } /* CC-139: la columna es codigoTipoGaleria */,
         transaction: t
       });
 
       const actualizado = await this.model.findOne({
-        where: { codigoTipo },
+        where: { codigoTipoGaleria: codigoTipo } /* CC-139: la columna es codigoTipoGaleria */,
         transaction: t
       });
 
@@ -76,7 +76,7 @@ class TipoGaleriaService {
   async deleteTipoGaleria(codigoTipo) {
     return await sequelize.transaction(async (t) => {
       const registroDB = await this.model.findOne({
-        where: { codigoTipo },
+        where: { codigoTipoGaleria: codigoTipo } /* CC-139: la columna es codigoTipoGaleria */,
         transaction: t
       });
 
@@ -85,7 +85,7 @@ class TipoGaleriaService {
       const nombreGaleria = registroDB.nombreTipo || registroDB.nombreTipoGaleria;
 
       await this.model.destroy({
-        where: { codigoTipo },
+        where: { codigoTipoGaleria: codigoTipo } /* CC-139: la columna es codigoTipoGaleria */,
         transaction: t
       });
 

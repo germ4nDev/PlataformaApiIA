@@ -12,6 +12,7 @@ const {
     updateScript,
     deleteScript
 } = require("../controllers/scripts");
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 
@@ -22,10 +23,10 @@ router.get("/", getScripts);
 
 router.get("/:id", getScriptById);
 
-router.post("/", [validarJWT, validarSesion], createScript);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_SCRIPTS_CREAR')], createScript);
 
-router.put("/:id", [validarJWT, validarSesion], updateScript);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_SCRIPTS_MODIFICAR')], updateScript);
 
-router.delete("/:id", [validarJWT, validarSesion], deleteScript);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_SCRIPTS_ELIMINAR')], deleteScript);
 
 module.exports = router;

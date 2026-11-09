@@ -36,7 +36,7 @@ class VersionesAPService {
     return await sequelize.transaction(async (t) => {
       const nuevaVersion = await this.model.create(dataDTO, { transaction: t });
 
-      getIO().mit("versiones-actualizados", {
+      getIO().emit("versiones-actualizados", {
         action: "create",
         msg: `Versión creada: ${nuevaVersion.nombreVersion}`
       });
@@ -72,7 +72,7 @@ class VersionesAPService {
         transaction: t
       });
 
-      getIO().mit("versiones-actualizados", {
+      getIO().emit("versiones-actualizados", {
         action: "update",
         msg: `Versión actualizada: ${versionAPActualizada.nombreVersion}`
       });
@@ -99,7 +99,7 @@ class VersionesAPService {
         transaction: t
       });
 
-      getIO().mit("versiones-actualizados", {
+      getIO().emit("versiones-actualizados", {
         action: "delete",
         msg: `Versión eliminada: ${nombreVersionEliminada}`
       });

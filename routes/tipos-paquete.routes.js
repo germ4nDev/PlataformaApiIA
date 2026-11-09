@@ -13,6 +13,7 @@ const {
   updateTipoPaquete,
   deleteTipoPaquete
 } = require("../controllers/tipos-paquete.controller");
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 
@@ -25,10 +26,10 @@ router.get("/", getTiposPaquete);
 
 router.get("/:id", getTipoPaqueteById);
 
-router.post("/", [validarJWT, validarSesion], createTipoPaquete);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_TIPOSPAQ_CREAR')], createTipoPaquete);
 
-router.put("/:id", [validarJWT, validarSesion], updateTipoPaquete);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_TIPOSPAQ_MODIFICAR')], updateTipoPaquete);
 
-router.delete("/:id", [validarJWT, validarSesion], deleteTipoPaquete);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_TIPOSPAQ_ELIMINAR')], deleteTipoPaquete);
 
 module.exports = router;

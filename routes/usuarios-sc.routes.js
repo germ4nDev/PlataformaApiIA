@@ -16,6 +16,7 @@ const {
     updateUsuarioSC,
     deleteUsuarioSC
 } = require("../controllers/usuarios-sc.controller");
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 
@@ -28,12 +29,12 @@ router.get("/:id", getUsuarioSCById);
 
 router.get("/suscriptor/:codigoSuscriptor", getUsuariosSCBySuscriptorCode);
 
-router.post('/cargue-masivo', [validarJWT, validarSesion], uploadMasivoUsuariosSC);
+router.post('/cargue-masivo', [validarJWT, validarSesion, validarPermiso('ACT_USUSC_CARGUE')], uploadMasivoUsuariosSC);
 
-router.post("/", [validarJWT, validarSesion], createUsuarioSC);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_USUSC_CREAR')], createUsuarioSC);
 
-router.put("/:id", [validarJWT, validarSesion], updateUsuarioSC);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_USUSC_CAMBIAR')], updateUsuarioSC);
 
-router.delete("/:id", [validarJWT, validarSesion], deleteUsuarioSC);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_USUSC_ELIMINAR')], deleteUsuarioSC);
 
 module.exports = router;

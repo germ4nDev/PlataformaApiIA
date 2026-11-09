@@ -6,6 +6,10 @@ const { sequelize } = require('../database/connection');
 const { ColorSettingsModel, ColorSettingsDTO } = require('../models/color-setting');
 const { getIO } = require('../helpers/socket.helper');
 
+// CC-139: la web edita por codigoColorSetting (texto) y la tabla de la lista borra por colorNavId (número): se aceptan los dos.
+// Antes siempre colorNavId: con un texto SQL Server aborta la transacción («Rolling back … has no corresponding BEGIN TRANSACTION»).
+const donde = (id) => (/^\d+$/.test(String(id)) ? { colorNavId: Number(id) } : { codigoColorSetting: String(id) });
+
 class ColoresSettingsService {
   constructor() {
     this.model = ColorSettingsModel(sequelize);
@@ -16,7 +20,7 @@ class ColoresSettingsService {
   }
 
   async getColorSettingPorId(colorNavId) {
-    const registro = await this.model.findOne({ where: { colorNavId } });
+    const registro = await this.model.findOne({ where: donde(colorNavId) });
     if (!registro) throw { statusCode: 404, msg: "No existe la configuración de color." };
     return registro;
   }
@@ -25,9 +29,7 @@ class ColoresSettingsService {
    * Crea una configuración de colores
    */
   async createColorSetting(rawData) {
-    console.log('colores service antes', rawData);
     const dataDTO = ColorSettingsDTO(rawData);
-    console.log('colores service despues', dataDTO);
 
     return await sequelize.transaction(async (t) => {
       const nuevoColor = await this.model.create(dataDTO, { transaction: t });
@@ -50,19 +52,19 @@ class ColoresSettingsService {
 
     return await sequelize.transaction(async (t) => {
       const registroDB = await this.model.findOne({
-        where: { colorNavId },
+        where: donde(colorNavId),
         transaction: t
       });
 
       if (!registroDB) throw { statusCode: 404, msg: 'No existe la configuración de color para actualizar.' };
 
       await this.model.update(dataDTO, {
-        where: { colorNavId },
+        where: donde(colorNavId),
         transaction: t
       });
 
       const actualizado = await this.model.findOne({
-        where: { colorNavId },
+        where: donde(colorNavId),
         transaction: t
       });
 
@@ -78,14 +80,14 @@ class ColoresSettingsService {
   async deleteColorSetting(colorNavId) {
     return await sequelize.transaction(async (t) => {
       const registroDB = await this.model.findOne({
-        where: { colorNavId },
+        where: donde(colorNavId),
         transaction: t
       });
 
       if (!registroDB) throw { statusCode: 404, msg: 'No existe la configuración de color para eliminar.' };
 
       await this.model.destroy({
-        where: { colorNavId },
+        where: donde(colorNavId),
         transaction: t
       });
 

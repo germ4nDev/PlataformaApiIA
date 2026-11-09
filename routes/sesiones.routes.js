@@ -31,7 +31,7 @@ router.get("/:id", getSesionById);
 
 router.post("/", registrarSesion);
 
-router.post('/contexto', actualizarContextoSesion);
+router.post('/contexto', [validarJWT], actualizarContextoSesion);
 
 router.put("/contexto/:id", [validarJWT, validarSesion], actualizarContextoNavegacion);
 

@@ -79,7 +79,7 @@ const getWidgetByCodeRole = async (req, res = response) => {
 
 const createWidgetRole = async (req, res = response) => {
   try {
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
+    const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
     const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
 
     // Guarda en la base de datos

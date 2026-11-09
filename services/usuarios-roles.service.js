@@ -9,6 +9,7 @@ const { UsuarioModel } = require("../models/usuario");
 const { Op } = require('sequelize');
 const { getIO } = require('../helpers/socket.helper');
 
+const { alcanceBorrado } = require('../utils/plataforma/asignacion-roles');
 class UsuariosRolesService {
   constructor() {
     this.model = UsuarioRoleModel(sequelize);
@@ -55,21 +56,17 @@ class UsuariosRolesService {
   }
 
   async sincronizarRolesUsuario(payload) {
-    const { codigoUsuarioSC, rolesContexto, roles } = payload;
+    const { roles } = payload;
+    // OT-026: solo se reemplazan los roles del contexto en ese vínculo y, si llega, en esa empresa (antes borraba el rol en todas)
+    const alcance = alcanceBorrado(payload);
 
     const transaction = await sequelize.transaction();
 
     try {
-      if (rolesContexto && rolesContexto.length > 0) {
-        await this.model.destroy({
-          where: {
-            codigoUsuarioSC: codigoUsuarioSC,
-            codigoRole: {
-              [Op.in]: rolesContexto // Borra donde codigoRole esté en el array
-            }
-          },
-          transaction
-        });
+      if (alcance) {
+        const where = { codigoUsuarioSC: alcance.codigoUsuarioSC, codigoRole: { [Op.in]: alcance.roles } };
+        if (alcance.codigoEmpresaSC) where.codigoEmpresaSC = alcance.codigoEmpresaSC;
+        await this.model.destroy({ where, transaction });
       }
 
       if (roles && roles.length > 0) {

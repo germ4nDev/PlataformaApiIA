@@ -13,6 +13,7 @@ const {
     updateUsuarioEmpresa,
     deleteUsuarioEmpresa
 } = require("../controllers/usuarios-empresas-sc.controller");
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 
@@ -23,10 +24,10 @@ router.get("/", getUsuariosEmpresas);
 
 router.get("/:id", getUsuarioEmpresaById);
 
-router.post("/", [validarJWT, validarSesion], createUsuarioEmpresa);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_USUSC_EMPRESAS')], createUsuarioEmpresa);
 
-router.put("/:id", [validarJWT, validarSesion], updateUsuarioEmpresa);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_USUSC_EMPRESAS')], updateUsuarioEmpresa);
 
-router.delete("/:id", [validarJWT, validarSesion], validarJWT, deleteUsuarioEmpresa);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_USUSC_EMPRESAS')], deleteUsuarioEmpresa);
 
 module.exports = router;

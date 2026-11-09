@@ -26,6 +26,8 @@ const router = Router();
 // Soporta query param: GET /api/tablero-control/bodegas?puerto=BUENAVENTURA
 // Toda la ruta exige sesión (antes estaba abierta, incluso POST /maestro y POST /movimientos)
 const { validarJWT } = require('../../middlewares/validar-jwt');
+const { validarSesion } = require('../../middlewares/validar-sesion');
+const { validarPermiso } = require('../../middlewares/validar-permiso');
 router.use(validarJWT);
 router.get('/', obtenerDashboardBodegas);
 
@@ -36,10 +38,10 @@ router.get('/', obtenerDashboardBodegas);
 router.get('/maestro', obtenerMaestroBodegas);
 
 // POST /api/tablero-control/bodegas/maestro (Usa MaestroBodegaDTO + Joi)
-router.post('/maestro', crearBodega);
+router.post('/maestro', [validarSesion, validarPermiso('ACT_BODEGAS_CREAR')], crearBodega);
 
 // PUT /api/tablero-control/bodegas/maestro/:idBodega (Actualiza inventario/estado/temp)
-router.put('/maestro/:idBodega', actualizarBodega);
+router.put('/maestro/:idBodega', [validarSesion, validarPermiso('ACT_BODEGAS_MODIFICAR')], actualizarBodega);
 
 // =========================================================================
 // 3. ENDPOINTS DE MOVIMIENTOS Y LOTES BL (dbo.TCL_MovimientosBodega)
@@ -54,7 +56,7 @@ router.get('/movimientos/rango', obtenerMovimientosRango);
 router.get('/ocupacion', obtenerOcupacionBodegas);
 
 // POST /api/tablero-control/bodegas/movimientos (Usa MovimientoBodegaDTO + Transacción SQL)
-router.post('/movimientos', registrarMovimientoBodega);
+router.post('/movimientos', [validarSesion, validarPermiso('ACT_BODEGAS_MOVIMIENTO')], registrarMovimientoBodega);
 
 // =========================================================================
 // 4. FALLBACK POR PARÁMETRO DE RUTA (Ej: GET /api/tablero-control/bodegas/BUENAVENTURA)

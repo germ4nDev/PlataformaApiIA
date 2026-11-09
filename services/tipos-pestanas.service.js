@@ -33,10 +33,10 @@ class TiposPestanaService {
   async obtenerTipoPestanaPorId(codigo) {
     const registro = await this.model.findByPk(codigo);
     if (!registro) throw { statusCode: 404, msg: 'Tipo de pestana no encontrado' };
-    return TipoPestanaDTO(registro);
+    return registro; // CC-141: antes pasaba el registro de la base por el DTO (500)
   }
 
-  async crearTipoPestana(data) {
+  async crearTipoPestana(rawData) { // CC-139: recibía data y usaba rawData (ReferenceError → 500)
     const dataDTO = TipoPestanaDTO(rawData);
 
     return await sequelize.transaction(async (t) => {
@@ -46,13 +46,13 @@ class TiposPestanaService {
       ]);
 
       if (existente) throw { statusCode: 400, msg: `El código ${dataDTO.codigoTipo} ya está registrado.` };
-      if (existeNombre) throw { statusCode: 400, msg: `Ya existe un tipo de pestanae llamado ${dataDTO.estrategia}.` };
+      if (existeNombre) throw { statusCode: 400, msg: `Ya existe un tipo de pestaña llamado ${dataDTO.estrategia}.` };
 
       const nuevo = await this.model.create(dataDTO, { transaction: t });
 
-      getIO().emit('tipos-pestanaes-actualizados', {
+      getIO().emit('tipos-pestanas-actualizados', {
         action: 'create',
-        msg: `Tipo de pestanae creado: ${nuevo.estrategia}`
+        msg: `Tipo de pestaña creado: ${nuevo.estrategia}`
       });
 
       return nuevo;
@@ -96,7 +96,7 @@ class TiposPestanaService {
         transaction: t
       });
 
-      if (!registroDB) throw { statusCode: 404, msg: "No existe el tipo de pestanae con ese código para eliminar." };
+      if (!registroDB) throw { statusCode: 404, msg: "No existe el tipo de pestaña con ese código para eliminar." };
 
       const estrategiaPestana = registroDB.estrategia;
 
@@ -105,7 +105,7 @@ class TiposPestanaService {
         transaction: t
       });
 
-      getIO().emit('tipos-pestanaes-actualizados', {
+      getIO().emit('tipos-pestanas-actualizados', {
         action: 'delete',
         msg: `Tipo de pestana eliminado: ${estrategiaPestana}`
       });

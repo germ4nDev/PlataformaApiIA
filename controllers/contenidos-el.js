@@ -14,7 +14,8 @@ const getContenidos = async (req, res = response) => {
   } catch (error) {
     return res.status(error.statusCode || 500).json({
       ok: false,
-      msg: error.msg || "Error interno al obtener contenidos."
+      msg: error.msg || "Error interno al obtener contenidos.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -27,7 +28,8 @@ const getContenidoByCode = async (req, res = response) => {
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al obtener el contenido solicitado."
+      msg: error.msg || "Error al obtener el contenido solicitado.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -35,15 +37,16 @@ const getContenidoByCode = async (req, res = response) => {
 const createContenido = async (req, res = response) => {
   try {
     // QPLUS: Inyección de contexto de auditoría
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-    const dataDTO = { ...req.body, codigoUsuario: usuarioAccion };
+    const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
+    const dataDTO = { ...req.body, codigoUsuarioCreacion: usuarioAccion, codigoUsuarioModificacion: usuarioAccion };
 
     const contenidoDB = await service.createContenido(dataDTO);
     return res.status(201).json({ ok: true, contenidoDB });
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al crear el contenido."
+      msg: error.msg || "Error al crear el contenido.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -53,15 +56,16 @@ const updateContenido = async (req, res = response) => {
     const { codigoContenido, ...data } = req.body;
 
     // QPLUS: Hidratación del payload de auditoría
-    const usuarioAccion = req.usuario?.codigoUsuario || 'SISTEMA';
-    const dataDTO = { ...data, codigoUsuario: usuarioAccion };
+    const usuarioAccion = req.codigoUsuario || 'SISTEMA'; // CC-137: del token (validarJWT)
+    const dataDTO = { ...data, codigoUsuarioModificacion: usuarioAccion };
 
     const contenidoActualizado = await service.updateContenido(codigoContenido, dataDTO);
     return res.status(200).json({ ok: true, contenidoActualizado });
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al actualizar el contenido."
+      msg: error.msg || "Error al actualizar el contenido.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };
@@ -78,7 +82,8 @@ const deleteContenido = async (req, res = response) => {
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       ok: false,
-      msg: error.msg || "Error al eliminar el contenido."
+      msg: error.msg || "Error al eliminar el contenido.",
+      errores: error.details // CC-137: detalle del Joi
     });
   }
 };

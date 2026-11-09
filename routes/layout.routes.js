@@ -38,6 +38,10 @@ router.delete('/usuario/:codigoUsuario/:codigoPestana', eliminarLayoutPorPestana
 
 // router.get('/plantilla/:codigoPestana', getPlantillaMaestra);
 
-router.put('/plantilla/configurar/:codigoPestana', guardarConfiguracionMaestra);
+router.put('/plantilla/configurar/:codigoPestana', [
+  validarJWT,
+  validarSesion,
+  validarPermiso('ACT_TABLERO_PLANTILLA')
+], guardarConfiguracionMaestra);
 
 module.exports = router;

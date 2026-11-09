@@ -13,6 +13,7 @@ const {
     updatePaquete,
     deletePaquete
 } = require("../controllers/paquetes.controller");
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 
@@ -23,10 +24,10 @@ router.get("/", getPaquetes);
 
 router.get("/:id", getPaqueteById);
 
-router.post("/", [validarJWT, validarSesion], createPaquete);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_PAQS_CREAR')], createPaquete);
 
-router.put("/:id", [validarJWT, validarSesion], updatePaquete);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_PAQS_MODIFICAR')], updatePaquete);
 
-router.delete("/:id", [validarJWT, validarSesion], deletePaquete);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_PAQS_ELIMINAR')], deletePaquete);
 
 module.exports = router;

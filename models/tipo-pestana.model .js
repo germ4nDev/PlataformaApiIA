@@ -19,7 +19,7 @@ const TipoPestanaSchema = Joi.object({
     estado: Joi.boolean().default(true),
 
     // Campos de auditoría
-    codigoUsuario: Joi.string().max(200).required(),
+    codigoUsuario: Joi.string().max(200).allow('', null).optional(), // CC-138: la auditoría llega en codigoUsuarioCreacion/Modificacion
     codigoUsuarioCreacion: Joi.string().max(200).allow('', null).optional(),
     fechaCreacion: Joi.string().max(100).allow('', null).optional(),
     codigoUsuarioModificacion: Joi.string().max(200).allow('', null).optional(),
@@ -28,7 +28,7 @@ const TipoPestanaSchema = Joi.object({
 
 // 2. DATA TRANSFER OBJECT (DTO)
 const TipoPestanaDTO = (rawData) => {
-    const { error, value } = TiposPestanaSchema.validate(rawData, { abortEarly: false, stripUnknown: true });
+    const { error, value } = TipoPestanaSchema.validate(rawData, { abortEarly: false, stripUnknown: true });
 
     if (error) {
         throw {
@@ -44,9 +44,9 @@ const TipoPestanaDTO = (rawData) => {
         estrategia: value.estrategia,
         descripcion: value.descripcion ? value.descripcion.trim() : null,
         estado: value.estado,
-        codigoUsuarioCreacion: value.codigoUsuarioCreacion || value.codigoUsuario.trim(),
+        codigoUsuarioCreacion: value.codigoUsuarioCreacion || (value.codigoUsuario || 'SISTEMA').trim(),
         fechaCreacion: value.fechaCreacion || fechaActual,
-        codigoUsuarioModificacion: value.codigoUsuarioModificacion || value.codigoUsuario.trim(),
+        codigoUsuarioModificacion: value.codigoUsuarioModificacion || (value.codigoUsuario || value.codigoUsuarioCreacion || 'SISTEMA').trim(),
         fechaModificacion: value.fechaModificacion || fechaActual
     };
 };

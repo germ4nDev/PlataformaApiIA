@@ -12,12 +12,18 @@ const {
   consultarLineUp,
   cargarLineUp
 } = require('../../controllers/torre-control/line-up-maritimo.controller');
+const { validarSesion } = require('../../middlewares/validar-sesion');
+const { validarPermiso } = require('../../middlewares/validar-permiso');
 
-router.post('/rndc', validarJWT, cargarRNDC);
-router.post('/maritimo', validarJWT, cargarMaritimo);
-router.post('/matriz', validarJWT, cargarMatrizOperaciones);
-router.post('/historico-supertransporte/sincronizar', validarJWT, sincronizarSupertransporte);
+router.post('/rndc', [validarJWT, validarSesion, validarPermiso('ACT_INGESTA_CARGAR')], cargarRNDC);
+router.post('/maritimo', [validarJWT, validarSesion, validarPermiso('ACT_INGESTA_CARGAR')], cargarMaritimo);
+router.post('/matriz', [validarJWT, validarSesion, validarPermiso('ACT_INGESTA_CARGAR')], cargarMatrizOperaciones);
+router.post('/historico-supertransporte/sincronizar', [
+  validarJWT,
+  validarSesion,
+  validarPermiso('ACT_INGESTA_CARGAR')
+], sincronizarSupertransporte);
 
-router.post('/lineup/ingesta', validarJWT, cargarLineUp);
+router.post('/lineup/ingesta', [validarJWT, validarSesion, validarPermiso('ACT_INGESTA_CARGAR')], cargarLineUp);
 
 module.exports = router;

@@ -13,6 +13,7 @@ const {
     updateTipoGaleria,
     deleteTipoGaleria
 } = require("../controllers/tipos-galeria");
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 
@@ -23,10 +24,10 @@ router.get("/", getTiposGaleria);
 
 router.get("/:id", getTipoGaleriaById);
 
-router.post("/", [validarJWT, validarSesion], createTipoGaleria);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_TIPOSGAL_CREAR')], createTipoGaleria);
 
-router.put("/:id", [validarJWT, validarSesion], updateTipoGaleria);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_TIPOSGAL_MODIFICAR')], updateTipoGaleria);
 
-router.delete("/:id", [validarJWT, validarSesion], deleteTipoGaleria);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_TIPOSGAL_ELIMINAR')], deleteTipoGaleria);
 
 module.exports = router;

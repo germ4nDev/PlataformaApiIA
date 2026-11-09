@@ -9,6 +9,7 @@ const {
   actualizarTipoWidget,
   eliminarTipoWidget
 } = require('../controllers/tipos-widget.controller');
+const { validarPermiso } = require('../middlewares/validar-permiso');
 
 const router = Router();
 
@@ -19,10 +20,10 @@ router.get("/", getTiposWidget);
 
 router.get("/:id", getTipoWidgetById);
 
-router.post("/", [validarJWT, validarSesion], crearTipoWidget);
+router.post("/", [validarJWT, validarSesion, validarPermiso('ACT_TIPOSWDGT_CREAR')], crearTipoWidget);
 
-router.put("/:id", [validarJWT, validarSesion], actualizarTipoWidget);
+router.put("/:id", [validarJWT, validarSesion, validarPermiso('ACT_TIPOSWDGT_MODIFICAR')], actualizarTipoWidget);
 
-router.delete("/:id", [validarJWT, validarSesion], eliminarTipoWidget);
+router.delete("/:id", [validarJWT, validarSesion, validarPermiso('ACT_TIPOSWDGT_ELIMINAR')], eliminarTipoWidget);
 
 module.exports = router;

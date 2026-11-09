@@ -15,6 +15,7 @@ const ConexionesBDSchema = Joi.object({
     codigoPaquete: Joi.string().max(20).required()
         .messages({ 'any.required': 'El código del paquete es obligatorio.' }),
 
+    codigoServidor: Joi.string().max(200).allow('', null).optional().default(''), // CC-138: NOT NULL en la tabla
     codigoAplicacion: Joi.string().max(20).required()
         .messages({ 'any.required': 'El código de la aplicación es obligatorio.' }),
 
@@ -65,6 +66,7 @@ const ConexionesBDDTO = (rawData) => {
         codigoConexion: value.codigoConexion.trim(),
         codigoSuscriptor: value.codigoSuscriptor.trim(),
         codigoPaquete: value.codigoPaquete.trim(),
+        codigoServidor: value.codigoServidor || '',
         codigoAplicacion: value.codigoAplicacion.trim(),
         nombreConexion: value.nombreConexion.trim(),
         nombreServidor: value.nombreServidor.trim(),
@@ -89,6 +91,7 @@ const ConexionesBDModel = (sequelize) => {
             autoIncrement: true
         },
         codigoConexion: {
+          field: 'codigpConexion', // CC-138: nombre real de la columna (errata o nombre distinto en la tabla; ver OT-022)
             type: DataTypes.STRING(200),
             primaryKey: true,
             allowNull: false
@@ -96,6 +99,11 @@ const ConexionesBDModel = (sequelize) => {
         codigoSuscriptor: {
             type: DataTypes.STRING(200),
             allowNull: false
+        },
+        codigoServidor: { // CC-138: existe en la tabla (NOT NULL)
+            type: DataTypes.STRING(200),
+            allowNull: false,
+            defaultValue: ''
         },
         codigoPaquete: {
             type: DataTypes.STRING(200),

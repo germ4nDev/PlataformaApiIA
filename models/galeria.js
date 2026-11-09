@@ -71,6 +71,7 @@ const GaleriaModel = (sequelize) => {
             allowNull: false
         },
         codigoTipoGaleria: {
+          field: 'codigoTipo', // CC-138: nombre real de la columna (errata o nombre distinto en la tabla; ver OT-022)
             type: DataTypes.STRING(50),
             allowNull: false
         },
