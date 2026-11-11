@@ -7,7 +7,7 @@
       - elementos(idsSeccion)             tarjetas, pasos y cifras de esas secciones
       - planes() · caracteristicas() · comparativo() · comparativoValores()
       - preguntas(pagina, idioma)
-      - cifras()                          { tableros, puertos } desde PTLPestanas (TLC_*) y TCL_MaestroPuertos (activos)
+      - cifras()                          { tableros, puertos } desde PTL_Pestanas (TLC_*) y TCL_MaestroPuertos (activos)
       - guardarMensaje(m) → id · marcarNotificado(id)
       Puertos en vivo (OT-011; tablas de la Torre de Control, no de la 025: si faltan, vacío y el núcleo dice «sin dato»):
       - puertosActivos()                  id, nombre y punto de los puertos activos del maestro
@@ -58,7 +58,7 @@ const preguntas = (pagina, idioma) => ejecutar(`
 async function cifras() {
   const [fila] = await db.sequelize.query(`
     SELECT
-      (SELECT COUNT(*) FROM dbo.PTLPestanas WHERE codigoPestana LIKE 'TLC[_]%' AND estado = 1) AS tableros,
+      (SELECT COUNT(*) FROM dbo.PTL_Pestanas WHERE codigoPestana LIKE 'TLC[_]%' AND estado = 1) AS tableros,
       (SELECT COUNT(*) FROM dbo.TCL_MaestroPuertos WHERE COALESCE(estado, 1) = 1) AS puertos`, { type: QueryTypes.SELECT });
   return { tableros: fila?.tableros ?? null, puertos: fila?.puertos ?? null };
 }

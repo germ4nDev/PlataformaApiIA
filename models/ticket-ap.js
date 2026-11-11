@@ -93,7 +93,7 @@ const TicketAPDTO = (rawData) => {
 };
 
 const TicketAPModel = (sequelize) => {
-    return sequelize.define('PTLTicketsAP', {
+    return sequelize.define('PTL_TicketsAP', {
         ticketId: {
             type: DataTypes.INTEGER,
             autoIncrement: true
@@ -186,7 +186,7 @@ const TicketAPModel = (sequelize) => {
             allowNull: false
         }
     }, {
-        tableName: 'PTLTicketsAP',
+        tableName: 'PTL_TicketsAP',
         timestamps: false
     });
 };

@@ -56,7 +56,7 @@ const ContenidoDTO = (rawData) => {
 };
 
 const ContenidoModel = (sequelize) => {
-  return sequelize.define('PTLContenidosEL', {
+  return sequelize.define('PTL_ContenidosEL', {
     contenidoId: {
       type: DataTypes.INTEGER,
       autoIncrement: true
@@ -104,7 +104,7 @@ const ContenidoModel = (sequelize) => {
       allowNull: false
     }
   }, {
-    tableName: 'PTLContenidosEL',
+    tableName: 'PTL_ContenidosEL',
     timestamps: false
   });
 };

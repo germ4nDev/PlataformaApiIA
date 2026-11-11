@@ -6,12 +6,9 @@ const { sequelize } = require('../database/connection');
 
 // Modelos
 const { HistorialFacturacionModel, HistorialFacturacionDTO } = require('../models/historial-facturacion');
-const { ModuloPQModel } = require('../models/modulo-paquete');
-const { AplicacionModel } = require('../models/aplicacion');
 
 // Servicios
 const MercadoPagoService = require('../services/mercadopago.service');
-const ProvisionService = require('../services/provision.service');
 const FacturacionService = require('./facturacion.service');
 
 const { getIO } = require('../helpers/socket.helper');
@@ -20,12 +17,9 @@ class HistorialFacturacionService {
   constructor() {
     // Inicialización de modelos (Funciones fábrica)
     this.model = HistorialFacturacionModel(sequelize);
-    this.moduloPQModel = ModuloPQModel(sequelize);
-    this.aplicacionModel = AplicacionModel(sequelize);
 
     // Servicios
     this.mpService = new MercadoPagoService();
-    this.provisionService = new ProvisionService();
     this.facturacionService = new FacturacionService();
   }
 
@@ -169,17 +163,7 @@ class HistorialFacturacionService {
       await this.model.update(dataDTO, { where: { codigoHistorial }, transaction: t });
       const actualizado = await this.model.findOne({ where: { codigoHistorial }, transaction: t });
 
-      if (!registroDB.estadoPPago && actualizado.estadoPPago) {
-        const modulosPQ = await this.moduloPQModel.findAll({ where: { codigoPaquete: actualizado.codigoPaquete }, transaction: t });
-        if (modulosPQ && modulosPQ.length > 0) {
-          const codigosAppsUnicas = [...new Set(modulosPQ.map(mod => mod.codigoAplicacion))];
-          const aplicaciones = await this.aplicacionModel.findAll({ where: { codigoAplicacion: codigosAppsUnicas }, transaction: t });
-          for (const app of aplicaciones) {
-            this.provisionService.clonarBaseDeDatos(actualizado.codigoSuscriptor, app.plantillaBD, app.prefijoBD)
-              .catch(err => console.error(`Error clonando:`, err));
-          }
-        }
-      }
+      // OT-030: la base del suscriptor ya no se clona al aprobar el pago; se crea al asignar el paquete (aprovisionamiento.service).
 
       getIO().emit('facturacion-actualizada', { action: 'update', msg: `Historial actualizado.` });
       return actualizado;

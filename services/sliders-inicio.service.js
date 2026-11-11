@@ -20,7 +20,7 @@ class SliderService {
    */
   async modelo() {
     if (!this._revisado) {
-      this._revisado = sequelize.getQueryInterface().describeTable('PTLSliderInicio')
+      this._revisado = sequelize.getQueryInterface().describeTable('PTL_SliderInicio')
         .then((cols) => { this.conAplicacion = Object.keys(cols || {}).some((c) => c.toLowerCase() === 'codigoaplicacion'); })
         .catch(() => { this.conAplicacion = false; });
     }

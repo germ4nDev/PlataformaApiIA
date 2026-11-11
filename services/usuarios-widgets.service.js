@@ -1,14 +1,14 @@
 const { sequelize } = require('../database/connection');
-const { PTLUsuarioWidgets } = require('../models'); // Ajusta la ruta a tu carpeta models si es distinta
+const { PTL_UsuarioWidgets } = require('../models'); // Ajusta la ruta a tu carpeta models si es distinta
 const { UsuarioWidgetDTO } = require('../models/usuario-widget.model');
 
 class UsuariosWidgetsService {
   constructor() {
-    this.model = PTLUsuarioWidgets;
+    this.model = PTL_UsuarioWidgets;
   }
 
   async getLayoutUsuario(codigoUsuario) {
-    if (!this.model) throw new Error("Modelo PTLUsuarioWidgets no instanciado en Sequelize.");
+    if (!this.model) throw new Error("Modelo PTL_UsuarioWidgets no instanciado en Sequelize.");
     return await this.model.findAll({ where: { codigoUsuario } });
   }
 

@@ -53,7 +53,7 @@ const RequerimientoDTO = (rawData) => {
 };
 
 const RequerimientoModel = (sequelize) => {
-  return sequelize.define('PTLRequerimientosTK', {
+  return sequelize.define('PTL_RequerimientosTK', {
     requerimientoId: {
       type: DataTypes.INTEGER,
       autoIncrement: true
@@ -97,7 +97,7 @@ const RequerimientoModel = (sequelize) => {
       allowNull: false
     }
   }, {
-    tableName: 'PTLRequerimientosTK',
+    tableName: 'PTL_RequerimientosTK',
     timestamps: false
   });
 };

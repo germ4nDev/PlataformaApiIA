@@ -91,7 +91,7 @@ const SuscriptorDTO = (rawData) => {
 
 // 3. MODELO SEQUELIZE
 const SuscriptorModel = (sequelize) => {
-  return sequelize.define("PTLSuscriptores", {
+  return sequelize.define("PTL_Suscriptores", {
     suscriptorId: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
@@ -187,7 +187,7 @@ const SuscriptorModel = (sequelize) => {
       allowNull: true
     }
   }, {
-    tableName: "PTLSuscriptores",
+    tableName: "PTL_Suscriptores",
     timestamps: false, // Manejado manualmente en el DTO
   });
 };

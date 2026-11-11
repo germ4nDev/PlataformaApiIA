@@ -29,6 +29,9 @@ const PaqueteSCSchema = Joi.object({
 
   estadoLicencia: Joi.boolean().optional().default(true),
 
+  // OT-029: foto del precio al vender (la calcula el API con la lista de precios; lo que mande la web se ignora)
+  codigoLista: Joi.string().max(200).allow('', null).optional(),
+
   codigoUsuarioCreacion: Joi.string().max(200).allow('', null).optional(),
   fechaCreacion: Joi.string().max(100).allow('', null).optional(),
   codigoUsuarioModificacion: Joi.string().max(200).allow('', null).optional(),
@@ -57,8 +60,9 @@ const PaqueteSCDTO = (rawData) => {
     fechaInicio: value.fechaInicio || fechaActual,
     fechaProximoPago: value.fechaProximoPago || fechaActual,
     fechaRenovacion: value.fechaRenovacion || fechaActual,
-    observaciones: value.observaciones.trim(),
-    fechaCancelacion: value.fechaCancelacion || fechaActual,
+    observaciones: (value.observaciones || '').trim(),
+    fechaCancelacion: value.fechaCancelacion || null, // una licencia nueva no nace cancelada (OT-029)
+    codigoLista: value.codigoLista || null,
 
     estadoLicencia: value.estadoLicencia,
 
@@ -70,7 +74,7 @@ const PaqueteSCDTO = (rawData) => {
 };
 
 const PaqueteSCModel = (sequelize) => {
-  return sequelize.define('PTLPaquetesSC', {
+  return sequelize.define('PTL_PaquetesSC', {
     paqueteSCId: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
@@ -127,6 +131,15 @@ const PaqueteSCModel = (sequelize) => {
       defaultValue: true,
       allowNull: false
     },
+    // OT-029 (migración 036): foto del precio con el que se vendió
+    codigoLista: { type: DataTypes.STRING(200), allowNull: true },
+    moneda: { type: DataTypes.STRING(3), allowNull: true },
+    periodicidad: { type: DataTypes.STRING(10), allowNull: true },
+    mesesCobertura: { type: DataTypes.INTEGER, allowNull: true },
+    valorPeriodo: { type: DataTypes.DECIMAL(18, 2), allowNull: true },
+    precioSetup: { type: DataTypes.DECIMAL(18, 2), allowNull: true },
+    porcentajeDescuento: { type: DataTypes.DECIMAL(5, 2), allowNull: true },
+    valorFinal: { type: DataTypes.DECIMAL(18, 2), allowNull: true },
     codigoUsuarioCreacion: {
       type: DataTypes.STRING(200),
       allowNull: true
@@ -144,7 +157,7 @@ const PaqueteSCModel = (sequelize) => {
       allowNull: true
     }
   }, {
-    tableName: 'PTLPaquetesSC',
+    tableName: 'PTL_PaquetesSC',
     timestamps: false
   });
 };

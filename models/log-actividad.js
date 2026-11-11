@@ -59,7 +59,7 @@ const LogActividadDTO = (rawData) => {
 };
 
 const LogActividadModel = (sequelize) => {
-  return sequelize.define('PTLLogActividadesAP', {
+  return sequelize.define('PTL_LogActividadesAP', {
     logId: {
       type: DataTypes.INTEGER,
       primaryKey: true,
@@ -102,7 +102,7 @@ const LogActividadModel = (sequelize) => {
       allowNull: false
     }
   }, {
-    tableName: 'PTLLogActividadesAP',
+    tableName: 'PTL_LogActividadesAP',
     timestamps: false
   });
 };

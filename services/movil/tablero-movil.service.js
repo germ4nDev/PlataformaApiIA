@@ -114,8 +114,8 @@ class TableroMovilService {
 
   /**
    * Datos del layout de la pestaña, los mismos que usa la web: filas del usuario y plantilla maestra (/api/layout), el estado
-   * de cada widget del maestro y, de las tablas que mandan, la estrategia (PTLPestanas) y la zona dinámica
-   * (PTLCfgZonasDinamicas): /api/layout/plantilla no las entrega bien (la web las toma de /api/pestanas).
+   * de cada widget del maestro y, de las tablas que mandan, la estrategia (PTL_Pestanas) y la zona dinámica
+   * (PTL_CfgZonasDinamicas): /api/layout/plantilla no las entrega bien (la web las toma de /api/pestanas).
    * La regla (layoutEfectivo) se aplica después, cuando se sabe cuántas terminales hay.
    * @returns {{ usuario: Array, plantilla: object, estados: Object, nombres: Object }}
    */

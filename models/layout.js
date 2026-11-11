@@ -63,7 +63,7 @@ const LayoutDTO = (rawData) => {
 
 // 3. MODELO SEQUELIZE
 const LayoutModel = (sequelize) => {
-  return sequelize.define('PTLLayouts', {
+  return sequelize.define('PTL_Layouts', {
     // layoutId es un int, probablemente un identity auto-incremental, pero NO es la llave primaria según la imagen
     layoutId: {
       type: DataTypes.INTEGER,
@@ -126,7 +126,7 @@ const LayoutModel = (sequelize) => {
       allowNull: true
     }
   }, {
-    tableName: 'PTLLayouts',
+    tableName: 'PTL_Layouts',
     timestamps: false
   });
 };

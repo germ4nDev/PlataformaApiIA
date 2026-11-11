@@ -1,6 +1,6 @@
 /*
     Author: German Valencia
-    Description: Schema, DTO and Model for PTLTiposActividad (Categorización de Permisos RBAC)
+    Description: Schema, DTO and Model for PTL_TiposActividad (Categorización de Permisos RBAC)
 */
 const Joi = require('joi');
 const { DataTypes } = require('sequelize');
@@ -58,7 +58,7 @@ const TipoActividadDTO = (rawData) => {
 // 3. MODELO SEQUELIZE
 // ==========================================
 const TipoActividadModel = (sequelize) => {
-  return sequelize.define('PTLTiposActividad', {
+  return sequelize.define('PTL_TiposActividad', {
     tipoActividadId: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
@@ -99,7 +99,7 @@ const TipoActividadModel = (sequelize) => {
       allowNull: true
     }
   }, {
-    tableName: 'PTLTiposActividad',
+    tableName: 'PTL_TiposActividad',
     timestamps: false
   });
 };

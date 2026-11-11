@@ -57,7 +57,7 @@ const ServidorDTO = (rawData) => {
 };
 
 const ServidorModel = (sequelize) => {
-  return sequelize.define('PTLServidor', {
+  return sequelize.define('PTL_Servidor', {
     servidorId: {
       type: DataTypes.INTEGER,
       autoIncrement: true
@@ -105,7 +105,7 @@ const ServidorModel = (sequelize) => {
       allowNull: false
     }
   }, {
-    tableName: 'PTLServidor',
+    tableName: 'PTL_Servidor',
     timestamps: false
   });
 };

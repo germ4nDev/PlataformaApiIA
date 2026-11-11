@@ -122,8 +122,8 @@ class UsuarioSCService {
 
     const resultadoTransaccion = await sequelize.transaction(async (t) => {
       const resultadosFinales = [];
-      const UsuarioModel = sequelize.models.PTLUsuarios || this.model.sequelize.models.PTLUsuarios;
-      const UsuariosSCModel = sequelize.models.PTLUsuariosSC || this.model;
+      const UsuarioModel = sequelize.models.PTL_Usuarios || this.model.sequelize.models.PTL_Usuarios;
+      const UsuariosSCModel = sequelize.models.PTL_UsuariosSC || this.model;
 
       for (const item of operacionesProcesadas) {
         let usuarioDB = await UsuarioModel.findOne({

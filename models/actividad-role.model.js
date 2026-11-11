@@ -55,7 +55,7 @@ const ActividadRoleDTO = (rawData) => {
 };
 
 const ActividadRoleModel = (sequelize) => {
-    const PTLActividadesRoles = sequelize.define('PTLActividadesRoles', {
+    const PTL_ActividadesRoles = sequelize.define('PTL_ActividadesRoles', {
         actividadRoleId: {
             type: DataTypes.INTEGER,
             autoIncrement: true,
@@ -98,19 +98,19 @@ const ActividadRoleModel = (sequelize) => {
             allowNull: true
         }
     }, {
-        tableName: 'PTLActividadesRoles',
+        tableName: 'PTL_ActividadesRoles',
         timestamps: false
     });
 
-    PTLActividadesRoles.associate = (models) => {
-        PTLActividadesRoles.belongsTo(models.PTLActividades, {
+    PTL_ActividadesRoles.associate = (models) => {
+        PTL_ActividadesRoles.belongsTo(models.PTL_Actividades, {
             foreignKey: 'codigoActividad',
             targetKey: 'codigoActividad',
             as: 'actividad'
         });
     };
 
-    return PTLActividadesRoles;
+    return PTL_ActividadesRoles;
 };
 
 module.exports = {

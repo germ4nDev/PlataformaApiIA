@@ -78,7 +78,7 @@ const ModuloAPDTO = (rawData) => {
 };
 
 const ModuloAPModel = (sequelize) => {
-    return sequelize.define('PTLModulosAP', {
+    return sequelize.define('PTL_ModulosAP', {
         moduloId: {
             type: DataTypes.INTEGER,
             autoIncrement: true
@@ -156,7 +156,7 @@ const ModuloAPModel = (sequelize) => {
             allowNull: false
         }
     }, {
-        tableName: 'PTLModulosAP',
+        tableName: 'PTL_ModulosAP',
         timestamps: false
     });
 };

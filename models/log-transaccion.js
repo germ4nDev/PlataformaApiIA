@@ -60,7 +60,7 @@ const LogTransaccionDTO = (rawData) => {
 };
 
 const LogTransaccionModel = (sequelize) => {
-  return sequelize.define('PTLLogTransaccionesAP', {
+  return sequelize.define('PTL_LogTransaccionesAP', {
     logId: {
       type: DataTypes.INTEGER,
       primaryKey: true,
@@ -112,7 +112,7 @@ const LogTransaccionModel = (sequelize) => {
       allowNull: false
     }
   }, {
-    tableName: 'PTLLogTransaccionesAP',
+    tableName: 'PTL_LogTransaccionesAP',
     timestamps: false
   });
 };

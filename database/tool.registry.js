@@ -25,7 +25,7 @@ const ToolRegistry = {
       };
     }
 
-    const palabrasPeligrosas = ['INSERT', 'UPDATE', 'DELETE', 'DROP', 'ALTER', 'TRUNCATE', 'RENAME', 'PTLUSUARIOS.CLAVEUSUARIO'];
+    const palabrasPeligrosas = ['INSERT', 'UPDATE', 'DELETE', 'DROP', 'ALTER', 'TRUNCATE', 'RENAME', 'CLAVEUSUARIO']; // OT-031: la columna de la clave, se nombre la tabla como se nombre (tabla nueva, sinónimo viejo o alias)
 
     const contienePeligro = palabrasPeligrosas.some(palabra => queryVerificable.includes(palabra));
 

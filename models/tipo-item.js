@@ -51,7 +51,7 @@ const TipoItemDTO = (rawData) => {
 };
 
 const TipoItemModel = (sequelize) => {
-  return sequelize.define('PTLTiposItem', {
+  return sequelize.define('PTL_TiposItem', {
     tipoItemId: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
@@ -96,7 +96,7 @@ const TipoItemModel = (sequelize) => {
       allowNull: true
     }
   }, {
-    tableName: 'PTLTiposItem',
+    tableName: 'PTL_TiposItem',
     timestamps: false
   });
 };

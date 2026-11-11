@@ -3,7 +3,7 @@
     Pattern: PORTTOS Repository - Layout del teléfono (OT-017 fase 2, migración 031)
     Description:
       widgetsPermitidos(codigoUsuario, codigoPestana?)  filas del maestro (activas) que permiten los roles activos del usuario
-                                                         (PTLUsuariosSC → PTLUsuariosRole → PTLRolesAP → PTLWidgetsRoles), con canal
+                                                         (PTL_UsuariosSC → PTL_UsuariosRole → PTL_RolesAP → PTL_WidgetsRoles), con canal
                                                          (030) y tamaño por defecto. Solo lectura.
       guardado(codigoUsuario, codigoPestana)            { items, version, fechaModificacion } o null
       guardar(codigoUsuario, codigoPestana, items)      crea o actualiza la fila (version + 1); devuelve la versión
@@ -19,11 +19,11 @@ async function widgetsPermitidos(codigoUsuario, codigoPestana = null) {
   return consultar(`
     SELECT DISTINCT UPPER(LTRIM(RTRIM(w.codigoWidget))) AS codigoWidget, UPPER(LTRIM(RTRIM(w.codigoPestana))) AS codigoPestana,
            w.nombreWidget, w.defaultCols, w.defaultRows, w.pos_x, w.pos_y, w.canal, CAST(ISNULL(w.movil, 0) AS BIT) AS movil
-    FROM dbo.PTLUsuariosSC u
-    JOIN dbo.PTLUsuariosRole ur ON ur.codigoUsuarioSC = u.codigoUsuarioSC AND ISNULL(ur.estadoUsuarioRole, 1) = 1
-    JOIN dbo.PTLRolesAP r ON r.codigoRole = ur.codigoRole AND ISNULL(r.estadoRole, 1) = 1
-    JOIN dbo.PTLWidgetsRoles wr ON wr.codigoRole = r.codigoRole AND wr.estadoRelacion = 1
-    JOIN dbo.PTLWidgetsMaestro w ON w.codigoWidget = wr.codigoWidget AND ISNULL(w.estadoWidget, 1) = 1
+    FROM dbo.PTL_UsuariosSC u
+    JOIN dbo.PTL_UsuariosRole ur ON ur.codigoUsuarioSC = u.codigoUsuarioSC AND ISNULL(ur.estadoUsuarioRole, 1) = 1
+    JOIN dbo.PTL_RolesAP r ON r.codigoRole = ur.codigoRole AND ISNULL(r.estadoRole, 1) = 1
+    JOIN dbo.PTL_WidgetsRoles wr ON wr.codigoRole = r.codigoRole AND wr.estadoRelacion = 1
+    JOIN dbo.PTL_WidgetsMaestro w ON w.codigoWidget = wr.codigoWidget AND ISNULL(w.estadoWidget, 1) = 1
     WHERE u.codigoUsuario = :codigoUsuario
       AND (:codigoPestana IS NULL OR UPPER(LTRIM(RTRIM(w.codigoPestana))) = :codigoPestana);`,
   { codigoUsuario, codigoPestana });

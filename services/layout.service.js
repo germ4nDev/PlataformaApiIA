@@ -10,7 +10,7 @@ const { LayoutPestanaDTO, LayoutPestanaModel } = require('../models/layout-pesta
 // 🚨 RESTAURAMOS LOS NOMBRES EXACTOS DE TU INDEX.JS
 const {
   sequelize,
-  PTLLayouts,
+  PTL_Layouts,
   LayoutPestana,
   TiposPestana,
   CfgZonDinamicas,
@@ -25,7 +25,7 @@ class LayoutService {
   // ==========================================
   async getLayouts() {
     try {
-      const layoutDB = await PTLLayouts.findAll();
+      const layoutDB = await PTL_Layouts.findAll();
 
       if (!layoutDB || layoutDB.length === 0) return [];
 
@@ -45,7 +45,7 @@ class LayoutService {
 
   async getLayoutByUsuario(codigoUsuario, codigoPestana) {
     try {
-      const layoutDB = await PTLLayouts.findAll({
+      const layoutDB = await PTL_Layouts.findAll({
         where: { codigoUsuario, codigoPestana }
       });
 
@@ -72,12 +72,12 @@ class LayoutService {
     const { codigoUsuario, codigoPestana } = dataDTOs[0];
 
     return await sequelize.transaction(async (t) => {
-      await PTLLayouts.destroy({
+      await PTL_Layouts.destroy({
         where: { codigoUsuario, codigoPestana },
         transaction: t
       });
 
-      const layoutDB = await PTLLayouts.bulkCreate(dataDTOs, { transaction: t });
+      const layoutDB = await PTL_Layouts.bulkCreate(dataDTOs, { transaction: t });
 
       return layoutDB.map(registro => {
         const widget = registro.toJSON();
@@ -197,7 +197,7 @@ class LayoutService {
 
   async eliminarLayoutPorPestana(codigoUsuario, codigoPestana) {
     try {
-      return await PTLLayouts.destroy({
+      return await PTL_Layouts.destroy({
         where: { codigoUsuario, codigoPestana }
       });
     } catch (error) {
@@ -299,7 +299,7 @@ class LayoutService {
       console.log(`Parámetro recibido: '${codigoLimpio}'`);
 
       // 🟢 1. CONSULTA A LA TABLA MAESTRA GLOBAL (Sin usar 'MASTER' ni usuarios)
-      // Asegúrate de usar el modelo de Sequelize que apunta a "dbo.PTLPestanas"
+      // Asegúrate de usar el modelo de Sequelize que apunta a "dbo.PTL_Pestanas"
       const pestanaGlobal = await LayoutPestana.findOne({
         where: {
           codigoPestana: codigoLimpio

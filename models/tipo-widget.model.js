@@ -43,7 +43,7 @@ const TipoWidgetDTO = (rawData) => {
 };
 
 const TipoWidgetModel = (sequelize) => {
-    return sequelize.define('PTLTiposWidget', {
+    return sequelize.define('PTL_TiposWidget', {
         idTipo: { type: DataTypes.INTEGER, autoIncrement: true },
         codigoTipo: { type: DataTypes.STRING(200), primaryKey: true, allowNull: false },
         nombreTipo: { type: DataTypes.STRING(100), allowNull: false },
@@ -55,7 +55,7 @@ const TipoWidgetModel = (sequelize) => {
         codigoUsuarioModificacion: { type: DataTypes.STRING(200), allowNull: true },
         fechaModificacion: { type: DataTypes.STRING(100), allowNull: true }
     }, {
-        tableName: 'PTLTiposWidget',
+        tableName: 'PTL_TiposWidget',
         timestamps: false
     });
 };

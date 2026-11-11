@@ -52,7 +52,7 @@ const TipoEstadoDTO = (rawData) => {
 };
 
 const TipoEstadoModel = (sequelize) => {
-  return sequelize.define('PTLTiposEstados', {
+  return sequelize.define('PTL_TiposEstados', {
     tipoEstadoId: {
       type: DataTypes.INTEGER,
       autoIncrement: true
@@ -97,7 +97,7 @@ const TipoEstadoModel = (sequelize) => {
       allowNull: false
     }
   }, {
-    tableName: 'PTLTiposEstados',
+    tableName: 'PTL_TiposEstados',
     timestamps: false
   });
 };

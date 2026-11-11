@@ -2,7 +2,7 @@
     Author: German Valencia
     Refactored for: QPLUS DTO Pattern, Entity Standardization & Joi Validation
     Updated for: Metadata-Driven Layout Engine (Vinculación con Tipos de Pestaña)
-    Entity: PTLLayoutPestanas (Preferencias de orden y visibilidad de pestañas por usuario)
+    Entity: PTL_LayoutPestanas (Preferencias de orden y visibilidad de pestañas por usuario)
 */
 const Joi = require('joi');
 const { DataTypes } = require('sequelize');
@@ -50,7 +50,7 @@ const LayoutPestanaDTO = (rawData) => {
 
 // 3. MODELO SEQUELIZE
 const LayoutPestanaModel = (sequelize) => {
-  return sequelize.define('PTLLayoutPestanas', {
+  return sequelize.define('PTL_LayoutPestanas', {
     layoutPestanaId: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
@@ -69,7 +69,7 @@ const LayoutPestanaModel = (sequelize) => {
       type: DataTypes.INTEGER,
       allowNull: false
     },
-    // 🚨 NUEVA COLUMNA (Foreign Key hacia PTLTiposPestana)
+    // 🚨 NUEVA COLUMNA (Foreign Key hacia PTL_TiposPestana)
     codigoTipo: {
       type: DataTypes.STRING(200),
       allowNull: true
@@ -91,7 +91,7 @@ const LayoutPestanaModel = (sequelize) => {
       allowNull: true
     }
   }, {
-    tableName: 'PTLLayoutPestanas',
+    tableName: 'PTL_LayoutPestanas',
     timestamps: false
   });
 };

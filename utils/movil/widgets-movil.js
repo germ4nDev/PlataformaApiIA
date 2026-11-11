@@ -2,7 +2,7 @@
     Author: German Valencia
     Pattern: PORTTOS Núcleo puro (AD-16) - Widgets de la web en la app móvil (layout del usuario o por defecto)
     Description: El tablero móvil muestra los mismos widgets que el usuario tiene en la web para esa pestaña:
-      su layout guardado (dbo.PTLLayouts) o, si no tiene, el layout por defecto (dbo.PTLWidgetsMaestro inicial = 1).
+      su layout guardado (dbo.PTL_Layouts) o, si no tiene, el layout por defecto (dbo.PTL_WidgetsMaestro inicial = 1).
       Cada código de widget de la web tiene aquí su versión para el teléfono (kpis | lista | grafica | analista | mapa),
       armada con los mismos datos que usa la web. Sin base de datos ni red.
         codigoMovil(celda)                   código de la app para una celda (TERM_SLOT_n → TERMINAL_n)

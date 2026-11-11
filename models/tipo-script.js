@@ -48,7 +48,7 @@ const TipoScriptDTO = (rawData) => {
 };
 
 const TipoScriptModel = (sequelize) => {
-    return sequelize.define('PTLTiposScripts', {
+    return sequelize.define('PTL_TiposScripts', {
         tipoScriptId: {
             type: DataTypes.INTEGER,
             autoIncrement: true,
@@ -89,7 +89,7 @@ const TipoScriptModel = (sequelize) => {
             allowNull: false
         }
     }, {
-        tableName: 'PTLTiposScripts',
+        tableName: 'PTL_TiposScripts',
         timestamps: false
     });
 };

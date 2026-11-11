@@ -53,7 +53,7 @@ const TipoPestanaDTO = (rawData) => {
 
 // 3. MODELO SEQUELIZE
 const TipoPestanaModel = (sequelize) => {
-    return sequelize.define('PTLTiposPestana', {
+    return sequelize.define('PTL_TiposPestana', {
         // tipoId: {
         //     type: DataTypes.INTEGER,
         //     autoIncrement: true,
@@ -93,7 +93,7 @@ const TipoPestanaModel = (sequelize) => {
             allowNull: true
         }
     }, {
-        tableName: 'PTLTiposPestana',
+        tableName: 'PTL_TiposPestana',
         timestamps: false
     });
 };

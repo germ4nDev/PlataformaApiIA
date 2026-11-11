@@ -10,17 +10,17 @@ const { AplicacionModel } = require('./../models/aplicacion'); // Ajusta según 
 const { SuscriptorModel } = require('./../models/suscriptor');
 
 // 3. Inicializamos los modelos pasándoles la instancia de sequelize
-const PTLPaquetes = PaqueteModel(sequelize);
-const PTLUsuarios = UsuarioModel(sequelize);
+const PTL_Paquetes = PaqueteModel(sequelize);
+const PTL_Usuarios = UsuarioModel(sequelize);
 const PTLTickets = TicketAPModel(sequelize);
-const PTLAplicaciones = AplicacionModel(sequelize);
-const PTLSuscriptores = SuscriptorModel(sequelize);
+const PTL_Aplicaciones = AplicacionModel(sequelize);
+const PTL_Suscriptores = SuscriptorModel(sequelize);
 
 class DashboardService {
 
   async getUsuariosConectados() {
     try {
-      const total = await PTLUsuarios.count({
+      const total = await PTL_Usuarios.count({
         where: { isOnline: true }
       });
       console.log('total conectados', total);
@@ -33,10 +33,10 @@ class DashboardService {
 
   async getKpiTotales() {
     try {
-      const totalUsuarios = await PTLUsuarios.count();
-      const totalPaquetes = await PTLPaquetes.count();
-      const totalAplicaciones = await PTLAplicaciones.count();
-      const totalSuscriptores = await PTLSuscriptores.count();
+      const totalUsuarios = await PTL_Usuarios.count();
+      const totalPaquetes = await PTL_Paquetes.count();
+      const totalAplicaciones = await PTL_Aplicaciones.count();
+      const totalSuscriptores = await PTL_Suscriptores.count();
 
       return {
         totalUsuarios,
@@ -53,7 +53,7 @@ class DashboardService {
   async getPaquetesPorSuscriptor() {
     try {
       // 1. Paquetes Activos
-      const activos = await PTLPaquetes.findAll({
+      const activos = await PTL_Paquetes.findAll({
         attributes: [
           ['nombrePaquete', 'suscriptor'],
           [sequelize.fn('COUNT', sequelize.col('codigoPaquete')), 'cantidad']
@@ -64,7 +64,7 @@ class DashboardService {
       });
 
       // 2. Paquetes Inactivos / Vencidos
-      const inactivos = await PTLPaquetes.findAll({
+      const inactivos = await PTL_Paquetes.findAll({
         attributes: [
           ['nombrePaquete', 'suscriptor'],
           [sequelize.fn('COUNT', sequelize.col('codigoPaquete')), 'cantidad']

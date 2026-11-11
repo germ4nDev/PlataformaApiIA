@@ -51,7 +51,7 @@ const SesionDTO = (rawData) => {
 };
 
 const SesionModel = (sequelize) => {
-  return sequelize.define('PTLSesiones', {
+  return sequelize.define('PTL_Sesiones', {
     sesionId: { type: DataTypes.INTEGER, autoIncrement: true },
     codigoSesion: { type: DataTypes.STRING(200), primaryKey: true, allowNull: false },
     codigoUsuario: { type: DataTypes.STRING(200), allowNull: false },
@@ -68,7 +68,7 @@ const SesionModel = (sequelize) => {
     fechaLogin: { type: DataTypes.STRING(100), allowNull: false },
     fechaLogout: { type: DataTypes.STRING(100), allowNull: true }
   }, {
-    tableName: 'PTLSesiones',
+    tableName: 'PTL_Sesiones',
     timestamps: false
   });
 };

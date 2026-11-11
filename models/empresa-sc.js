@@ -62,7 +62,7 @@ const EmpresaSCDTO = (rawData) => {
 };
 
 const EmpresaSCModel = (sequelize) => {
-  return sequelize.define('PTLEmpresasSC', {
+  return sequelize.define('PTL_EmpresasSC', {
     empresaId: {
       type: DataTypes.INTEGER,
       autoIncrement: true
@@ -114,7 +114,7 @@ const EmpresaSCModel = (sequelize) => {
       allowNull: true
     }
   }, {
-    tableName: 'PTLEmpresasSC',
+    tableName: 'PTL_EmpresasSC',
     timestamps: false
   });
 };

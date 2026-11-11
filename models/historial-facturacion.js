@@ -76,7 +76,7 @@ const HistorialFacturacionDTO = (rawData) => {
 };
 
 const HistorialFacturacionModel = (sequelize) => {
-  return sequelize.define('PTLHistorialFacturacion', {
+  return sequelize.define('PTL_HistorialFacturacion', {
     historialId: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
@@ -142,7 +142,7 @@ const HistorialFacturacionModel = (sequelize) => {
       allowNull: true
     }
   }, {
-    tableName: 'PTLHistorialFacturacion',
+    tableName: 'PTL_HistorialFacturacion',
     timestamps: false
   });
 };

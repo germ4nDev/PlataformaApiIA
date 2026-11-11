@@ -15,7 +15,7 @@ const consultar = (texto, replacements) => db.sequelize.query(texto, { replaceme
 async function maestro(codigoPestana) {
   const filas = await consultar(`
     SELECT UPPER(LTRIM(RTRIM(codigoWidget))) AS codigoWidget, nombreWidget, estadoWidget
-    FROM dbo.PTLWidgetsMaestro WHERE codigoPestana = :codigoPestana;`, { codigoPestana });
+    FROM dbo.PTL_WidgetsMaestro WHERE codigoPestana = :codigoPestana;`, { codigoPestana });
   return {
     nombres: Object.fromEntries(filas.map((f) => [f.codigoWidget, f.nombreWidget])),
     // estadoWidget NULL cuenta como activo (igual que antes en la app)
@@ -24,8 +24,8 @@ async function maestro(codigoPestana) {
 }
 
 /**
- * Widgets de la pestaña que permiten los roles del usuario (regla 18, fase 2): relaciones activas de PTLWidgetsRoles de sus
- * roles activos (PTLUsuariosSC → PTLUsuariosRole → PTLRolesAP), con el canal del maestro (canal, migración 030; movil, 028).
+ * Widgets de la pestaña que permiten los roles del usuario (regla 18, fase 2): relaciones activas de PTL_WidgetsRoles de sus
+ * roles activos (PTL_UsuariosSC → PTL_UsuariosRole → PTL_RolesAP), con el canal del maestro (canal, migración 030; movil, 028).
  * Lo mismo que arma la web al entrar (rolesYWidgetsDeAplicacion). Solo lectura.
  * @returns {Promise<Array<{ codigoWidget: string, movil: boolean, canal: string }>>}
  */
@@ -33,11 +33,11 @@ async function permitidosDeUsuario(codigoUsuario, codigoPestana) {
   return consultar(`
     SELECT DISTINCT UPPER(LTRIM(RTRIM(w.codigoWidget))) AS codigoWidget, CAST(ISNULL(w.movil, 0) AS BIT) AS movil,
            w.canal
-    FROM dbo.PTLUsuariosSC u
-    JOIN dbo.PTLUsuariosRole ur ON ur.codigoUsuarioSC = u.codigoUsuarioSC AND ISNULL(ur.estadoUsuarioRole, 1) = 1
-    JOIN dbo.PTLRolesAP r ON r.codigoRole = ur.codigoRole AND ISNULL(r.estadoRole, 1) = 1
-    JOIN dbo.PTLWidgetsRoles wr ON wr.codigoRole = r.codigoRole AND wr.estadoRelacion = 1
-    JOIN dbo.PTLWidgetsMaestro w ON w.codigoWidget = wr.codigoWidget
+    FROM dbo.PTL_UsuariosSC u
+    JOIN dbo.PTL_UsuariosRole ur ON ur.codigoUsuarioSC = u.codigoUsuarioSC AND ISNULL(ur.estadoUsuarioRole, 1) = 1
+    JOIN dbo.PTL_RolesAP r ON r.codigoRole = ur.codigoRole AND ISNULL(r.estadoRole, 1) = 1
+    JOIN dbo.PTL_WidgetsRoles wr ON wr.codigoRole = r.codigoRole AND wr.estadoRelacion = 1
+    JOIN dbo.PTL_WidgetsMaestro w ON w.codigoWidget = wr.codigoWidget
     WHERE u.codigoUsuario = :codigoUsuario AND w.codigoPestana = :codigoPestana;`, { codigoUsuario, codigoPestana });
 }
 

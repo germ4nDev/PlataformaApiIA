@@ -8,8 +8,8 @@ class DashboardRepository {
             SELECT 
                 p.nombrePaquete AS label,
                 COUNT(s.suscriptorId) AS total
-            FROM PTLPaquetes p
-            LEFT JOIN PTLSuscriptores s ON s.paqueteId = p.paqueteId AND s.estado = 1
+            FROM PTL_Paquetes p
+            LEFT JOIN PTL_Suscriptores s ON s.paqueteId = p.paqueteId AND s.estado = 1
             WHERE p.estado = 1
             GROUP BY p.nombrePaquete
         `, { type: sequelize.QueryTypes.SELECT });
@@ -22,7 +22,7 @@ class DashboardRepository {
                 SUM(CASE WHEN t.estado = 'RESUELTO' THEN 1 ELSE 0 END) AS resueltos,
                 SUM(CASE WHEN t.estado = 'EN_PROGRESO' THEN 1 ELSE 0 END) AS enProgreso,
                 SUM(CASE WHEN t.estado = 'ABIERTO' THEN 1 ELSE 0 END) AS abiertos
-            FROM PTLAplicaciones a
+            FROM PTL_Aplicaciones a
             LEFT JOIN PTLTickets t ON t.aplicacionId = a.aplicacionId
             GROUP BY a.nombreAplicacion
         `, { type: sequelize.QueryTypes.SELECT });

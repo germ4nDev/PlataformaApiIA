@@ -1,8 +1,8 @@
 /*
     Author: German Valencia
     Núcleo puro de validarPermiso (AD-16, prueba en _pruebas/validar-permiso.test.js). CC-128.
-    El permiso se valida contra los roles del vínculo usuario–suscriptor (PTLUsuariosSC.codigoUsuarioSC) en la empresa de la sesión
-    (PTLUsuariosRole.codigoEmpresaSC), igual que la web arma el menú. Decisión del usuario (2026-11-07): solo se valida que el usuario de la
+    El permiso se valida contra los roles del vínculo usuario–suscriptor (PTL_UsuariosSC.codigoUsuarioSC) en la empresa de la sesión
+    (PTL_UsuariosRole.codigoEmpresaSC), igual que la web arma el menú. Decisión del usuario (2026-11-07): solo se valida que el usuario de la
     sesión tenga la actividad; no se revisa a quién pertenece el registro destino.
     Sin usuario → 401; sin llave, sin suscriptor o sin empresa en la sesión → 403. Nunca devuelve undefined (Sequelize no lo acepta).
 */
@@ -13,7 +13,7 @@ const deSesion = (sesion, campo) => limpio(sesion?.[campo] ?? sesion?.dataValues
 
 /**
  * Saca de la petición lo que necesita la validación.
- * codigoUsuario lo deja validarJWT; codigoSuscriptor y codigoEmpresaSC, validarSesion en req.sesionContexto (PTLSesiones).
+ * codigoUsuario lo deja validarJWT; codigoSuscriptor y codigoEmpresaSC, validarSesion en req.sesionContexto (PTL_Sesiones).
  * opciones.propio(req) → código del usuario dueño del recurso: si es el mismo de la sesión, pasa sin consultar (p. ej. su propia clave).
  */
 function contextoPermiso(req = {}, llavePermiso, opciones = {}) {

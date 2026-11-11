@@ -2,12 +2,12 @@
     Author: German Valencia
     Pattern: PORTTOS Repository - Metadatos de las pestañas para el layout y la barra de pestañas (OT-008; solo lectura)
     Description: Lo que web y app necesitan de cada pestaña y que /api/layout/plantilla no entrega bien: ese servicio lee la
-      estrategia y la zona de PTLLayoutPestanas (preferencias por usuario) con un findOne y, por ejemplo, devuelve Marítimo
+      estrategia y la zona de PTL_LayoutPestanas (preferencias por usuario) con un findOne y, por ejemplo, devuelve Marítimo
       como ESTATICO_ANALITICO y sin zona. La regla 7 no deja tocar /api/layout, así que aquí se leen de las tablas que mandan:
-      - estilos()          → { CODIGO: { icono, color } } de PTLPestanas (migración 020; sin ella, migracionPendiente)
-      - zonas()            → { CODIGO: { codigoMolde, inicioX, inicioY, colsPorItem, rowsPorItem } } de PTLCfgZonasDinamicas
-      - estrategias()      → { CODIGO: codigoTipoPestana } de PTLPestanas
-      El modelo de Sequelize de PTLPestanas no declara icono ni color a propósito (tabla compartida; la 020 es opcional).
+      - estilos()          → { CODIGO: { icono, color } } de PTL_Pestanas (migración 020; sin ella, migracionPendiente)
+      - zonas()            → { CODIGO: { codigoMolde, inicioX, inicioY, colsPorItem, rowsPorItem } } de PTL_CfgZonasDinamicas
+      - estrategias()      → { CODIGO: codigoTipoPestana } de PTL_Pestanas
+      El modelo de Sequelize de PTL_Pestanas no declara icono ni color a propósito (tabla compartida; la 020 es opcional).
 */
 const { QueryTypes } = require('sequelize');
 const { sequelize } = require('../database/connection');
@@ -20,7 +20,7 @@ const n = (v) => (v === null || v === undefined || v === '' || !Number.isFinite(
 
 async function estilos() {
   try {
-    const filas = await consultar('SELECT codigoPestana, icono, color FROM dbo.PTLPestanas WHERE icono IS NOT NULL OR color IS NOT NULL;');
+    const filas = await consultar('SELECT codigoPestana, icono, color FROM dbo.PTL_Pestanas WHERE icono IS NOT NULL OR color IS NOT NULL;');
     return Object.fromEntries(filas.map((f) => [clave(f.codigoPestana), { icono: f.icono ?? null, color: f.color ?? null }]));
   } catch (error) {
     if (esColumnaInexistente(error)) throw migracionPendiente(MIGRACION_020);
@@ -32,7 +32,7 @@ async function estilos() {
 async function zonas() {
   try {
     const filas = await consultar(`SELECT codigoPestana, codigoMolde, inicioX, inicioY, colsPorItem, rowsPorItem
-      FROM dbo.PTLCfgZonasDinamicas WHERE ISNULL(estado, 1) = 1;`);
+      FROM dbo.PTL_CfgZonasDinamicas WHERE ISNULL(estado, 1) = 1;`);
     return Object.fromEntries(filas.map((z) => [clave(z.codigoPestana), {
       codigoMolde: z.codigoMolde ?? null, inicioX: n(z.inicioX), inicioY: n(z.inicioY), colsPorItem: n(z.colsPorItem), rowsPorItem: n(z.rowsPorItem),
     }]));
@@ -43,7 +43,7 @@ async function zonas() {
 }
 
 async function estrategias() {
-  const filas = await consultar('SELECT codigoPestana, codigoTipoPestana FROM dbo.PTLPestanas;');
+  const filas = await consultar('SELECT codigoPestana, codigoTipoPestana FROM dbo.PTL_Pestanas;');
   return Object.fromEntries(filas.map((f) => [clave(f.codigoPestana), f.codigoTipoPestana ?? null]));
 }
 

@@ -61,7 +61,7 @@ const UsuarioDTO = (rawData) => {
 };
 
 const UsuarioModel = (sequelize) => {
-  return sequelize.define('PTLUsuarios', {
+  return sequelize.define('PTL_Usuarios', {
     usuarioId: { type: DataTypes.INTEGER, autoIncrement: true },
     codigoUsuario: { type: DataTypes.STRING(200), primaryKey: true, allowNull: false },
     identificacionUsuario: { type: DataTypes.STRING(100), allowNull: false, unique: true },
@@ -89,7 +89,7 @@ const UsuarioModel = (sequelize) => {
     codigoUsuarioModificacion: { type: DataTypes.STRING(200), allowNull: true },
     fechaModificacion: { type: DataTypes.STRING(100), allowNull: true }
   }, {
-    tableName: 'PTLUsuarios',
+    tableName: 'PTL_Usuarios',
     timestamps: false
   });
 };

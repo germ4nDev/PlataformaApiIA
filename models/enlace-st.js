@@ -57,7 +57,7 @@ const EnlaceSTDTO = (rawData) => {
 };
 
 const EnlaceSTModel = (sequelize) => {
-  return sequelize.define('PTLEnlacesST', {
+  return sequelize.define('PTL_EnlacesST', {
     enlaceId: {
       type: DataTypes.INTEGER,
       autoIncrement: true
@@ -105,7 +105,7 @@ const EnlaceSTModel = (sequelize) => {
       allowNull: false
     }
   }, {
-    tableName: 'PTLEnlacesST',
+    tableName: 'PTL_EnlacesST',
     timestamps: false
   });
 };

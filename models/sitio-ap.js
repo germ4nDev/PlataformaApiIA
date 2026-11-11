@@ -61,7 +61,7 @@ const SitioAPDTO = (rawData) => {
 };
 
 const SitioAPModel = (sequelize) => {
-  return sequelize.define('PTLSitiosAP', {
+  return sequelize.define('PTL_SitiosAP', {
     sitioId: {
       type: DataTypes.INTEGER,
       autoIncrement: true
@@ -115,7 +115,7 @@ const SitioAPModel = (sequelize) => {
       allowNull: false
     }
   }, {
-    tableName: 'PTLSitiosAP',
+    tableName: 'PTL_SitiosAP',
     timestamps: false
   });
 };

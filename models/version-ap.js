@@ -60,7 +60,7 @@ const VersionAPDTO = (rawData) => {
 };
 
 const VersionAPModel = (sequelize) => {
-  return sequelize.define('PTLVersionesAP', {
+  return sequelize.define('PTL_VersionesAP', {
     versionId: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
@@ -113,7 +113,7 @@ const VersionAPModel = (sequelize) => {
       allowNull: false
     }
   }, {
-    tableName: 'PTLVersionesAP',
+    tableName: 'PTL_VersionesAP',
     timestamps: false
   });
 };

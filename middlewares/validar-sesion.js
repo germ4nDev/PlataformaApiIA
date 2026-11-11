@@ -5,7 +5,7 @@ const { sequelize } = require('../database/connection'); // Ajusta la ruta a tu 
 const { SesionModel } = require('../models/sesion'); // Ajusta la ruta a tu carpeta models
 
 // 🟢 3. ¡LA CLAVE! Instancias el modelo pasándole la conexión
-const PTLSesiones = SesionModel(sequelize);
+const PTL_Sesiones = SesionModel(sequelize);
 
 const validarSesion = async (req, res, next) => {
   try {
@@ -18,8 +18,8 @@ const validarSesion = async (req, res, next) => {
       });
     }
 
-    // 🟢 Ahora PTLSesiones ya no es undefined, ¡es el modelo real con la función findOne!
-    const sesionDB = await PTLSesiones.findOne({
+    // 🟢 Ahora PTL_Sesiones ya no es undefined, ¡es el modelo real con la función findOne!
+    const sesionDB = await PTL_Sesiones.findOne({
       where: { codigoSesion, activa: true }
     });
 

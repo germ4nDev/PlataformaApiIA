@@ -71,7 +71,7 @@ const SliderInicioDTO = (rawData, modo = 'crear') => {
 /** conAplicacion: la tabla ya tiene la columna codigoAplicacion (migración 027). Sin ella, el modelo de siempre. */
 const SliderInicioModel = (sequelize, { conAplicacion = false } = {}) => {
     const columnaApp = conAplicacion ? { codigoAplicacion: { type: DataTypes.STRING(200), allowNull: true } } : {};
-    return sequelize.define(conAplicacion ? 'PTLSliderInicioApp' : 'PTLSliderInicio', {
+    return sequelize.define(conAplicacion ? 'PTLSliderInicioApp' : 'PTL_SliderInicio', {
         sliderId: {
             type: DataTypes.INTEGER,
             autoIncrement: true
@@ -117,7 +117,7 @@ const SliderInicioModel = (sequelize, { conAplicacion = false } = {}) => {
         },
         ...columnaApp
     }, {
-        tableName: 'PTLSliderInicio',
+        tableName: 'PTL_SliderInicio',
         timestamps: false
     });
 };

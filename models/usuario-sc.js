@@ -49,7 +49,7 @@ const UsuarioSCDTO = (rawData) => {
 };
 
 const UsuarioSCModel = (sequelize) => {
-  return sequelize.define('PTLUsuariosSC', {
+  return sequelize.define('PTL_UsuariosSC', {
     usuarioSCId: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
@@ -90,7 +90,7 @@ const UsuarioSCModel = (sequelize) => {
       allowNull: true
     }
   }, {
-    tableName: 'PTLUsuariosSC',
+    tableName: 'PTL_UsuariosSC',
     timestamps: false
   });
 };

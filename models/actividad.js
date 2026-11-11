@@ -61,7 +61,7 @@ const ActividadDTO = (rawData) => {
 };
 
 const ActividadModel = (sequelize) => {
-    return sequelize.define('PTLActividades', {
+    return sequelize.define('PTL_Actividades', {
         actividadId: { type: DataTypes.INTEGER, autoIncrement: true },
         codigoActividad: { type: DataTypes.STRING(200), primaryKey: true, allowNull: false },
         codigoAplicacion: { type: DataTypes.STRING(200), allowNull: false },
@@ -96,7 +96,7 @@ const ActividadModel = (sequelize) => {
             allowNull: true
         }
     }, {
-        tableName: 'PTLActividades',
+        tableName: 'PTL_Actividades',
         timestamps: false
     });
 };

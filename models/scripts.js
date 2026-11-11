@@ -59,7 +59,7 @@ const ScriptDTO = (rawData) => {
 };
 
 const ScriptModel = (sequelize) => {
-    return sequelize.define('PTLScripts', {
+    return sequelize.define('PTL_Scripts', {
         scriptId: {
             type: DataTypes.INTEGER,
             autoIncrement: true,
@@ -115,7 +115,7 @@ const ScriptModel = (sequelize) => {
             allowNull: false
         }
     }, {
-        tableName: 'PTLScripts',
+        tableName: 'PTL_Scripts',
         timestamps: false
     });
 };

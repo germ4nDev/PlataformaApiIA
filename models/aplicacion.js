@@ -83,7 +83,7 @@ const AplicacionDTO = (rawData) => {
 
 // 3. MODELO SEQUELIZE IDÉNTICO AL SCHEMA DB
 const AplicacionModel = (sequelize) => {
-    return sequelize.define('PTLAplicaciones', {
+    return sequelize.define('PTL_Aplicaciones', {
         aplicacionId: {
             type: DataTypes.INTEGER,
             autoIncrement: true,
@@ -163,7 +163,7 @@ const AplicacionModel = (sequelize) => {
             allowNull: true // 🟢 Corregido a true según DB
         }
     }, {
-        tableName: 'PTLAplicaciones',
+        tableName: 'PTL_Aplicaciones',
         timestamps: false
     });
 };

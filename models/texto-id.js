@@ -52,7 +52,7 @@ const TextoIDDTO = (rawData) => {
 };
 
 const TextoIDModel = (sequelize) => {
-  return sequelize.define('PTLTextosID', {
+  return sequelize.define('PTL_TextosID', {
     textoId: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
@@ -97,7 +97,7 @@ const TextoIDModel = (sequelize) => {
       allowNull: false
     }
   }, {
-    tableName: 'PTLTextosID',
+    tableName: 'PTL_TextosID',
     timestamps: false
   });
 };

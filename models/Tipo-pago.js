@@ -49,7 +49,7 @@ const TipoPagoDTO = (rawData) => {
 };
 
 const TipoPagoModel = (sequelize) => {
-  return sequelize.define('PTLTiposPago', {
+  return sequelize.define('PTL_TiposPago', {
     tipoPagoId: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
@@ -90,7 +90,7 @@ const TipoPagoModel = (sequelize) => {
       allowNull: true
     }
   }, {
-    tableName: 'PTLTiposPago',
+    tableName: 'PTL_TiposPago',
     timestamps: false
   });
 };

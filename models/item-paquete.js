@@ -12,11 +12,12 @@ const ItemPaqueteSchema = Joi.object({
     codigoPaquete: Joi.string().max(200).required()
         .messages({ 'any.required': 'El código del paquete vinculado es obligatorio.' }),
 
+    // codigoValor = código del ítem del catálogo (PTL_Items.codigoItem); codigoItem es el código de esta fila
     codigoValor: Joi.string().max(200).required()
-        .messages({ 'any.required': 'El código de valor es obligatorio.' }),
+        .messages({ 'any.required': 'El ítem del catálogo es obligatorio.' }),
 
-    tipoValorId: Joi.number().integer().positive().required()
-        .messages({ 'any.required': 'El ID del tipo de valor es obligatorio.' }),
+    // OT-029: el precio va en la lista de precios; tipoValorId ya no se usa (0)
+    tipoValorId: Joi.number().integer().min(0).optional().default(0),
 
     nombreItem: Joi.string().max(200).required()
         .messages({ 'any.required': 'El nombre del ítem es obligatorio.' }),
@@ -71,7 +72,7 @@ const ItemPaqueteDTO = (rawData) => {
 };
 
 const ItemPaqueteModel = (sequelize) => {
-    return sequelize.define('PTLItemsPaquete', {
+    return sequelize.define('PTL_ItemsPaquete', {
         itemId: {
             type: DataTypes.INTEGER,
             autoIncrement: true
@@ -143,7 +144,7 @@ const ItemPaqueteModel = (sequelize) => {
             allowNull: false
         }
     }, {
-        tableName: 'PTLItemsPaquete',
+        tableName: 'PTL_ItemsPaquete',
         timestamps: false
     });
 };

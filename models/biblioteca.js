@@ -55,7 +55,7 @@ const BibliotecaDTO = (rawData) => {
 };
 
 const BibliotecaModel = (sequelize) => {
-    return sequelize.define('PTLBibliotecas', {
+    return sequelize.define('PTL_Bibliotecas', {
         bibliotecaId: {
             type: DataTypes.INTEGER,
             autoIncrement: true,
@@ -105,7 +105,7 @@ const BibliotecaModel = (sequelize) => {
             allowNull: false
         }
     }, {
-        tableName: 'PTLBibliotecas',
+        tableName: 'PTL_Bibliotecas',
         timestamps: false
     });
 };

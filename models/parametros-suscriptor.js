@@ -53,7 +53,7 @@ const ParametrosSuscriptorDTO = (rawData) => {
 };
 
 const ParametrosSuscriptorModel = (sequelize) => {
-  return sequelize.define('PTLParametrosSuscriptor', {
+  return sequelize.define('PTL_ParametrosSuscriptor', {
     parametroId: {
       type: DataTypes.INTEGER,
       autoIncrement: true
@@ -92,7 +92,7 @@ const ParametrosSuscriptorModel = (sequelize) => {
       allowNull: false
     }
   }, {
-    tableName: 'PTLParametrosSuscriptor',
+    tableName: 'PTL_ParametrosSuscriptor',
     timestamps: false
   });
 };

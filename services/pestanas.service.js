@@ -49,7 +49,7 @@ class PestanaService {
     }
   }
 
-  /** Zona dinámica por pestaña (PTLCfgZonasDinamicas): /api/layout/plantilla no la entrega bien (OT-008). */
+  /** Zona dinámica por pestaña (PTL_CfgZonasDinamicas): /api/layout/plantilla no la entrega bien (OT-008). */
   async zonas() {
     try {
       return await PestanasMetadatos.zonas();

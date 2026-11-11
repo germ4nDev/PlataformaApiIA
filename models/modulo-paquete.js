@@ -57,7 +57,7 @@ const ModuloPQDTO = (rawData) => {
 };
 
 const ModuloPQModel = (sequelize) => {
-    return sequelize.define('PTLModulosPQ', {
+    return sequelize.define('PTL_ModulosPQ', {
         moduloPQId: {
             type: DataTypes.INTEGER,
             autoIncrement: true
@@ -105,7 +105,7 @@ const ModuloPQModel = (sequelize) => {
             allowNull: true
         }
     }, {
-        tableName: 'PTLModulosPQ',
+        tableName: 'PTL_ModulosPQ',
         timestamps: false
     });
 };

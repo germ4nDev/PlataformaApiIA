@@ -48,7 +48,7 @@ const TipoGaleriaDTO = (rawData) => {
 };
 
 const TipoGaleriaModel = (sequelize) => {
-  return sequelize.define("PTLTiposGaleria", {
+  return sequelize.define("PTL_TiposGaleria", {
     tipoId: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
@@ -89,7 +89,7 @@ const TipoGaleriaModel = (sequelize) => {
       allowNull: false
     }
   }, {
-    tableName: "PTLTiposGaleria",
+    tableName: "PTL_TiposGaleria",
     timestamps: false,
   });
 };

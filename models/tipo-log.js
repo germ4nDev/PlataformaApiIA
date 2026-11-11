@@ -52,7 +52,7 @@ const TipoLogDTO = (rawData) => {
 };
 
 const TipoLogModel = (sequelize) => {
-  return sequelize.define('PTLTiposLogs', {
+  return sequelize.define('PTL_TiposLogs', {
     tipoLogId: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
@@ -98,7 +98,7 @@ const TipoLogModel = (sequelize) => {
       allowNull: false
     }
   }, {
-    tableName: 'PTLTiposLogs',
+    tableName: 'PTL_TiposLogs',
     timestamps: false
   });
 };

@@ -56,7 +56,7 @@ const CfgZonasDinamicaDTO = (rawData) => {
 
 // 3. MODELO SEQUELIZE
 const CfgZonasDinamicaModel = (sequelize) => {
-  return sequelize.define('PTLCfgZonasDinamicas', {
+  return sequelize.define('PTL_CfgZonasDinamicas', {
     zonaId: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
@@ -112,7 +112,7 @@ const CfgZonasDinamicaModel = (sequelize) => {
       allowNull: true
     }
   }, {
-    tableName: 'PTLCfgZonasDinamicas',
+    tableName: 'PTL_CfgZonasDinamicas',
     timestamps: false
   });
 };

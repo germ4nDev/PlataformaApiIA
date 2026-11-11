@@ -55,7 +55,7 @@ const TipoPaqueteDTO = (rawData) => {
 };
 
 const TipoPaqueteModel = (sequelize) => {
-  return sequelize.define('PTLTiposPaquete', {
+  return sequelize.define('PTL_TiposPaquete', {
     tipoPaqueteId: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
@@ -104,7 +104,7 @@ const TipoPaqueteModel = (sequelize) => {
       allowNull: true
     }
   }, {
-    tableName: 'PTLTiposPaquete', // El nombre de tu nueva tabla en SQL Server
+    tableName: 'PTL_TiposPaquete', // El nombre de tu nueva tabla en SQL Server
     timestamps: false
   });
 };

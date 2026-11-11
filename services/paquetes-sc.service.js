@@ -5,6 +5,11 @@
 const { sequelize } = require('../database/connection');
 const { PaqueteSCModel, PaqueteSCDTO } = require('../models/paquete-sc');
 const { getIO } = require('../helpers/socket.helper');
+const ListasPrecios = require('./plataforma/listas-precios.service');
+const Aprovisionamiento = require('./plataforma/aprovisionamiento.service');
+
+// OT-029: la foto del precio la pone el API al vender; después no se cambia por PUT
+const FOTO = ['codigoLista', 'moneda', 'periodicidad', 'mesesCobertura', 'valorPeriodo', 'precioSetup', 'porcentajeDescuento', 'valorFinal'];
 
 class PaqueteSCService {
   constructor() {
@@ -44,12 +49,15 @@ class PaqueteSCService {
     // console.log('crear paquete sc raw', rawData);   // [ruido de consola: comentado 2026-10-26]
 
     const dataDTO = PaqueteSCDTO(rawData);
+    // OT-029: precio de la lista elegida (o la vigente) con los meses y el descuento del tipo de paquete
+    const foto = await ListasPrecios.cotizar({ codigoPaquete: dataDTO.codigoPaquete, codigoTipoPaquete: dataDTO.codigoTipoPaquete, codigoLista: rawData.codigoLista || '' });
+    Object.assign(dataDTO, foto);
     // console.log('crear paquete sc dto', dataDTO);   // [ruido de consola: comentado 2026-10-26]
 
     return await sequelize.transaction(async (t) => {
       const nuevoPaquete = await this.model.create(dataDTO, { transaction: t });
 
-      crearBaseDatosSuscriptor();
+      // OT-030: la base de cada aplicación del paquete se crea después del commit (abajo), sin bloquear la venta.
 
       getIO().emit('paquetes-sc-actualizados', {
         action: 'create',
@@ -57,33 +65,12 @@ class PaqueteSCService {
       });
 
       return nuevoPaquete;
+    }).then((nuevoPaquete) => {
+      // OT-030: una base por aplicación del paquete (menos la Plataforma); si falla queda ERROR y se reintenta desde la pantalla
+      Aprovisionamiento.encolar({ codigoSuscriptor: dataDTO.codigoSuscriptor, codigoPaquete: dataDTO.codigoPaquete })
+        .catch((e) => console.error('❌ [Aprovisionamiento] No se pudo encolar:', e?.message || e?.msg || e));
+      return nuevoPaquete;
     });
-  }
-
-  async crearBaseDatosSuscriptor() {
-    const modulosPQ = await this.moduloPQModel.findAll({
-      where: { codigoPaquete: dataDTO.codigoPaquete },
-      transaction: t
-    });
-    console.log('4️⃣ [DEBUG] Módulos encontrados:', modulosPQ ? modulosPQ.length : 0);
-
-    if (modulosPQ && modulosPQ.length > 0) {
-      const codigosAppsUnicas = [...new Set(modulosPQ.map(mod => mod.codigoAplicacion))];
-
-      const aplicaciones = await this.aplicacionModel.findAll({
-        where: { codigoAplicacion: codigosAppsUnicas },
-        transaction: t
-      });
-      console.log('5️⃣ [DEBUG] Aplicaciones encontradas:', aplicaciones ? aplicaciones.length : 0);
-
-      for (const app of aplicaciones) {
-        this.provisionService.clonarBaseDeDatos(
-          dataDTO.codigoSuscriptor,
-          app.plantillaBD,
-          app.prefijoBD
-        ).catch(err => console.error(`❌ Error clonando BD manual app ${app.codigoAplicacion}:`, err));
-      }
-    }
   }
 
   async updatePaqueteSC(codigoSuscriptorPaquete, rawData) {
@@ -100,8 +87,10 @@ class PaqueteSCService {
       // console.log('registroDB', registroDB);   // [ruido de consola: comentado 2026-10-26]
       if (!registroDB) throw { statusCode: 404, msg: 'No existe el paquete SC para actualizar.' };
 
-      // 2. Actualizamos
-      await this.model.update(rawData, {
+      // 2. Actualizamos (sin tocar la foto del precio, OT-029)
+      const cambios = { ...rawData };
+      for (const k of FOTO) delete cambios[k];
+      await this.model.update(cambios, {
         where: { codigoSuscriptorPaquete },
         transaction: t
       });

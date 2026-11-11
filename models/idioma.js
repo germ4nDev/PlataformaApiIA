@@ -56,7 +56,7 @@ const IdiomaDTO = (rawData) => {
 };
 
 const IdiomaModel = (sequelize) => {
-    return sequelize.define('PTLIdiomas', {
+    return sequelize.define('PTL_Idiomas', {
         idiomaId: {
             type: DataTypes.INTEGER,
             autoIncrement: true,
@@ -105,7 +105,7 @@ const IdiomaModel = (sequelize) => {
             allowNull: false
         }
     }, {
-        tableName: 'PTLIdiomas',
+        tableName: 'PTL_Idiomas',
         timestamps: false
     });
 };

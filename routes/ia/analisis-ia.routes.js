@@ -12,7 +12,7 @@ const AnalisisIA = require('../../controllers/ia/analisis-ia.controller');
 const router = express.Router();
 router.use(validarJWT);
 
-// Administración: JWT y, si IA_PERMISO_ADMIN está definido, sesión (trae el suscriptor) y esa llavePermiso (PTLActividades)
+// Administración: JWT y, si IA_PERMISO_ADMIN está definido, sesión (trae el suscriptor) y esa llavePermiso (PTL_Actividades)
 const admin = configIA.permisoAdmin ? [validarSesion, validarPermiso(configIA.permisoAdmin)] : [];
 router.get('/admin/resumen', admin, AnalisisIA.adminResumen);
 router.get('/admin/config', admin, AnalisisIA.adminConfig);

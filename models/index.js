@@ -39,8 +39,8 @@
 // const TCLAisUltimaPosicion = AisUltimaPosicionModel(sequelize);
 
 // // --- Layouts ---
-// const PTLLayouts = LayoutModel(sequelize);
-// const PTLUsuarioWidgets = UsuarioWidgetModel(sequelize);
+// const PTL_Layouts = LayoutModel(sequelize);
+// const PTL_UsuarioWidgets = UsuarioWidgetModel(sequelize);
 
 // // 🚨 CORREGIDO: Le cambiamos el nombre a la constante por "TiposPestana"
 // const TiposPestana = TipoPestanaModel(sequelize);
@@ -88,8 +88,8 @@
 //   BitacoraSincronizacion,
 //   TCLAisUltimaPosicion,
 //   // Layouts
-//   PTLLayouts,
-//   PTLUsuarioWidgets,
+//   PTL_Layouts,
+//   PTL_UsuarioWidgets,
 //   TiposPestana,
 //   LayoutPestana,
 //   CfgZonasDinamicas,
@@ -137,8 +137,8 @@ const BitacoraSincronizacion = BitacoraSincronizacionModel(sequelize);
 const TCLAisUltimaPosicion = AisUltimaPosicionModel(sequelize);
 
 // --- Layouts ---
-const PTLLayouts = LayoutModel(sequelize);
-const PTLUsuarioWidgets = UsuarioWidgetModel(sequelize);
+const PTL_Layouts = LayoutModel(sequelize);
+const PTL_UsuarioWidgets = UsuarioWidgetModel(sequelize);
 const TiposPestana = TipoPestanaModel(sequelize);
 const LayoutPestana = LayoutPestanaModel(sequelize);
 const CfgZonasDinamicas = CfgZonasDinamicaModel(sequelize);
@@ -198,8 +198,8 @@ module.exports = {
   TCLAisUltimaPosicion,
 
   // Layouts
-  PTLLayouts,
-  PTLUsuarioWidgets,
+  PTL_Layouts,
+  PTL_UsuarioWidgets,
   TiposPestana,
   LayoutPestana,
   CfgZonasDinamicas,

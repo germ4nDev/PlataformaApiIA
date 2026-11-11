@@ -58,7 +58,7 @@ const UsuarioRoleDTO = (rawData) => {
 
 // 3. MODELO SEQUELIZE CORREGIDO
 const UsuarioRoleModel = (sequelize) => {
-  return sequelize.define('PTLUsuariosRole', {
+  return sequelize.define('PTL_UsuariosRole', {
     usuarioRoleId: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
@@ -104,7 +104,7 @@ const UsuarioRoleModel = (sequelize) => {
       allowNull: true
     }
   }, {
-    tableName: 'PTLUsuariosRole',
+    tableName: 'PTL_UsuariosRole',
     timestamps: false
   });
 };

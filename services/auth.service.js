@@ -122,7 +122,7 @@ class AuthService {
   // 🟢 4. REFACTORIZADO: Un servicio no debe recibir req, res. Solo recibe los datos.
   async cerrarSesion(codigoUsuario) {
     if (codigoUsuario) {
-      // Usamos this.model en lugar de PTLUsuarios
+      // Usamos this.model en lugar de PTL_Usuarios
       await this.model.update(
         { isOnline: false },
         { where: { codigoUsuario } }

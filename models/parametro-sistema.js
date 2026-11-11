@@ -60,7 +60,7 @@ const ParametroSistemaDTO = (rawData) => {
 // 3. MODELO SEQUELIZE (MAPEO BD)
 // ==========================================
 const ParametroSistemaModel = (sequelize) => {
-    return sequelize.define('PTLParametrosSistema', {
+    return sequelize.define('PTL_ParametrosSistema', {
         parametroId: { type: DataTypes.INTEGER, autoIncrement: true },
         codigoParametro: { type: DataTypes.STRING(200), primaryKey: true, allowNull: false },
         llaveParametro: { type: DataTypes.STRING(200), allowNull: false, unique: true },
@@ -76,7 +76,7 @@ const ParametroSistemaModel = (sequelize) => {
         codigoUsuarioModificacion: { type: DataTypes.STRING(200), allowNull: true },
         fechaModificacion: { type: DataTypes.STRING(100), allowNull: true }
     }, {
-        tableName: 'PTLParametrosSistema',
+        tableName: 'PTL_ParametrosSistema',
         timestamps: false
     });
 };

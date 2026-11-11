@@ -6,7 +6,7 @@
       verifica que las dos den lo mismo. Sin red ni base.
 
         layoutEfectivo({ usuario, plantilla, estados, terminales }) → { origen, celdas: [{ codigo, idClon?, x, y, cols, rows }] }
-          - usuario: filas de PTLLayouts del usuario (codigoWidget, posicion_x|x, posicion_y|y, cols, rows, layoutId?).
+          - usuario: filas de PTL_Layouts del usuario (codigoWidget, posicion_x|x, posicion_y|y, cols, rows, layoutId?).
           - plantilla: { estrategia, widgetsEstaticos: [{ codigoWidget, x, y, cols, rows, anclaje, inicial }], zonaDinamica }
             (lo que entrega LayoutService.getPlantillaMaestra, el mismo de /api/layout/plantilla).
           - estados: { CODIGO: estadoWidget } del maestro; un widget con estado 0/false no entra al layout por defecto.

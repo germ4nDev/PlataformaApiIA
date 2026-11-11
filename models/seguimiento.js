@@ -68,7 +68,7 @@ const SeguimientoDTO = (rawData) => {
 };
 
 const SeguimientoModel = (sequelize) => {
-  return sequelize.define('PTLSeguimientosTK', {
+  return sequelize.define('PTL_SeguimientosTK', {
     seguimientoId: {
       type: DataTypes.INTEGER,
       autoIncrement: true
@@ -130,7 +130,7 @@ const SeguimientoModel = (sequelize) => {
       allowNull: false
     }
   }, {
-    tableName: 'PTLSeguimientosTK',
+    tableName: 'PTL_SeguimientosTK',
     timestamps: false
   });
 };

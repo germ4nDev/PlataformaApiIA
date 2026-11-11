@@ -52,7 +52,7 @@ const FormatoGaleriaDTO = (rawData) => {
 };
 
 const FormatoGaleriaModel = (sequelize) => {
-    return sequelize.define("PTLFormatosGaleria", {
+    return sequelize.define("PTL_FormatosGaleria", {
         formatoId: {
             type: DataTypes.INTEGER,
             autoIncrement: true,
@@ -97,7 +97,7 @@ const FormatoGaleriaModel = (sequelize) => {
             allowNull: false
         }
     }, {
-        tableName: "PTLFormatosGaleria",
+        tableName: "PTL_FormatosGaleria",
         timestamps: false
     });
 };

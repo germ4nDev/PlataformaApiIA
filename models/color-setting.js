@@ -59,7 +59,7 @@ const ColorSettingsDTO = (rawData) => {
 };
 
 const ColorSettingsModel = (sequelize) => {
-    return sequelize.define('PTLColorSettings', {
+    return sequelize.define('PTL_ColorSettings', {
         colorNavId: {
             type: DataTypes.INTEGER,
             autoIncrement: true
@@ -107,7 +107,7 @@ const ColorSettingsModel = (sequelize) => {
             allowNull: false
         }
     }, {
-        tableName: 'PTLColorSettings',
+        tableName: 'PTL_ColorSettings',
         timestamps: false
     });
 };

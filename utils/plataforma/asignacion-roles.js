@@ -2,7 +2,7 @@
     Author: German Valencia
     Pattern: PLATAFORMA Núcleo puro - Asignación de roles del usuario (OT-026, AD-16; sin base ni red)
     Description:
-      La llave de un rol asignado (PTLUsuariosRole) = vínculo usuario–suscriptor (codigoUsuarioSC) + empresa (codigoEmpresaSC) + rol.
+      La llave de un rol asignado (PTL_UsuariosRole) = vínculo usuario–suscriptor (codigoUsuarioSC) + empresa (codigoEmpresaSC) + rol.
       alcanceBorrado(payload)       qué filas reemplaza una sincronización: las del vínculo, solo los roles del contexto (los de la
                                     aplicación en pantalla) y, si llega la empresa, solo en esa empresa (antes borraba en todas)
       normalizarAplicaciones(filas) aplicaciones del suscriptor sin repetidos ni vacíos, ordenadas por nombre

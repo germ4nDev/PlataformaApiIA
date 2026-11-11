@@ -85,7 +85,7 @@ const ConexionesBDDTO = (rawData) => {
 };
 
 const ConexionesBDModel = (sequelize) => {
-    return sequelize.define('PTLConexionesBD', {
+    return sequelize.define('PTL_ConexionesBD', {
         conexionId: {
             type: DataTypes.INTEGER,
             autoIncrement: true
@@ -164,7 +164,7 @@ const ConexionesBDModel = (sequelize) => {
             allowNull: false
         }
     }, {
-        tableName: 'PTLConexionesBD',
+        tableName: 'PTL_ConexionesBD',
         timestamps: false
     });
 };

@@ -1,7 +1,7 @@
 /*
     Author: German Valencia
     Pattern: PORTTOS Service - Layouts heredados de torre de control
-    Description: Tableros por usuario de las tablas TLC* (anteriores a PTLLayouts). Sin filas propias se devuelve
+    Description: Tableros por usuario de las tablas TLC* (anteriores a PTL_Layouts). Sin filas propias se devuelve
       el layout de SISTEMA_DEFAULT. Acceso a datos en layout-legado.repository.js.
 */
 const { LayoutUsuarioDTO } = require('../../models/torre-control/layout-usuario.model');

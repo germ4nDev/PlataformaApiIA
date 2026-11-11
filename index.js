@@ -16,7 +16,7 @@ const cron = require('node-cron');
 // === Base de Datos y Modelos ===
 const { db, sequelize } = require("./database/connection");
 const { UsuarioModel } = require('./models/usuario');
-const PTLUsuarios = UsuarioModel(sequelize);
+const PTL_Usuarios = UsuarioModel(sequelize);
 
 // === Helpers y Servicios ===
 const { setIO } = require('./helpers/socket.helper');
@@ -39,7 +39,7 @@ const normalizarOrigen = (url) => (url || '').trim().replace(/\/+$/, '');
 const whitelist = [...new Set([
   'https://porttos.co',           // Web producción
   'https://www.porttos.co',       // Web producción (con www)
-  'https://plataforma.dymsites.co', // Consola de la plataforma (OT-012); los demás dominios salen de PTLDominiosAP
+  'https://plataforma.dymsites.co', // Consola de la plataforma (OT-012); los demás dominios salen de PTL_DominiosAP
   'capacitor://localhost',        // App móvil (iOS Capacitor)
   'https://localhost',            // App móvil (Android Capacitor, androidScheme: 'https')
   'http://localhost',             // App móvil (Android Capacitor con androidScheme: 'http')
@@ -81,7 +81,7 @@ const corsOptions = {
   origin: function (origin, callback) {
     // Permitimos peticiones sin origen (como las de herramientas REST o de servidor a servidor)
     // y las que coincidan exactamente con la lista blanca.
-    // y los dominios activos de PTLDominiosAP (OT-012: agregar un dominio = una fila, sin tocar el .env).
+    // y los dominios activos de PTL_DominiosAP (OT-012: agregar un dominio = una fila, sin tocar el .env).
     if (!origin || whitelist.includes(normalizarOrigen(origin)) || Dominios.origenPermitido(origin)) {
       callback(null, true);
     } else {
@@ -148,6 +148,8 @@ app.use('/api/layout', require('./routes/layout.routes'));
 app.use('/api/usuarios-widgets', require('./routes/usuarios-widgets.routes'));
 app.use('/api/sesiones', require('./routes/sesiones.routes'));
 app.use('/api/lista-precios', require('./routes/lista-precios.routes'));
+app.use('/api/aprovisionamientos', require('./routes/aprovisionamientos')); // OT-030
+app.use('/api/paises', require('./routes/paises')); // Utilidades › Países
 app.use('/api/parametros', require('./routes/parametros-sistema.routes'));
 app.use('/api/pestanas', require('./routes/pestanas.routes'));
 app.use('/api/tipos-widget', require('./routes/tipos-widget.routes'));
@@ -260,7 +262,7 @@ io.on("connection", async (socket) => {
     console.log(`🏠 Socket ${socket.id} unido a la sala [Room: ${codigoUsuario}]`);
 
     try {
-      await PTLUsuarios.update(
+      await PTL_Usuarios.update(
         {
           isOnline: true,
           ultimaConexion: new Date().toISOString()
@@ -282,7 +284,7 @@ io.on("connection", async (socket) => {
 
     if (usuarioDesconectado) {
       try {
-        await PTLUsuarios.update(
+        await PTL_Usuarios.update(
           {
             isOnline: false,
             ultimaConexion: new Date().toISOString()
@@ -314,7 +316,7 @@ sequelize
 
     // 🟢 Limpieza de estados de socket (Movido aquí para asegurar conexión a DB)
     try {
-      await PTLUsuarios.update({ isOnline: false }, { where: { isOnline: true } });
+      await PTL_Usuarios.update({ isOnline: false }, { where: { isOnline: true } });
       console.log('🧹 Estados de conexión de usuarios reiniciados a offline.');
     } catch (e) {
       console.error('Error al limpiar estados de socket:', e);
@@ -334,6 +336,9 @@ sequelize
 
       // Se requiere aquí (y no arriba) para que sus servicios ya encuentren `io` exportado
       require('./jobs/cron.manager').initCronJobs();
+
+      // OT-030: retoma las bases de suscriptor pendientes o atascadas (se crean al asignar un paquete)
+      require('./services/plataforma/aprovisionamiento.service').iniciar();
 
       // Motor AIS: proceso aislado, se enciende con AIS_ENABLED=true
       if (process.env.AIS_ENABLED === 'true') {

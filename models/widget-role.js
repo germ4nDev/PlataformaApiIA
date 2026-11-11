@@ -44,7 +44,7 @@ const WidgetRoleDTO = (rawData) => {
 };
 
 const WidgetRoleModel = (sequelize) => {
-  return sequelize.define('PTLWidgetsRoles', {
+  return sequelize.define('PTL_WidgetsRoles', {
     idRelacion: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     codigoWidgetRole: { type: DataTypes.STRING(200), allowNull: false },
     codigoWidget: { type: DataTypes.STRING(200), allowNull: false },
@@ -61,7 +61,7 @@ const WidgetRoleModel = (sequelize) => {
     codigoUsuarioModificacion: { type: DataTypes.STRING(200), allowNull: true },
     fechaModificacion: { type: DataTypes.STRING(100), allowNull: true }
   }, {
-    tableName: 'PTLWidgetsRoles',
+    tableName: 'PTL_WidgetsRoles',
     timestamps: false
   });
 };

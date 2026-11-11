@@ -59,7 +59,7 @@ const GaleriaDTO = (rawData) => {
 };
 
 const GaleriaModel = (sequelize) => {
-    return sequelize.define("PTLGaleria", {
+    return sequelize.define("PTL_Galeria", {
         galeriaId: {
             type: DataTypes.INTEGER,
             autoIncrement: true,
@@ -113,7 +113,7 @@ const GaleriaModel = (sequelize) => {
             allowNull: false
         }
     }, {
-        tableName: "PTLGaleria",
+        tableName: "PTL_Galeria",
         timestamps: false
     });
 };

@@ -62,7 +62,7 @@ const SuiteAPDTO = (rawData) => {
 };
 
 const SuiteAPModel = (sequelize) => {
-  return sequelize.define('PTLSuitesAP', {
+  return sequelize.define('PTL_SuitesAP', {
     suiteId: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
@@ -119,7 +119,7 @@ const SuiteAPModel = (sequelize) => {
       allowNull: false
     }
   }, {
-    tableName: 'PTLSuitesAP',
+    tableName: 'PTL_SuitesAP',
     timestamps: false
   });
 };

@@ -52,7 +52,7 @@ class WidgetesRolesService {
       const data = await this.model.findAll({
         where: {
           codigoRole: codigoRole,
-          // Corregido 2026-11-02 (admin-widgets): filtraba por 'permiso', columna que no existe en PTLWidgetsRoles.
+          // Corregido 2026-11-02 (admin-widgets): filtraba por 'permiso', columna que no existe en PTL_WidgetsRoles.
           estadoRelacion: true
         },
         include: [

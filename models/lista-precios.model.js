@@ -43,7 +43,7 @@ const ListaPreciosDTO = (rawData) => {
 };
 
 const ListaPreciosModel = (sequelize) => {
-    return sequelize.define('PTLListasPrecios', {
+    return sequelize.define('PTL_ListasPrecios', {
         listaPrecioId: { type: DataTypes.INTEGER, autoIncrement: true },
         codigoLista: { type: DataTypes.STRING(200), primaryKey: true, allowNull: false },
         nombreLista: { type: DataTypes.STRING(150), allowNull: false },
@@ -58,7 +58,7 @@ const ListaPreciosModel = (sequelize) => {
         codigoUsuarioModificacion: { type: DataTypes.STRING(200), allowNull: true },
         fechaModificacion: { type: DataTypes.STRING(100), allowNull: true }
     }, {
-        tableName: 'PTLListasPrecios',
+        tableName: 'PTL_ListasPrecios',
         timestamps: false
     });
 };
@@ -101,7 +101,7 @@ const ListaPreciosDetalleDTO = (rawData) => {
 };
 
 const ListaPreciosDetalleModel = (sequelize) => {
-    return sequelize.define('PTLListasPreciosDetalle', {
+    return sequelize.define('PTL_ListasPreciosDetalle', {
         detalleListaId: { type: DataTypes.INTEGER, autoIncrement: true },
         codigoDetalle: { type: DataTypes.STRING(200), primaryKey: true, allowNull: false },
         codigoLista: { type: DataTypes.STRING(200), allowNull: false },
@@ -117,7 +117,7 @@ const ListaPreciosDetalleModel = (sequelize) => {
         codigoUsuarioModificacion: { type: DataTypes.STRING(200), allowNull: true },
         fechaModificacion: { type: DataTypes.STRING(100), allowNull: true }
     }, {
-        tableName: 'PTLListasPreciosDetalle',
+        tableName: 'PTL_ListasPreciosDetalle',
         timestamps: false
     });
 };

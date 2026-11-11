@@ -70,7 +70,7 @@ const PaqueteDTO = (rawData) => {
 };
 
 const PaqueteModel = (sequelize) => {
-  return sequelize.define('PTLPaquetes', {
+  return sequelize.define('PTL_Paquetes', {
     paqueteId: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
@@ -162,7 +162,7 @@ const PaqueteModel = (sequelize) => {
       allowNull: true
     }
   }, {
-    tableName: 'PTLPaquetes',
+    tableName: 'PTL_Paquetes',
     timestamps: false
   });
 };

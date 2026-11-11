@@ -2,7 +2,7 @@
   PLATAFORMA · Migración 034 · Utilidades › Traducciones (OT-027, CC-154)
   Qué hace (idempotente; no borra nada, no toca otros roles):
     1. Crea el módulo de menú «Traducciones» (dbo.PTLModulosAP) como hermano de Utilidades › Idiomas: misma aplicación, suite y padre; sin ícono (hijos = 0: el ícono es solo de los módulos padre, como guarda gestion-modulo);
-       ruta /utilidades/traducciones; translateKey PLATAFORMA.MODULOS.TRADUCCIONES.
+       ruta /utilidades/traducciones; translateKey TRADUCCIONES (el menú la lee como MENU.MODULES.TRADUCCIONES, regla 23).
     2. Lo agrega (dbo.PTLModulosPQ) a cada paquete que ya incluye Idiomas, para que salga en el menú de quien tiene ese paquete.
     3. Crea las actividades ACT_TRAD_CREAR, ACT_TRAD_MODIFICAR y ACT_TRAD_ELIMINAR (tipo CRUD) colgadas del módulo nuevo y se las asigna al
        ROLE_ADMINISTRADOR de Plataforma con permiso = 1 (como la 033).
@@ -43,7 +43,7 @@ INSERT INTO dbo.PTLModulosAP (codigoModulo, codigoAplicacion, codigoSuite, codig
                               codigoUsuarioCreacion, fechaCreacion, codigoUsuarioModificacion, fechaModificacion)
 SELECT @modulo, m.codigoAplicacion, m.codigoSuite, m.codigoPadre, m.codigoBiblioteca, N'Traducciones', m.precioModulo,
        REPLACE(m.rutaModulo, N'idiomas', N'traducciones'), N'OT-027 · Llaves de traducción de los idiomas (es.json, en.json…)',
-       0, N'', N'PLATAFORMA.MODULOS.TRADUCCIONES', 1, NULL, @ahora, NULL, @ahora
+       0, N'', N'TRADUCCIONES', 1, NULL, @ahora, NULL, @ahora
 FROM dbo.PTLModulosAP m
 WHERE m.codigoModulo = @idiomas
   AND NOT EXISTS (SELECT 1 FROM dbo.PTLModulosAP x WHERE x.codigoModulo = @modulo);

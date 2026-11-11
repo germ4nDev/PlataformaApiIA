@@ -5,7 +5,7 @@
         conEstilo(pestanas, estilos, zonas) → pestañas planas con `icono`, `color` y `zonaDinamica` (null si no hay)
       - icono: nombre neutro (letras, números, guion o guion bajo; máx. 60); cada cliente lo dibuja con su juego de íconos.
       - color: hexadecimal #RGB, #RRGGBB o #RRGGBBAA. Un valor que no cumple se descarta (null) y el cliente usa su respaldo.
-      - zonaDinamica: la de PTLCfgZonasDinamicas (las terminales de Marítimo); la regla de layout la toma de aquí porque
+      - zonaDinamica: la de PTL_CfgZonasDinamicas (las terminales de Marítimo); la regla de layout la toma de aquí porque
         /api/layout/plantilla no la entrega (ver repositories/pestanas-metadatos.repository.js).
 */
 

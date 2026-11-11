@@ -33,7 +33,7 @@ class DominiosService {
       try {
         this.indice = D.indexar(await this.repo.dominios());
       } catch (error) {
-        console.warn('⚠️ [Dominios] No se pudo leer PTLDominiosAP; se conserva la lista anterior:', error?.message || error);
+        console.warn('⚠️ [Dominios] No se pudo leer PTL_DominiosAP; se conserva la lista anterior:', error?.message || error);
       } finally {
         this.cargadoEn = this.ahora();
         this.cargando = null;

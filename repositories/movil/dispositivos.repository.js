@@ -5,7 +5,7 @@
       - registrar(d)                    alta o actualización por token (si el token ya era de otro usuario, pasa al nuevo)
       - baja(token, codigoUsuario)      deja de recibir (activo = 0); solo el dueño
       - deUsuario(codigoUsuario)        dispositivos activos del usuario (sus preferencias)
-      - destinatarios()                 dispositivos activos cuya sesión sigue activa en PTLSesiones (una sola sesión por usuario)
+      - destinatarios()                 dispositivos activos cuya sesión sigue activa en PTL_Sesiones (una sola sesión por usuario)
       - yaEnviados(idsHallazgo)         pares hallazgo/dispositivo ya notificados (para no repetir)
       - registrarEnvio(e) · invalidar(id) · contarFallo(id)
     Sin la 019 lanza migracionPendiente('019_movil_push.sql').
@@ -56,7 +56,7 @@ function destinatarios({ codigoUsuario = null } = {}) {
   return ejecutar(`
     SELECT d.id, d.token, d.plataforma, d.codigoUsuario, d.puertos, d.severidadMinima, d.idioma
     FROM dbo.TCL_DispositivosMovil d
-    INNER JOIN dbo.PTLSesiones s ON s.codigoSesion = d.codigoSesion AND s.codigoUsuario = d.codigoUsuario AND s.activa = 1
+    INNER JOIN dbo.PTL_Sesiones s ON s.codigoSesion = d.codigoSesion AND s.codigoUsuario = d.codigoUsuario AND s.activa = 1
     WHERE d.activo = 1 ${codigoUsuario ? 'AND d.codigoUsuario = :codigoUsuario' : ''}`, { codigoUsuario });
 }
 

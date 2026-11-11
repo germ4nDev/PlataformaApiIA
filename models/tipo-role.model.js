@@ -47,7 +47,7 @@ const TipoRoleDTO = (rawData) => {
 };
 
 const TipoRoleModel = (sequelize) => {
-  return sequelize.define('PTLTiposRole', {
+  return sequelize.define('PTL_TiposRole', {
     tipoRoleId: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
@@ -86,7 +86,7 @@ const TipoRoleModel = (sequelize) => {
       allowNull: true
     }
   }, {
-    tableName: 'PTLTiposRole',
+    tableName: 'PTL_TiposRole',
     timestamps: false
   });
 };

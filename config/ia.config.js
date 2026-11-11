@@ -28,7 +28,7 @@
       IA_TURNOS=6,14,22              Horas (Colombia) en que cierra cada turno. El resumen diario sale con el primero
                                      y cubre el día operativo (de ese turno al mismo del día anterior).
       IA_MODELO_RESUMEN=claude-sonnet-5-5
-      IA_PERMISO_ADMIN=              llavePermiso (PTLActividades) exigida en /api/analisis-ia/admin/*. Vacío = basta el JWT.
+      IA_PERMISO_ADMIN=              llavePermiso (PTL_Actividades) exigida en /api/analisis-ia/admin/*. Vacío = basta el JWT.
       Asistente para preguntas (fase 5):
       IA_ASISTENTE_ENABLED=true      Asistente de la plataforma (necesita IA_ENABLED=true). Solo responde dentro del marco de
                                      alcance (proceso logístico portuario y Porttos) y solo con sus herramientas de lectura.

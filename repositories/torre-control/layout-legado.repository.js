@@ -2,7 +2,7 @@
     Author: German Valencia
     Pattern: PORTTOS Repository - Layouts heredados de torre de control
     Description: Tablas de layout anteriores a las PTL* de la plataforma: TLCLayout_Usuarios (widgets por usuario)
-      y TLCUserDashboardLayout (tableros guardados por código). El tablero actual usa PTLLayouts.
+      y TLCUserDashboardLayout (tableros guardados por código). El tablero actual usa PTL_Layouts.
 */
 const { sequelize } = require('../../database/connection');
 const { LayoutUsuarioModel } = require('../../models/torre-control/layout-usuario.model');

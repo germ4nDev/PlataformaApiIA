@@ -76,7 +76,7 @@
 // };
 
 // const WidgetMaestroModel = (sequelize) => {
-//   return sequelize.define('PTLWidgetsMaestro', {
+//   return sequelize.define('PTL_WidgetsMaestro', {
 //     widgetId: { type: DataTypes.INTEGER, autoIncrement: true },
 //     codigoWidget: { type: DataTypes.STRING(200), primaryKey: true, allowNull: false },
 //     codigoTipo: { type: DataTypes.STRING(200), allowNull: false },
@@ -103,7 +103,7 @@
 //     codigoUsuarioModificacion: { type: DataTypes.STRING(200), allowNull: true },
 //     fechaModificacion: { type: DataTypes.STRING(100), allowNull: true }
 //   }, {
-//     tableName: 'PTLWidgetsMaestro',
+//     tableName: 'PTL_WidgetsMaestro',
 //     timestamps: false
 //   });
 // };
@@ -183,7 +183,7 @@ const WidgetMaestroDTO = (rawData, userContext = { codigoUsuario: 'SISTEMA_ADMIN
     codigoWidget: value.codigoWidget.trim().toUpperCase(),
     codigoTipo: value.codigoTipo.trim().toUpperCase(),
     codigoPestana: value.codigoPestana.trim().toUpperCase(),
-    // Identificadores (GUID) en minúsculas, como en PTLAplicaciones, PTLPestanas y PTLRolesAP: en mayúsculas el widget no
+    // Identificadores (GUID) en minúsculas, como en PTL_Aplicaciones, PTL_Pestanas y PTL_RolesAP: en mayúsculas el widget no
     // coincidía con los roles de su aplicación y la asignación de roles salía vacía (OT-015, CC-113)
     codigoAplicacion: value.codigoAplicacion.trim().toLowerCase(),
     codigoSuite: value.codigoSuite.trim().toLowerCase(),
@@ -212,7 +212,7 @@ const WidgetMaestroDTO = (rawData, userContext = { codigoUsuario: 'SISTEMA_ADMIN
 
 const WidgetMaestroModel = (sequelize) => {
   return sequelize.define(
-    'PTLWidgetsMaestro',
+    'PTL_WidgetsMaestro',
     {
       widgetId: { type: DataTypes.INTEGER, autoIncrement: true },
       codigoWidget: { type: DataTypes.STRING(200), primaryKey: true, allowNull: false },
@@ -245,7 +245,7 @@ const WidgetMaestroModel = (sequelize) => {
       fechaModificacion: { type: DataTypes.STRING(100), allowNull: true }
     },
     {
-      tableName: 'PTLWidgetsMaestro',
+      tableName: 'PTL_WidgetsMaestro',
       schema: 'dbo',
       timestamps: false
     }

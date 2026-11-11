@@ -10,7 +10,7 @@
       ramas(arbol)                    [{ modulo, submodulos: [...] }] para elegir dónde crear
       filas(arboles)                  [{ llave, modulo, textos: { es, en… } }] de la unión de idiomas, por llave
 */
-const SEGMENTO_NUEVO = /^[A-Z][A-Z0-9_]*$/; // las llaves nuevas, en MAYÚSCULAS (regla 22)
+const SEGMENTO_NUEVO = /^[A-Z][A-Z0-9_]*$/; // las llaves nuevas, en MAYÚSCULAS (reglas 22 y 23)
 const esGrupo = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
 
 function plano(arbol, pre = '', out = {}) {

@@ -59,7 +59,7 @@
 // };
 
 // const ItemModel = (sequelize) => {
-//   return sequelize.define('PTLItems', {
+//   return sequelize.define('PTL_Items', {
 //     itemId: {
 //       type: DataTypes.INTEGER,
 //       autoIncrement: true
@@ -113,7 +113,7 @@
 //       allowNull: false
 //     }
 //   }, {
-//     tableName: 'PTLItems',
+//     tableName: 'PTL_Items',
 //     timestamps: false
 //   });
 // };
@@ -184,7 +184,7 @@ const ItemDTO = (rawData) => {
 };
 
 const ItemModel = (sequelize) => {
-  return sequelize.define('PTLItems', {
+  return sequelize.define('PTL_Items', {
     itemId: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
@@ -239,7 +239,7 @@ const ItemModel = (sequelize) => {
       allowNull: true
     }
   }, {
-    tableName: 'PTLItems',
+    tableName: 'PTL_Items',
     timestamps: false
   });
 };

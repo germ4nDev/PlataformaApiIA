@@ -22,18 +22,18 @@ const { ModuloAPModel } = require('../models/modulo-ap');
 const { PaqueteModel } = require('../models/paquete');
 
 // INICIALIZACIÓN DE MODELOS
-const PTLUsuarios = UsuarioModel(sequelize);
+const PTL_Usuarios = UsuarioModel(sequelize);
 const PTLTickets = TicketAPModel(sequelize);
-const PTLActividades = ActividadModel(sequelize);
-const PTLAplicaciones = AplicacionModel(sequelize);
-const PTLBibliotecas = BibliotecaModel(sequelize);
-const PTLGalerias = GaleriaModel(sequelize);
-const PTLIdiomas = IdiomaModel(sequelize);
-const PTLItems = ItemModel(sequelize);
-const PTLSuscriptores = SuscriptorModel(sequelize);
+const PTL_Actividades = ActividadModel(sequelize);
+const PTL_Aplicaciones = AplicacionModel(sequelize);
+const PTL_Bibliotecas = BibliotecaModel(sequelize);
+const PTL_Galerias = GaleriaModel(sequelize);
+const PTL_Idiomas = IdiomaModel(sequelize);
+const PTL_Items = ItemModel(sequelize);
+const PTL_Suscriptores = SuscriptorModel(sequelize);
 const PTLSuites = SuiteAPModel(sequelize);
 const PTLModulos = ModuloAPModel(sequelize);
-const PTLPaquetes = PaqueteModel(sequelize);
+const PTL_Paquetes = PaqueteModel(sequelize);
 
 // SERVICIOS
 const TicketsAPService = require('../services/tickets-ap.service');
@@ -67,10 +67,10 @@ class IaAssistantService {
 
   _getSchema() {
     const modelos = {
-      usuarios: PTLUsuarios, tickets: PTLTickets, actividades: PTLActividades,
-      aplicaciones: PTLAplicaciones, bibliotecas: PTLBibliotecas, galerias: PTLGalerias,
-      idiomas: PTLIdiomas, items: PTLItems, suscriptores: PTLSuscriptores,
-      suites: PTLSuites, paquetes: PTLPaquetes, modulos: PTLModulos
+      usuarios: PTL_Usuarios, tickets: PTLTickets, actividades: PTL_Actividades,
+      aplicaciones: PTL_Aplicaciones, bibliotecas: PTL_Bibliotecas, galerias: PTL_Galerias,
+      idiomas: PTL_Idiomas, items: PTL_Items, suscriptores: PTL_Suscriptores,
+      suites: PTLSuites, paquetes: PTL_Paquetes, modulos: PTLModulos
     };
 
     let schemaDescription = {};

@@ -49,7 +49,7 @@ const ClaseTicketDTO = (rawData) => {
 };
 
 const ClaseTicketModel = (sequelize) => {
-    return sequelize.define('PTLClasesTicket', {
+    return sequelize.define('PTL_ClasesTicket', {
         claseTicketId: {
             type: DataTypes.INTEGER,
             autoIncrement: true
@@ -89,7 +89,7 @@ const ClaseTicketModel = (sequelize) => {
             allowNull: false
         }
     }, {
-        tableName: 'PTLClasesTicket',
+        tableName: 'PTL_ClasesTicket',
         timestamps: false
     });
 };

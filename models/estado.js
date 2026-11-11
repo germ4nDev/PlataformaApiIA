@@ -47,7 +47,7 @@ const EstadoDTO = (rawData) => {
 };
 
 const EstadoModel = (sequelize) => {
-  return sequelize.define('PTLEstados', {
+  return sequelize.define('PTL_Estados', {
     estadoId: {
       type: DataTypes.INTEGER,
       autoIncrement: true
@@ -83,7 +83,7 @@ const EstadoModel = (sequelize) => {
       allowNull: false
     }
   }, {
-    tableName: 'PTLEstados',
+    tableName: 'PTL_Estados',
     timestamps: false
   });
 };

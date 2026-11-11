@@ -50,7 +50,7 @@ const RoleAPDTO = (rawData) => {
 };
 
 const RoleAPModel = (sequelize) => {
-  return sequelize.define('PTLRolesAP', {
+  return sequelize.define('PTL_RolesAP', {
     roleId: {
       type: DataTypes.INTEGER,
       autoIncrement: true
@@ -102,7 +102,7 @@ const RoleAPModel = (sequelize) => {
       allowNull: true
     }
   }, {
-    tableName: 'PTLRolesAP',
+    tableName: 'PTL_RolesAP',
     timestamps: false
   });
 };

@@ -6,12 +6,12 @@ const { sequelize } = require('../database/connection');
 const { WidgetMaestroModel, WidgetMaestroDTO } = require('../models/widget');
 const { emitir } = require('../helpers/socket.helper');
 const { Op } = require('sequelize');
-const { PTLLayouts } = require('../models/layout');
+const { PTL_Layouts } = require('../models/layout');
 
 class WidgetsService {
   constructor() {
     this.model = WidgetMaestroModel(sequelize);
-    this.layoutModel = PTLLayouts;
+    this.layoutModel = PTL_Layouts;
   }
 
   async getWidgetsActivos() {
@@ -152,11 +152,11 @@ class WidgetsService {
   //     console.log('intentar actualizar el layout de los usuarios');
 
   //     // Sequelize registra todos los modelos definidos bajo este objeto global. 
-  //     // 'PTLLayouts' es el nombre que le diste al definir el modelo en su archivo.
-  //     const LayoutModel = sequelize.models.PTLLayouts;
+  //     // 'PTL_Layouts' es el nombre que le diste al definir el modelo en su archivo.
+  //     const LayoutModel = sequelize.models.PTL_Layouts;
 
   //     if (!LayoutModel) {
-  //       console.error("⚠️ El modelo 'PTLLayouts' no está registrado en sequelize.models. Revisa cómo se define en su archivo.");
+  //       console.error("⚠️ El modelo 'PTL_Layouts' no está registrado en sequelize.models. Revisa cómo se define en su archivo.");
   //       return;
   //     }
 
@@ -197,10 +197,10 @@ class WidgetsService {
   // 🟢 Método Helper: Limpieza de la cadena JSON corregido
   async limpiarWidgetDeLayouts(codigoWidget, t) {
     try {
-      const LayoutModel = sequelize.models.PTLLayouts;
+      const LayoutModel = sequelize.models.PTL_Layouts;
 
       if (!LayoutModel) {
-        console.error("⚠️ El modelo 'PTLLayouts' no está registrado en sequelize.models.");
+        console.error("⚠️ El modelo 'PTL_Layouts' no está registrado en sequelize.models.");
         return;
       }
 
