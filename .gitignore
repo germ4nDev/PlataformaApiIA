@@ -52,3 +52,6 @@ dist/
 Thumbs.db
 # Salidas de scripts (vistas previas)
 scripts/salidas/
+
+# Aplicaciones del ecosistema: cada una es su propio repositorio (regla 26, OT-033)
+/apps/*/
