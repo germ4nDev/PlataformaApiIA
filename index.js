@@ -22,10 +22,9 @@ const PTL_Usuarios = UsuarioModel(sequelize);
 const { setIO } = require('./helpers/socket.helper');
 const { socketAuth, esModoEstricto } = require('./middlewares/socket-auth');
 const { registrarSalas } = require('./sockets/salas.socket');
+// Aplicaciones (regla 26 y 27, OT-032 fase 3a): se montan desde su manifiesto; el núcleo no las nombra
+const Apps = require('./helpers/cargador-apps');
 const SuscripcionCronService = require('./services/cron.service');
-const { iniciarVigilanteSupertransporte } = require('./controllers/torre-control/dashboard/alertas.cron');
-const simuladorGNL = require('./services/torre-control/gnl-telemetria.service');
-const AISStreamService = require('./services/torre-control/ais-stream.service');
 
 // ================================================
 // === CONFIGURACIÓN BASE DEL SERVIDOR ===
@@ -131,9 +130,6 @@ app.use("/api/usuarios", require("./routes/usuarios.routes"));
 app.use("/api/usuarios-roles", require("./routes/usuarios-roles.routes"));
 app.use("/api/ia", require("./routes/ia"));
 // Capa de análisis con IA de Porttos (fase 1: fotos de KPI, señales y foto operativa; IA_ENABLED en el .env)
-app.use("/api/analisis-ia", require("./routes/ia/analisis-ia.routes"));
-app.use("/api/movil", require("./routes/movil/movil.routes")); // App móvil (PorttosMovil)
-app.use('/api/portal', require('./routes/portal/portal.routes')); // Portal público porttos.co (migración 025)
 app.use('/api/dominios', require('./routes/dominios/dominios.routes')); // Dominio → aplicación (OT-012, migración 026)
 app.use('/api/layout-telefono', require('./routes/layout-telefono/layout-telefono.routes')); // Layout de la web embebida en el teléfono (OT-017, migración 031)
 app.use("/api/historial-facturacion", require("./routes/historial-facturacion.routes"));
@@ -203,48 +199,14 @@ app.use("/api/logs-actualizaciones", require("./routes/logs-actualizaciones"));
 app.use("/api/logs-transacciones", require("./routes/logs-transacciones"));
 
 // TCLP
-app.use("/api/tclp-dashboard", require("./routes/torre-control/dashboard.routes"));
-app.use("/api/tclp-ingesta", require("./routes/torre-control/ingesta.routes"));
-app.use("/api/torre-control", require("./routes/torre-control/torre-control.routes"));
-app.use("/api/maritimo", require("./routes/torre-control/maritimo.routes"));
-app.use('/api/widgets', require('./routes/torre-control/widget.routes'));
-app.use('/api/mapa-general', require('./routes/torre-control/mapa-general.routes'));
-app.use('/api/alertas', require('./routes/torre-control/alertas-climaticas.routes'));
-app.use('/api/puertos', require('./routes/torre-control/puertos.routes'));
-app.use('/api/terminales', require('./routes/torre-control/terminales.routes'));
-app.use('/api/muelles', require('./routes/torre-control/muelles.routes'));
-app.use('/api/infraestructura', require('./routes/torre-control/infraestructura.routes'));
-app.use('/api/tipos-infraestructura', require('./routes/torre-control/tipos-infraestructura.routes'));
-app.use('/api/eventos-viales', require('./routes/torre-control/evento-vial.routes'));
-app.use('/api/alertas-mapa', require('./routes/torre-control/alertas-mapa.routes'));
-app.use('/api/recorrido-mapa', require('./routes/torre-control/recorrido-mapa.routes'));
-app.use('/api/tableros', require('./routes/torre-control/tableros-pestanas.routes'));
-app.use('/api/ingesta-operacion', require('./routes/torre-control/ingesta-operacion.routes'));
-app.use('/api/flota-terrestre', require('./routes/torre-control/flota-terrestre.routes'));
-app.use('/api/motonaves', require('./routes/torre-control/motonaves.routes'));
-app.use('/api/faros', require('./routes/torre-control/faros.routes'));
-app.use('/api/radar', require('./routes/torre-control/radar.routes'));
-app.use('/api/contenedores', require('./routes/torre-control/contenedores.routes'));
-app.use('/api/inventario-contenedores', require('./routes/torre-control/inventario-contenedores.routes'));
-app.use('/api/gnl-telemetria', require('./routes/torre-control/gnl-telemetria.routes'));
-app.use('/api/bodegas', require('./routes/torre-control/bodegas.routes'));
-app.use('/api/virtual-gate', require('./routes/torre-control/virtual-gate.routes'));
+// Rutas de cada aplicación (Porttos: apps/porttos/index.js), en el mismo punto y orden que antes
+Apps.montarRutas(app);
 
 // Manejador central de errores: siempre después de la última ruta (JSON mal formado, next(error), etc.)
 app.use(require('./middlewares/manejador-errores'));
 
-// Simulador GNL (OT-009, 2026-10-29): pulso simulado en todos los puertos activos del maestro, o solo en los de
-// GNL_SIMULADOR_PUERTO (separados por coma). Corre también en producción (decisión del usuario: simulados rotulados);
-// se apaga con GNL_SIMULADOR=false o SIMULADOS_GNL=false.
-const simuladorGnlActivo = process.env.GNL_SIMULADOR !== 'false'
-  && String(process.env.SIMULADOS_GNL ?? 'true').toLowerCase() !== 'false';
-
-if (simuladorGnlActivo) {
-  const puertosGnl = (process.env.GNL_SIMULADOR_PUERTO || '').split(',').map((s) => s.trim()).filter(Boolean);
-  simuladorGNL.iniciarEnPuertos(puertosGnl)
-    .then((puertos) => console.log(`Simulador GNL transmitiendo en: ${puertos.join(', ') || 'ningún puerto'}`))
-    .catch(err => console.error("❌ Error arrancando simulador GNL:", err.msg || err));
-}
+// Lo que cada aplicación corre al cargar (Porttos: simulador GNL)
+Apps.alCargar({ io });
 
 // =======================================================
 // === EVENTOS SOCKET.IO ===
@@ -334,21 +296,12 @@ sequelize
       const cronService = new SuscripcionCronService();
       cronService.iniciarTareasProgramadas();
 
-      // Se requiere aquí (y no arriba) para que sus servicios ya encuentren `io` exportado
-      require('./jobs/cron.manager').initCronJobs();
 
       // OT-030: retoma las bases de suscriptor pendientes o atascadas (se crean al asignar un paquete)
       require('./services/plataforma/aprovisionamiento.service').iniciar();
 
-      // Motor AIS: proceso aislado, se enciende con AIS_ENABLED=true
-      if (process.env.AIS_ENABLED === 'true') {
-        // Alertas del mapa (atraque, zarpe, nave en zona de faro) a partir de cada ciclo del radar
-        AISStreamService.alCambios((naves, eventos) => require('./services/torre-control/alertas-mapa.service').evaluarAis(naves, eventos));
-        AISStreamService.iniciarConexion(io)
-          .catch(aisError => console.error('❌ [Boot] Error encendiendo el radar AIS:', aisError.message));
-      } else {
-        console.log('⏸️ [AIS] Motor apagado (AIS_ENABLED != true).');
-      }
+      // Aplicaciones: sus cron y motores en segundo plano (Porttos: cron de la Torre de Control y motor AIS)
+      Apps.alArrancar({ io });
 
       setTimeout(async () => {
         try {
@@ -374,11 +327,7 @@ const apagar = async (senal) => {
   if (apagando) return;
   apagando = true;
   console.log(`🛑 ${senal} recibido. Cerrando servicios...`);
-  try {
-    await AISStreamService.detener(); // persiste el buffer AIS pendiente
-  } catch (e) {
-    console.error('Error deteniendo AIS:', e.message);
-  }
+  await Apps.alApagar(); // Porttos: persiste el buffer AIS pendiente
   server.close(() => process.exit(0));
   setTimeout(() => process.exit(0), 5000).unref();
 };

@@ -2,7 +2,7 @@
     Author: German Valencia
     Pattern: PORTTOS Service - Homologación aviso DIMAR → MMSI
     Description: Para cada aviso sin MMSI busca el MMSI de referencia de su número OMI y lo vincula.
-      Así el motor AIS puede rastrear las naves avisadas. Lo programa jobs/cron.manager.js ('homologacion-mmsi').
+      Así el motor AIS puede rastrear las naves avisadas. Lo programa apps/porttos/jobs/cron.manager.js ('homologacion-mmsi').
 */
 const MaritimoRepository = require('../../repositories/torre-control/maritimo.repository');
 

@@ -3,7 +3,7 @@
     Pattern: PORTTOS Service - Sincronización con fuentes oficiales
     Description: Procesos que traen datos externos y los guardan: alertas climáticas oficiales y eventos viales
       de TomTom. También el supervisor de procesos (ejecución manual en modo diagnóstico).
-      Lo programa jobs/cron.manager.js; antes vivía en jobs/sincronizacion.service.js.
+      Lo programa apps/porttos/jobs/cron.manager.js; antes vivía en jobs/sincronizacion.service.js.
 */
 const FuentesExternas = require('../../adapters/fuentes-externas.adapter');
 const AlertasRepository = require('../../repositories/torre-control/alertas-climaticas.repository');
