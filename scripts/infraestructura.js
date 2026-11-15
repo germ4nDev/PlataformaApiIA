@@ -1,4 +1,4 @@
-const { InfraestructuraModel, InfraestructuraDTO } = require('./../models/torre-control/infraestructura.model');
+const { InfraestructuraModel, InfraestructuraDTO } = require('../apps/porttos/models/torre-control/infraestructura.model');
 const { TerminalModel } = require('./../models/torre-control/terminales.model');
 const { db, sequelize } = require('../database/connection');
 const { Sequelize } = require('sequelize');

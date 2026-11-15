@@ -5,7 +5,7 @@
       clave = normalizarPuerto (salas de socket, alertas); idPuerto = TCL_MaestroPuertos.id_puerto (tablas TCL_*).
       Caché de 5 minutos. Puerto inexistente → 404.
 */
-const MaritimoVivoRepository = require('../repositories/torre-control/maritimo-vivo.repository');
+const MaritimoVivoRepository = require('../apps/porttos/repositories/torre-control/maritimo-vivo.repository');
 const { normalizarPuerto } = require('./salas.helper');
 const { noEncontrado } = require('./errores.helper');
 

@@ -6,7 +6,7 @@
       - Sin puerto, 'ALL' o un puerto sin geocerca → null (el endpoint responde como antes: todo el país).
       - Caché de 5 minutos: el mapa consulta la flota cada 10 s.
 */
-const MaritimoRepository = require('../repositories/torre-control/maritimo.repository');
+const MaritimoRepository = require('../apps/porttos/repositories/torre-control/maritimo.repository');
 const { normalizarPuerto } = require('./salas.helper');
 
 const CACHE_MS = 5 * 60 * 1000;

@@ -65,10 +65,10 @@ db.sequelize = sequelize;
 
 // // 3. Registro de modelos con manejo de errores interno
 try {
-  db.TLCRNDCOperacionTerrestre = require('../models/torre-control/rndc.model')(sequelize, DataTypes);
+  db.TLCRNDCOperacionTerrestre = require('../apps/porttos/models/torre-control/rndc.model')(sequelize, DataTypes);
 
   // 👉 CORRECCIÓN: Apuntamos al nuevo modelo y le asignamos el nombre correcto en el objeto db
-  db.TCL_CamionesOperaciones = require('../models/torre-control/flota-terrestre.model').FlotaTerrestreDTOModel(sequelize);
+  db.TCL_CamionesOperaciones = require('../apps/porttos/models/torre-control/flota-terrestre.model').FlotaTerrestreDTOModel(sequelize);
 
   // Agrega aquí otros modelos futuros:
   // db.OtraTabla = require('../models/otra.model')(sequelize, DataTypes);

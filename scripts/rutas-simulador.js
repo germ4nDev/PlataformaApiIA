@@ -18,7 +18,7 @@
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
-const SimuladorFlotaService = require('../services/torre-control/simulador-flota.service');
+const SimuladorFlotaService = require('../apps/porttos/services/torre-control/simulador-flota.service');
 
 const args = process.argv.slice(2);
 const valor = (bandera) => args.flatMap((a, i) => (a === bandera ? [args[i + 1]] : []));

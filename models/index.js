@@ -5,12 +5,12 @@
 // // 1. IMPORTAMOS LOS MODELOS
 // // ==========================================
 // // --- Módulo Torre de Control ---
-// const { PuertoModel } = require('./torre-control/puerto.model');
-// const { TerminalModel } = require('./torre-control/terminal.model.js');
-// const { MuelleModel } = require('./torre-control/muelle.model');
-// const { EventoVialModel } = require('./torre-control/evento-vial.model.js');
-// const { BitacoraSincronizacionModel } = require('./torre-control/bitacora-sincronizacion.model.js');
-// const { AisUltimaPosicionModel } = require('./torre-control/ais-posicion.model.js');
+// const { PuertoModel } = require('../apps/porttos/models/torre-control/puerto.model');
+// const { TerminalModel } = require('../apps/porttos/models/torre-control/terminal.model.js');
+// const { MuelleModel } = require('../apps/porttos/models/torre-control/muelle.model');
+// const { EventoVialModel } = require('../apps/porttos/models/torre-control/evento-vial.model.js');
+// const { BitacoraSincronizacionModel } = require('../apps/porttos/models/torre-control/bitacora-sincronizacion.model.js');
+// const { AisUltimaPosicionModel } = require('../apps/porttos/models/torre-control/ais-posicion.model.js');
 
 // // --- Módulo Layouts Antiguo / Base ---
 // const { LayoutModel } = require('./layout.js');
@@ -22,9 +22,9 @@
 // const { CfgZonasDinamicaModel } = require('./cfg-zonas-dinamicas.model.js');
 // const { WidgetMaestroModel } = require('./widget.js');
 
-// const { InfraestructuraTanquesModel } = require('./torre-control/infraestructura-tanques.model');
-// const { OperacionesFlujoGNLModel } = require('./torre-control/operaciones-flujo-gnl.model');
-// const { NominacionesGasModel } = require('./torre-control/nominaciones-gas.model');
+// const { InfraestructuraTanquesModel } = require('../apps/porttos/models/torre-control/infraestructura-tanques.model');
+// const { OperacionesFlujoGNLModel } = require('../apps/porttos/models/torre-control/operaciones-flujo-gnl.model');
+// const { NominacionesGasModel } = require('../apps/porttos/models/torre-control/nominaciones-gas.model');
 
 
 // // ==========================================
@@ -103,12 +103,12 @@ const { sequelize } = require('../database/connection');
 // 1. IMPORTAMOS LOS MODELOS
 // ==========================================
 // --- Módulo Torre de Control ---
-const { PuertoModel } = require('./torre-control/puerto.model');
-const { TerminalModel } = require('./torre-control/terminal.model.js');
-const { MuelleModel } = require('./torre-control/muelle.model');
-const { EventoVialModel } = require('./torre-control/evento-vial.model.js');
-const { BitacoraSincronizacionModel } = require('./torre-control/bitacora-sincronizacion.model.js');
-const { AisUltimaPosicionModel } = require('./torre-control/ais-posicion.model.js');
+const { PuertoModel } = require('../apps/porttos/models/torre-control/puerto.model');
+const { TerminalModel } = require('../apps/porttos/models/torre-control/terminal.model.js');
+const { MuelleModel } = require('../apps/porttos/models/torre-control/muelle.model');
+const { EventoVialModel } = require('../apps/porttos/models/torre-control/evento-vial.model.js');
+const { BitacoraSincronizacionModel } = require('../apps/porttos/models/torre-control/bitacora-sincronizacion.model.js');
+const { AisUltimaPosicionModel } = require('../apps/porttos/models/torre-control/ais-posicion.model.js');
 
 // --- Módulo Layouts Antiguo / Base ---
 const { LayoutModel } = require('./layout.js');
@@ -121,9 +121,9 @@ const { CfgZonasDinamicaModel } = require('./cfg-zonas-dinamicas.model.js');
 const { WidgetMaestroModel } = require('./widget.js');
 
 // --- Módulo GNL (Líquidos y Gases) ---
-const { InfraestructuraTanquesModel } = require('./torre-control/infraestructura-tanques.model');
-const { OperacionesFlujoGNLModel } = require('./torre-control/operaciones-flujo-gnl.model');
-const { NominacionesGasModel } = require('./torre-control/nominaciones-gas.model');
+const { InfraestructuraTanquesModel } = require('../apps/porttos/models/torre-control/infraestructura-tanques.model');
+const { OperacionesFlujoGNLModel } = require('../apps/porttos/models/torre-control/operaciones-flujo-gnl.model');
+const { NominacionesGasModel } = require('../apps/porttos/models/torre-control/nominaciones-gas.model');
 
 // ==========================================
 // 2. INICIALIZAMOS LOS MODELOS

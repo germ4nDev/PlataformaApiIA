@@ -5,7 +5,7 @@
 const claudeAdapter = require('../adapters/claude.adapter');
 const { GUARDRAIL_PROMPT } = require('../config/guardrails.config');
 const { sequelize } = require('../database/connection');
-const tclConfigService = require('./torre-control/tcl-config.service'); // <-- Nuevo servicio de configuración de agentes
+const tclConfigService = require('../apps/porttos/services/torre-control/tcl-config.service'); // <-- Nuevo servicio de configuración de agentes
 
 // IMPORTACIÓN DE MODELOS
 const { UsuarioModel } = require('../models/usuario');

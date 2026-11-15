@@ -1,7 +1,7 @@
 require('dotenv').config();
 const db = require('../database/connection');
 const IngestionService = require('../services/torre-control/ingestion.service');
-const ReportesService = require('../services/torre-control/reportes.service');
+const ReportesService = require('../apps/porttos/services/torre-control/reportes.service');
 const { NodoLogisticoDTO } = require('../models/torre-control/nodo-logistico.model');
 
 async function iniciarPoblado() {
