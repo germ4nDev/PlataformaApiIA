@@ -88,10 +88,17 @@ const deleteSitio = async (req, res = response) => {
   }
 };
 
+// CC-207 (OT-036 fase 2): Sitios por capas (services/plataforma/sitios.service.js): lista con el nombre de la aplicación y la ruta donde
+// la aplicación administra su contenido; código que no cambia; retirar = inactivar (no si tiene enlaces activos). Mismas rutas y permisos;
+// las respuestas conservan { sitios } y { sitio }.
+const Sitios = require('../services/plataforma/sitios.service');
+const { manejar, contextoUsuario } = require('../helpers/controlador.helper');
+const usuarioDe = (req) => contextoUsuario(req).codigoUsuario;
+
 module.exports = {
-  getSitios,
-  getSitioById,
-  createSitio,
-  updateSitio,
-  deleteSitio
+  getSitios: manejar('Sitios.listar', async (req, res) => res.json({ ok: true, sitios: await Sitios.listar() })),
+  getSitioById: manejar('Sitios.obtener', async (req, res) => res.json({ ok: true, sitio: await Sitios.obtener(req.params) })),
+  createSitio: manejar('Sitios.crear', async (req, res) => res.status(201).json({ ok: true, sitio: await Sitios.crear(req.body, usuarioDe(req)) })),
+  updateSitio: manejar('Sitios.modificar', async (req, res) => res.json({ ok: true, sitio: await Sitios.modificar(req.params.id, req.body, usuarioDe(req)) })),
+  deleteSitio: manejar('Sitios.inactivar', async (req, res) => res.json({ ok: true, ...(await Sitios.inactivar(req.params, usuarioDe(req))) })),
 };

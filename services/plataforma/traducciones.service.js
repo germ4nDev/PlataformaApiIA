@@ -8,6 +8,10 @@
       modificar(datos)        cambia el texto de una llave que ya existe (no convierte grupos en texto ni al revés)
       eliminar(datos)         borra la llave de todos los idiomas; no se puede si la usa el código o una tabla (menú)
       sembrar(datos)          crea el JSON de un idioma que el API todavía no tiene (producción) con el que trae la web
+      idiomasMaestro()        { maestro, conArchivo, faltan }: los idiomas activos del maestro y cuáles no tienen archivo (CC-208)
+      sincronizarIdiomas()    crea el archivo de cada idioma del maestro que falte, a partir del español (textos por traducir)
+    Contrato de i18n para las aplicaciones (regla 27, OT-036 fase 3): textosDe(prefijo) · escribirTextos({ llave: { es, en… } }) ·
+      quitarTextos([llaves]). Escriben en todos los idiomas con archivo; un idioma sin texto toma el del español.
     Llaves protegidas: config/i18n-llaves-usadas.json (las que usa el código; la genera _memoria/datos/ot027-llaves-usadas.js) y
     translateKey de las tablas del menú.
 */
@@ -52,7 +56,56 @@ class TraduccionesService {
     try { protegidas = await this.protegidas(); } catch { /* sin base: solo las del código */ }
     const filas = N.filas(arboles).map((f) => ({ ...f, protegida: protegidas.has(f.llave) }))
       .sort((a, b) => a.llave.localeCompare(b.llave));
-    return { idiomas, ramas: N.ramas(arboles[idiomas[0]] || {}), filas };
+    let faltan = [];
+    try { faltan = (await this.idiomasMaestro()).faltan; } catch { /* sin base: no se sabe qué falta */ }
+    return { idiomas, ramas: N.ramas(arboles[idiomas[0]] || {}), filas, faltan };
+  }
+
+  // ---------- Maestro de idiomas (CC-208) ----------
+  async idiomasMaestro() {
+    const maestro = await this.repo.idiomasDelMaestro();
+    const conArchivo = this.repo.idiomas();
+    return { maestro: [...new Set(maestro.map(N.siglaArchivo).filter(Boolean))].sort(), conArchivo, faltan: N.idiomasPorCrear(maestro, conArchivo) };
+  }
+
+  async sincronizarIdiomas() {
+    const { faltan } = await this.idiomasMaestro();
+    if (!faltan.length) return { creados: [] };
+    const base = N.baseParaIdioma(this.arboles());
+    for (const i of faltan) this.repo.escribir(i, base);
+    return { creados: faltan, llaves: Object.keys(N.plano(base)).length };
+  }
+
+  // ---------- Contrato para las aplicaciones (OT-036 fase 3) ----------
+  textosDe(prefijo) {
+    return N.textosDePrefijo(this.arboles(), prefijo);
+  }
+
+  escribirTextos(textos) {
+    const arboles = this.arboles();
+    const idiomas = Object.keys(arboles);
+    if (!idiomas.length) throw { statusCode: 409, msg: 'No hay archivos de traducción en el API: siémbrelos primero.', codigo: 'TRADUCCION_SIN_ARCHIVOS' };
+    const { porIdioma, errores } = N.textosPorIdioma(textos, idiomas);
+    if (errores.length) throw { statusCode: 400, msg: errores[0].mensaje, codigo: 'VALIDACION', details: errores.map((e) => ({ campo: e.llave, mensaje: e.mensaje })) };
+    for (const i of idiomas) {
+      let a = arboles[i];
+      try { for (const [llave, texto] of Object.entries(porIdioma[i])) a = N.poner(a, llave, texto); } catch (e) {
+        throw { statusCode: 400, msg: MOTIVOS[e.message] || e.message, codigo: 'VALIDACION' };
+      }
+      this.repo.escribir(i, a);
+    }
+    return { llaves: Object.keys(porIdioma[idiomas[0]]).length, idiomas };
+  }
+
+  quitarTextos(llaves) {
+    const arboles = this.arboles();
+    let quitadas = 0;
+    for (const [i, a] of Object.entries(arboles)) {
+      let nuevo = a;
+      for (const llave of llaves || []) if (typeof N.plano(nuevo)[llave] === 'string') { nuevo = N.quitar(nuevo, llave); quitadas++; }
+      if (nuevo !== a) this.repo.escribir(i, nuevo);
+    }
+    return { quitadas };
   }
 
   async crear(datos) {

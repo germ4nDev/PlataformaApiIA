@@ -143,12 +143,35 @@ const deletePestana = async (req, res = response) => {
   }
 };
 
+// CC-203 (Utilidades › Pestañas, regla 19): la lectura por código y la escritura van por capas (services/plataforma/pestanas.service.js:
+// validación, ícono y color, socket pestanas-actualizados; eliminar = inactivar). Las funciones de arriba con el mismo nombre quedan
+// de referencia hasta retirarlas. La respuesta conserva `tipo` (forma anterior) y agrega `pestana`.
+const Admin = require('./../services/plataforma/pestanas.service');
+const { manejar, contextoUsuario } = require('../helpers/controlador.helper');
+const usuario = (req) => contextoUsuario(req).codigoUsuario;
+
+const getPestanaPorCodigo = manejar('Pestanas.obtener', async (req, res) => {
+  const pestana = await Admin.obtener(req.params);
+  res.json({ ok: true, pestana, tipo: pestana });
+});
+const crearPestana = manejar('Pestanas.crear', async (req, res) => {
+  const pestana = await Admin.crear(req.body, usuario(req));
+  res.status(201).json({ ok: true, pestana, tipo: pestana });
+});
+const modificarPestana = manejar('Pestanas.modificar', async (req, res) => {
+  const pestana = await Admin.modificar(req.params.id, req.body, usuario(req));
+  res.json({ ok: true, pestana, tipo: pestana });
+});
+const inactivarPestana = manejar('Pestanas.inactivar', async (req, res) => {
+  res.json({ ok: true, ...(await Admin.inactivar(req.params, usuario(req))), msg: 'Pestaña inactivada.' });
+});
+
 module.exports = {
   getPestanas,
   getPestanasTodas,
-  getPestanaById,
+  getPestanaById: getPestanaPorCodigo,
   getPestanaByCodeAplicacion,
-  createPestana,
-  updatePestana,
-  deletePestana
+  createPestana: crearPestana,
+  updatePestana: modificarPestana,
+  deletePestana: inactivarPestana
 };

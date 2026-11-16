@@ -10,6 +10,12 @@
                                             rutaPortal, rutaInicio, marca: { nombre, logo } }. Desconocido → neutro (nunca consola)
       puedeEntrar(contexto, appsUsuario)  consola y neutro: sí (como hoy); aplicación: solo si su suscriptor se la asigna (CC-145)
       origenesPermitidos(indice)          'https://<dominio>' de cada dominio activo, para CORS
+    Dominios de una aplicación (Aplicaciones › gestión, CC-202; usuario 2026-11-15):
+      listaDeDominios(valor)              'a.co, www.a.co' o arreglo → { validos (normalizados, únicos, con punto), invalidos }
+      dominiosDeAplicacion(cod, filas)    dominios activos de esa aplicación, ordenados
+      planDominiosDeAplicacion(cod, pedidos, filas)
+                                          { insertar, activar, desactivar, conflictos }: lo pedido que falta, lo inactivo que vuelve, lo
+                                          activo que ya no se pide (se inactiva, nunca se borra) y lo que es de otra aplicación o de la consola
 */
 const TIPOS = new Set(['consola', 'aplicacion']);
 const HOST_VALIDO = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/;
@@ -72,4 +78,43 @@ function origenesPermitidos(indice) {
   return indice instanceof Map ? [...indice.keys()].map((d) => `https://${d}`) : [];
 }
 
-module.exports = { normalizarHost, hostDeOrigen, indexar, contextoDe, puedeEntrar, origenesPermitidos, NEUTRO };
+const mismaApp = (fila, cod) =>
+  String(fila?.tipo || '').trim().toLowerCase() === 'aplicacion' && String(fila?.codigoAplicacion || '').trim().toLowerCase() === cod;
+
+function listaDeDominios(valor) {
+  const crudos = Array.isArray(valor) ? valor : String(valor ?? '').split(/[\s,;]+/);
+  const validos = [];
+  const invalidos = [];
+  for (const c of crudos) {
+    const t = String(c ?? '').trim();
+    if (!t) continue;
+    const h = normalizarHost(t);
+    if (!h || !h.includes('.')) invalidos.push(t);
+    else if (!validos.includes(h)) validos.push(h);
+  }
+  return { validos, invalidos };
+}
+
+function dominiosDeAplicacion(codigoAplicacion, filas) {
+  const cod = String(codigoAplicacion || '').trim().toLowerCase();
+  return (filas || []).filter((f) => mismaApp(f, cod) && activa(f.estado)).map((f) => normalizarHost(f.dominio)).filter(Boolean).sort();
+}
+
+function planDominiosDeAplicacion(codigoAplicacion, pedidos, filas) {
+  const cod = String(codigoAplicacion || '').trim().toLowerCase();
+  const porDominio = new Map((filas || []).map((f) => [normalizarHost(f?.dominio), f]));
+  const plan = { insertar: [], activar: [], desactivar: [], conflictos: [] };
+  for (const d of pedidos || []) {
+    const f = porDominio.get(d);
+    if (!f) plan.insertar.push(d);
+    else if (!mismaApp(f, cod)) plan.conflictos.push({ dominio: d, tipo: String(f.tipo || '').toLowerCase(), codigoAplicacion: texto(f.codigoAplicacion) });
+    else if (!activa(f.estado)) plan.activar.push(d);
+  }
+  for (const d of dominiosDeAplicacion(cod, filas)) if (!(pedidos || []).includes(d)) plan.desactivar.push(d);
+  return plan;
+}
+
+module.exports = {
+  normalizarHost, hostDeOrigen, indexar, contextoDe, puedeEntrar, origenesPermitidos, NEUTRO,
+  listaDeDominios, dominiosDeAplicacion, planDominiosDeAplicacion,
+};

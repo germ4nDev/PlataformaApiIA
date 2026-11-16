@@ -69,10 +69,15 @@ const eliminarTipoWidget = async (req, res) => {
   }
 };
 
+// CC-204 (Utilidades › Catálogos): obtener y escribir por capas (services/plataforma/catalogos.service.js: validación, código que no se
+// repite ni cambia, no inactiva ni elimina lo que otras tablas usan, socket de siempre y catalogos-actualizados). Mismas rutas y
+// permisos; la respuesta trae `registro` y conserva la forma anterior.
+const Catalogo = require('./plataforma/catalogos.controller').para('tipos-widget', (r) => ({ tipoRole: r }));
+
 module.exports = {
   getTiposWidget,
-  getTipoWidgetById,
-  crearTipoWidget,
-  actualizarTipoWidget,
-  eliminarTipoWidget
+  getTipoWidgetById: Catalogo.obtener,
+  crearTipoWidget: Catalogo.crear,
+  actualizarTipoWidget: Catalogo.modificar,
+  eliminarTipoWidget: Catalogo.eliminar
 };

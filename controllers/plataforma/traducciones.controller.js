@@ -40,4 +40,9 @@ const sembrarIdioma = async (req, res) => {
   try { return res.status(201).json({ ok: true, ...(await Servicio.sembrar({ ...req.body, idioma: req.params.idioma })) }); } catch (error) { return responderError(res, error, 'Traducciones.sembrar'); }
 };
 
-module.exports = { getArbol, getTraducciones, crearTraduccion, modificarTraduccion, eliminarTraduccion, sembrarIdioma };
+// CC-208: crea los archivos de los idiomas activos del maestro que falten (a partir del español)
+const sincronizarIdiomas = async (req, res) => {
+  try { return res.status(200).json({ ok: true, ...(await Servicio.sincronizarIdiomas()) }); } catch (error) { return responderError(res, error, 'Traducciones.sincronizarIdiomas'); }
+};
+
+module.exports = { getArbol, getTraducciones, crearTraduccion, modificarTraduccion, eliminarTraduccion, sembrarIdioma, sincronizarIdiomas };

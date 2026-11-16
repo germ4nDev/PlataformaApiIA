@@ -95,4 +95,57 @@ function filas(arboles) {
   }));
 }
 
-module.exports = { plano, revisarLlaveNueva, poner, quitar, ramas, filas, SEGMENTO_NUEVO };
+// OT-036 fase 3 (CC-208): idiomas del maestro (PTL_Idiomas) y textos que escriben las aplicaciones por el contrato del núcleo
+const FORMATO_LLAVE = /^[A-Z][A-Z0-9_]*(\.[A-Z0-9][A-Z0-9_]*)+$/;
+
+/** 'ES' | 'es' | 'es_co' | 'es-CO' → nombre del archivo ('es', 'es-CO'); null si no parece una sigla de idioma */
+function siglaArchivo(sigla) {
+  const m = String(sigla ?? '').trim().replace('_', '-').match(/^([A-Za-z]{2})(?:-([A-Za-z]{2}))?$/);
+  if (!m) return null;
+  return m[2] ? `${m[1].toLowerCase()}-${m[2].toUpperCase()}` : m[1].toLowerCase();
+}
+
+/** Idiomas activos del maestro que todavía no tienen archivo */
+function idiomasPorCrear(maestro, conArchivo) {
+  const hay = new Set(conArchivo);
+  return [...new Set((maestro || []).map(siglaArchivo).filter(Boolean))].filter((i) => !hay.has(i)).sort();
+}
+
+/** Base para un idioma nuevo: el árbol del español (o del primero que haya), copiado; los textos quedan para traducir */
+function baseParaIdioma(arboles) {
+  const base = arboles.es || Object.values(arboles)[0] || {};
+  return JSON.parse(JSON.stringify(base));
+}
+
+/**
+ * Contrato de i18n para las aplicaciones (regla 27): { llave: { es, en, … } } → por idioma, el texto de cada llave.
+ * Un idioma sin texto toma el del español (o el primero que venga) para que todos los archivos tengan las mismas llaves.
+ * Devuelve { porIdioma: { es: { llave: texto } }, errores: [{ llave, mensaje }] }.
+ */
+function textosPorIdioma(textos, idiomas) {
+  const porIdioma = Object.fromEntries(idiomas.map((i) => [i, {}]));
+  const errores = [];
+  for (const [llave, t] of Object.entries(textos || {})) {
+    if (!FORMATO_LLAVE.test(llave)) { errores.push({ llave, mensaje: 'Llave con formato MODULO.SUBMODULO.HOJA en MAYÚSCULAS.' }); continue; }
+    const valores = Object.fromEntries(Object.entries(t || {}).map(([k, v]) => [siglaArchivo(k), String(v ?? '').trim()]).filter(([k]) => k));
+    const respaldo = valores.es || Object.values(valores).find(Boolean) || '';
+    if (!respaldo) { errores.push({ llave, mensaje: 'Sin texto en ningún idioma.' }); continue; }
+    for (const i of idiomas) porIdioma[i][llave] = valores[i] || respaldo;
+  }
+  return { porIdioma, errores };
+}
+
+/** { llave: { es, en } } de las llaves que empiezan por el prefijo (MODULO.SUBMODULO) */
+function textosDePrefijo(arboles, prefijo) {
+  const p = String(prefijo || '').replace(/\.+$/, '') + '.';
+  const out = {};
+  for (const [i, a] of Object.entries(arboles || {})) {
+    for (const [llave, texto] of Object.entries(plano(a))) {
+      if (!llave.startsWith(p)) continue;
+      (out[llave] = out[llave] || {})[i] = texto;
+    }
+  }
+  return out;
+}
+
+module.exports = { plano, revisarLlaveNueva, poner, quitar, ramas, filas, SEGMENTO_NUEVO, FORMATO_LLAVE, siglaArchivo, idiomasPorCrear, baseParaIdioma, textosPorIdioma, textosDePrefijo };

@@ -7,11 +7,14 @@
       usuarioPuedeEntrar(ctx, cod)      consola/neutro: sí; aplicación: solo si su suscriptor se la asigna (CC-145)
       origenPermitido(origin)           ¿el origen es https://<un dominio activo>? (CORS); síncrono, sobre la caché
       refrescar()                       recarga la caché de dominios (al arrancar y cada 5 minutos)
+      dominiosDeAplicacion({ codigoAplicacion })             dominios activos de la aplicación (CC-202)
+      guardarDominiosDeAplicacion({ codigoAplicacion }, body) los deja como la lista pedida: inserta, reactiva o inactiva (nunca borra);
+                                        un dominio de otra aplicación o de la consola → 409; refresca la caché (CORS al instante)
     Cachés: dominios 5 minutos; aplicaciones de cada usuario 5 minutos. Si la base falla, se conserva la última lista buena.
 */
 const Repo = require('../../repositories/dominios/dominios.repository');
-const { validarCon } = require('../../helpers/errores.helper');
-const { ContextoQuerySchema } = require('../../models/dominios/dominios.model');
+const { validarCon, crearError } = require('../../helpers/errores.helper');
+const { ContextoQuerySchema, AplicacionParamsSchema, DominiosAplicacionSchema } = require('../../models/dominios/dominios.model');
 const D = require('../../utils/dominios/dominios');
 
 const CACHE_MS = 5 * 60 * 1000;
@@ -73,6 +76,31 @@ class DominiosService {
     if (!contexto || contexto.tipo !== 'aplicacion') return true;
     if (!codigoUsuario) return false;
     return D.puedeEntrar(contexto, await this.aplicacionesDeUsuario(codigoUsuario));
+  }
+
+  async dominiosDeAplicacion(params) {
+    const { codigoAplicacion } = validarCon(AplicacionParamsSchema, params || {});
+    return D.dominiosDeAplicacion(codigoAplicacion, await this.repo.dominios());
+  }
+
+  async guardarDominiosDeAplicacion(params, body) {
+    const { codigoAplicacion } = validarCon(AplicacionParamsSchema, params || {});
+    const { dominios } = validarCon(DominiosAplicacionSchema, body || {});
+    const { validos, invalidos } = D.listaDeDominios(dominios);
+    if (invalidos.length) throw crearError(400, `Dominio no válido: ${invalidos.join(', ')}`, 'VALIDACION', { invalidos });
+    const app = await this.repo.aplicacion(codigoAplicacion);
+    if (!app) throw crearError(404, 'No existe esa aplicación.', 'NO_EXISTE');
+    const plan = D.planDominiosDeAplicacion(app.codigoAplicacion, validos, await this.repo.dominios());
+    if (plan.conflictos.length) {
+      const c = plan.conflictos[0];
+      throw crearError(409, `El dominio ${c.dominio} ya es de ${c.tipo === 'consola' ? 'la consola' : 'otra aplicación'}.`, 'DOMINIO_OCUPADO', plan.conflictos);
+    }
+    if (plan.insertar.length || plan.activar.length || plan.desactivar.length) {
+      await this.repo.aplicarPlanDominios(app.codigoAplicacion, plan, app.nombreAplicacion);
+      this.cargadoEn = 0;
+      await this.refrescar();
+    }
+    return D.dominiosDeAplicacion(app.codigoAplicacion, await this.repo.dominios());
   }
 
   origenPermitido(origin) {

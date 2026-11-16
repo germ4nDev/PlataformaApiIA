@@ -8,6 +8,7 @@
       leer(idioma)         árbol del JSON o null si no hay archivo
       escribir(idioma, a)  guarda el árbol con el mismo formato del repositorio (4 espacios y salto final)
       llavesDeTablas()     MENU.MODULES.<translateKey> y MENU.SUITES.<translateKey> (el menú las traduce: no se pueden borrar)
+      idiomasDelMaestro()  siglas de los idiomas activos de PTL_Idiomas (CC-208)
 */
 const fs = require('fs');
 const path = require('path');
@@ -50,4 +51,10 @@ async function llavesDeTablas() {
   return filas.map((f) => String(f.llave || '').trim()).filter(Boolean);
 }
 
-module.exports = { carpeta, idiomas, leer, escribir, llavesDeTablas };
+// OT-036 fase 3 (CC-208): siglas de los idiomas activos del maestro (Utilidades › Idiomas)
+async function idiomasDelMaestro() {
+  const filas = await db.sequelize.query('SELECT siglaIdioma FROM dbo.PTL_Idiomas WHERE estadoIdioma = 1', { type: QueryTypes.SELECT });
+  return filas.map((f) => String(f.siglaIdioma || '').trim()).filter(Boolean);
+}
+
+module.exports = { carpeta, idiomas, leer, escribir, llavesDeTablas, idiomasDelMaestro };

@@ -43,6 +43,8 @@ const whitelist = [...new Set([
   'https://localhost',            // App móvil (Android Capacitor, androidScheme: 'https')
   'http://localhost',             // App móvil (Android Capacitor con androidScheme: 'http')
   'http://localhost:4200',        // Desarrollo local Angular
+  'http://localhost:4202',        // Desarrollo local: compilación aislada de Sistemas (OT-034, npm run start:sistemas)
+  'http://localhost:4203',        // Desarrollo local: compilación aislada de Porttos (OT-034, npm run start:porttos)
   'http://localhost:3000',
   process.env.ANGULAR_URL_LOCAL,
   process.env.ANGULAR_URL_LOCL, // nombre usado hoy en .env

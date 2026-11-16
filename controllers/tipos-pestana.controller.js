@@ -68,10 +68,33 @@ const eliminarTipoPestana = async (req, res) => {
   }
 };
 
+// CC-203 (Utilidades › Tipos de pestaña): obtener y escribir por capas (services/plataforma/pestanas.service.js: validación, una
+// estrategia por tipo, no inactiva un tipo con pestañas activas, socket tipos-pestanas-actualizados; eliminar = inactivar). La
+// respuesta conserva `tipoRole` (forma anterior) y agrega `tipo`.
+const Admin = require('../services/plataforma/pestanas.service');
+const { manejar, contextoUsuario } = require('../helpers/controlador.helper');
+const usuarioDe = (req) => contextoUsuario(req).codigoUsuario;
+
+const obtenerTipo = manejar('TiposPestana.obtener', async (req, res) => {
+  const tipo = await Admin.obtenerTipo(req.params);
+  res.json({ ok: true, tipo, tipoRole: tipo });
+});
+const crearTipo = manejar('TiposPestana.crear', async (req, res) => {
+  const tipo = await Admin.crearTipo(req.body, usuarioDe(req));
+  res.status(201).json({ ok: true, tipo, tipoRole: tipo });
+});
+const modificarTipo = manejar('TiposPestana.modificar', async (req, res) => {
+  const tipo = await Admin.modificarTipo(req.params.id, req.body, usuarioDe(req));
+  res.json({ ok: true, tipo, tipoRole: tipo });
+});
+const inactivarTipo = manejar('TiposPestana.inactivar', async (req, res) => {
+  res.json({ ok: true, ...(await Admin.inactivarTipo(req.params, usuarioDe(req))), msg: 'Tipo de pestaña inactivado.' });
+});
+
 module.exports = {
   getTiposPestana,
-  getTipoPestanaById,
-  crearTipoPestana,
-  actualizarTipoPestana,
-  eliminarTipoPestana
+  getTipoPestanaById: obtenerTipo,
+  crearTipoPestana: crearTipo,
+  actualizarTipoPestana: modificarTipo,
+  eliminarTipoPestana: inactivarTipo
 };
