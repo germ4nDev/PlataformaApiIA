@@ -9,7 +9,10 @@
       eliminar(datos)         borra la llave de todos los idiomas; no se puede si la usa el código o una tabla (menú)
       sembrar(datos)          crea el JSON de un idioma que el API todavía no tiene (producción) con el que trae la web
       idiomasMaestro()        { maestro, conArchivo, faltan }: los idiomas activos del maestro y cuáles no tienen archivo (CC-208)
-      sincronizarIdiomas()    crea el archivo de cada idioma del maestro que falte, a partir del español (textos por traducir)
+      sincronizarIdiomas({ modo })  CC-215: cada idioma activo del maestro sin archivo se crea con todas sus llaves TRADUCIDAS por la IA
+                              (trabajo en segundo plano, por lotes, retomable); modo 'espanol' lo crea copiando el español (sin traductor)
+      idiomasEditables()      CC-215, regla única: { idiomas: ['es', …activos con archivo], nombres, sinArchivo, trabajos, traductor }
+                              (editor del portal, selector público y Traducciones usan esta misma lista)
     Contrato de i18n para las aplicaciones (regla 27, OT-036 fase 3): textosDe(prefijo) · escribirTextos({ llave: { es, en… } }) ·
       quitarTextos([llaves]). Escriben en todos los idiomas con archivo; un idioma sin texto toma el del español.
     Llaves protegidas: config/i18n-llaves-usadas.json (las que usa el código; la genera _memoria/datos/ot027-llaves-usadas.js) y
@@ -20,6 +23,7 @@ const { validarCon } = require('../../helpers/errores.helper');
 const M = require('../../models/plataforma/traducciones.model');
 const N = require('../../utils/plataforma/traducciones');
 const LLAVES_CODIGO = require('../../config/i18n-llaves-usadas.json');
+const TI = require('../../utils/plataforma/traduccion-ia');
 
 const MOTIVOS = {
   FORMATO: 'Cada parte de la llave va en MAYÚSCULAS, con letras, números o _ (MODULO.SUBMODULO.LLAVE).',
@@ -30,9 +34,16 @@ const MOTIVOS = {
 };
 
 class TraduccionesService {
-  constructor({ repo = Repo, llavesCodigo = LLAVES_CODIGO } = {}) {
+  constructor({ repo = Repo, llavesCodigo = LLAVES_CODIGO, traductor = null, emitir = null } = {}) {
     this.repo = repo;
     this.llavesCodigo = new Set(llavesCodigo.llaves || llavesCodigo);
+    this._traductor = traductor;
+    this.trabajos = {}; // CC-215: sigla → { estado: traduciendo | listo | error, total, hechas, sinTraducir, motivo, inicio, fin, uso }
+    this.emitir = emitir || ((d) => { try { require('../../helpers/socket.helper').getIO().emit('traducciones-actualizadas', d); } catch { /* sin socket */ } });
+  }
+
+  get traductor() {
+    return this._traductor || (this._traductor = require('./traductor-ia.service'));
   }
 
   arboles() {
@@ -58,7 +69,7 @@ class TraduccionesService {
       .sort((a, b) => a.llave.localeCompare(b.llave));
     let faltan = [];
     try { faltan = (await this.idiomasMaestro()).faltan; } catch { /* sin base: no se sabe qué falta */ }
-    return { idiomas, ramas: N.ramas(arboles[idiomas[0]] || {}), filas, faltan };
+    return { idiomas, ramas: N.ramas(arboles[idiomas[0]] || {}), filas, faltan, trabajos: this.trabajos, traductor: this.traductor.disponible() };
   }
 
   // ---------- Maestro de idiomas (CC-208) ----------
@@ -68,12 +79,74 @@ class TraduccionesService {
     return { maestro: [...new Set(maestro.map(N.siglaArchivo).filter(Boolean))].sort(), conArchivo, faltan: N.idiomasPorCrear(maestro, conArchivo) };
   }
 
-  async sincronizarIdiomas() {
+  /** CC-215: activos del maestro con su nombre (si el repositorio no da el nombre, la sigla) */
+  async maestro() {
+    const filas = this.repo.maestroConNombre ? await this.repo.maestroConNombre() : (await this.repo.idiomasDelMaestro()).map((sigla) => ({ sigla, nombre: '' }));
+    return filas.map((f) => ({ sigla: N.siglaArchivo(f.sigla), nombre: f.nombre || '' })).filter((f) => f.sigla);
+  }
+
+  /** CC-215, regla única de idiomas: lo que se edita y se publica = activos en el maestro con archivo; el español siempre */
+  async idiomasEditables() {
+    const conArchivo = this.repo.idiomas();
+    let maestro = [];
+    try { maestro = await this.maestro(); } catch { /* sin base: solo español */ }
+    const idiomas = TI.idiomasEditables(maestro, conArchivo);
+    const nombres = Object.fromEntries(maestro.map((m) => [m.sigla, m.nombre || m.sigla.toUpperCase()]));
+    if (!nombres.es) nombres.es = 'Español';
+    const sinArchivo = maestro.filter((m) => !conArchivo.includes(m.sigla)).map((m) => ({ ...m, trabajo: this.trabajos[m.sigla] || null }));
+    return { idiomas, nombres, sinArchivo, trabajos: this.trabajos, traductor: this.traductor.disponible() };
+  }
+
+  async sincronizarIdiomas({ modo } = {}) {
     const { faltan } = await this.idiomasMaestro();
-    if (!faltan.length) return { creados: [] };
-    const base = N.baseParaIdioma(this.arboles());
-    for (const i of faltan) this.repo.escribir(i, base);
-    return { creados: faltan, llaves: Object.keys(N.plano(base)).length };
+    if (!faltan.length) return { creados: [], enCurso: [], trabajos: this.trabajos };
+    if (modo === 'espanol') { // sin traductor: copia del español para traducir a mano (CC-208)
+      const base = N.baseParaIdioma(this.arboles());
+      for (const i of faltan) { this.repo.escribir(i, base); delete this.trabajos[i]; }
+      return { creados: faltan, enCurso: [], llaves: Object.keys(N.plano(base)).length, trabajos: this.trabajos };
+    }
+    const disp = this.traductor.disponible();
+    if (!disp.ok) throw { statusCode: 409, msg: disp.motivo, codigo: 'TRADUCCION_SIN_TRADUCTOR' };
+    const nombres = Object.fromEntries((await this.maestro()).map((m) => [m.sigla, m.nombre]));
+    const enCurso = [];
+    for (const i of faltan) {
+      if (this.trabajos[i]?.estado === 'traduciendo') { enCurso.push(i); continue; }
+      enCurso.push(i);
+      this.trabajos[i] = { estado: 'traduciendo', total: 0, hechas: 0, sinTraducir: 0, motivo: null, inicio: new Date().toISOString(), fin: null, uso: { entrada: 0, salida: 0 } };
+      this.promesa = this.traducirIdioma(i, nombres[i] || '');
+    }
+    return { creados: [], enCurso, trabajos: this.trabajos };
+  }
+
+  /** CC-215: traduce por lotes lo que falta (lo ya hecho queda en el parcial) y al final escribe el archivo completo */
+  async traducirIdioma(sigla, nombre) {
+    const t = this.trabajos[sigla];
+    try {
+      const planoEs = N.plano(this.repo.leer('es') || {});
+      const hechas = this.repo.leerParcial(sigla) || {};
+      const pendientes = TI.porTraducir(planoEs, hechas);
+      t.total = pendientes.length + Object.keys(hechas).filter((k) => k in planoEs).length;
+      t.hechas = t.total - pendientes.length;
+      this.emitir({ action: 'traduciendo', idioma: sigla, hechas: t.hechas, total: t.total });
+      for (const lote of TI.lotes(pendientes)) {
+        const r = await this.traductor.traducirLote({ sigla, nombre, lote });
+        Object.assign(hechas, r.buenas);
+        t.uso.entrada += r.uso.entrada; t.uso.salida += r.uso.salida;
+        t.hechas += lote.length;
+        this.repo.escribirParcial(sigla, hechas);
+        this.emitir({ action: 'traduciendo', idioma: sigla, hechas: t.hechas, total: t.total });
+      }
+      const { arbol, sinTraducir } = TI.ensamblar(this.repo.leer('es') || {}, hechas); // el español de ahora: incluye llaves creadas mientras tanto
+      this.repo.escribir(sigla, arbol);
+      this.repo.quitarParcial(sigla);
+      Object.assign(t, { estado: 'listo', sinTraducir: sinTraducir.length, fin: new Date().toISOString() });
+      console.log(`[Traducciones] ${sigla}: ${t.total - sinTraducir.length} de ${t.total} llaves traducidas (tokens ${t.uso.entrada}/${t.uso.salida})`);
+    } catch (e) {
+      Object.assign(t, { estado: 'error', motivo: String(e?.msg || e?.message || 'Error al traducir').slice(0, 300), fin: new Date().toISOString() });
+      console.error(`[Traducciones] ${sigla}: la traducción se detuvo (${t.motivo}); lo traducido queda guardado y se retoma al reintentar`);
+    }
+    this.emitir({ action: t.estado, idioma: sigla, hechas: t.hechas, total: t.total });
+    return t;
   }
 
   // ---------- Contrato para las aplicaciones (OT-036 fase 3) ----------

@@ -35,6 +35,8 @@
       IA_MODELO_ASISTENTE=claude-sonnet-5-5
       IA_MODELO_FILTRO=claude-haiku-5-5   Clasificador de alcance (barato) para las preguntas que las reglas no deciden.
       IA_ASISTENTE_TOPE_USUARIO_DIA=60    Preguntas por usuario por día.
+      Traducción de idiomas nuevos (CC-215, núcleo i18n; no depende de IA_ENABLED):
+      IA_MODELO_TRADUCTOR=claude-sonnet-5-5  Modelo que traduce del español un idioma activo del maestro que no tiene archivo.
       Lo que se configura por puerto y tarea en TCL_IAConfig (panel de administración, migración 017) manda sobre
       el .env: encendido, modo sombra, topes, confianza mínima y tipos a publicar. IA_ENABLED sigue siendo el
       interruptor general: apagado, no se llama al modelo en ningún puerto.

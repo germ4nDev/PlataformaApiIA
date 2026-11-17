@@ -21,6 +21,7 @@ class UploadsService {
     this.folderMap = {
       'aplicaciones': path.join('aplicaciones'),
       'biblioteca': path.join('biblioteca', 'biblioteca'),
+      'dominios': path.join('dominios'),   // CC-224: logo de la marca de un dominio (Utilidades › Dominios)
       'idiomas': path.join('idiomas'),
       'scripts': path.join('scripts'),
       'sitios': path.join('sitios'),

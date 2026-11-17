@@ -166,8 +166,18 @@ function avisoCorreo(m = {}) {
   return { asunto: `[Portal Porttos] ${motivo} · ${m.nombre}`.slice(0, 180), texto: lineas.join('\n') };
 }
 
+/**
+ * CC-217 (usuario 2026-11-16): páginas que se muestran en el menú y que abren. Una página sin secciones activas no sale (su contenido,
+ * incluso el bloque propio de planes, puertos o contacto, cuelga de la primera sección). Inicio siempre; Planes además con planesActivos.
+ * filas: [{ pagina, activas }] (conteo de TCL_PortalSecciones). En el orden de PAGINAS.
+ */
+function paginasVisibles(filas = [], { conPlanes = false } = {}) {
+  const activas = new Map((filas || []).map((f) => [String(f.pagina || '').trim(), Number(f.activas) || 0]));
+  return PAGINAS.filter((p) => p === 'inicio' || ((activas.get(p) || 0) > 0 && (p !== 'planes' || conPlanes)));
+}
+
 module.exports = {
-  PAGINAS, IDIOMAS, MOTIVOS, CONFIG_PUBLICA,
+  PAGINAS, IDIOMAS, MOTIVOS, CONFIG_PUBLICA, paginasVisibles,
   armarPagina, armarPlanes, configPublica, limpiarTexto, revisarMensaje, avisoCorreo,
   planesActivos, sinPlanes, PLANES_VACIOS,
 };

@@ -55,3 +55,6 @@ scripts/salidas/
 
 # Aplicaciones del ecosistema: cada una es su propio repositorio (regla 26, OT-033)
 /apps/*/
+
+# CC-215: traducción en curso de un idioma nuevo (temporal del API)
+datos/i18n-parcial/

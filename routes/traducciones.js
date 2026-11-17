@@ -15,6 +15,7 @@ router.post('/', [validarJWT, validarSesion, validarPermiso('ACT_TRAD_CREAR')], 
 router.put('/', [validarJWT, validarSesion, validarPermiso('ACT_TRAD_MODIFICAR')], C.modificarTraduccion);
 router.delete('/', [validarJWT, validarSesion, validarPermiso('ACT_TRAD_ELIMINAR')], C.eliminarTraduccion);
 router.post('/idiomas/sincronizar', [validarJWT, validarSesion, validarPermiso('ACT_TRAD_MODIFICAR')], C.sincronizarIdiomas); // CC-208: idiomas del maestro
+router.get('/idiomas/estado', [validarJWT, validarSesion], C.estadoIdiomas); // CC-215: editables y avance de la traducción
 router.post('/:idioma/sembrar', [validarJWT, validarSesion, validarPermiso('ACT_TRAD_MODIFICAR')], C.sembrarIdioma);
 // pública: la web la pide al arrancar, antes del login
 router.get('/:idioma', C.getArbol);

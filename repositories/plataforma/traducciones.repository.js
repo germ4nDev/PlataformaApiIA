@@ -9,6 +9,9 @@
       escribir(idioma, a)  guarda el árbol con el mismo formato del repositorio (4 espacios y salto final)
       llavesDeTablas()     MENU.MODULES.<translateKey> y MENU.SUITES.<translateKey> (el menú las traduce: no se pueden borrar)
       idiomasDelMaestro()  siglas de los idiomas activos de PTL_Idiomas (CC-208)
+      maestroConNombre()   [{ sigla, nombre }] de los idiomas activos (CC-215: nombre para el editor y para el traductor)
+      leerParcial(i) / escribirParcial(i, plano) / quitarParcial(i)   traducción en curso de un idioma nuevo (datos/i18n-parcial;
+                           fuera de la carpeta de idiomas para que el idioma no aparezca hasta estar completo)
 */
 const fs = require('fs');
 const path = require('path');
@@ -57,4 +60,29 @@ async function idiomasDelMaestro() {
   return filas.map((f) => String(f.siglaIdioma || '').trim()).filter(Boolean);
 }
 
-module.exports = { carpeta, idiomas, leer, escribir, llavesDeTablas, idiomasDelMaestro };
+// CC-215: con el nombre, para mostrarlo en el editor y decirle al traductor a qué idioma va
+async function maestroConNombre() {
+  const filas = await db.sequelize.query('SELECT siglaIdioma, nombreIdioma FROM dbo.PTL_Idiomas WHERE estadoIdioma = 1', { type: QueryTypes.SELECT });
+  return filas.map((f) => ({ sigla: String(f.siglaIdioma || '').trim(), nombre: String(f.nombreIdioma || '').trim() })).filter((f) => f.sigla);
+}
+
+// CC-215: lo ya traducido de un idioma nuevo se guarda aparte hasta completarlo (si el API se reinicia, se retoma desde ahí)
+const PARCIAL = path.join(__dirname, '..', '..', 'datos', 'i18n-parcial');
+const archivoParcial = (idioma) => path.join(PARCIAL, `${idioma}.json`);
+
+function leerParcial(idioma) {
+  const f = archivoParcial(idioma);
+  return fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : {};
+}
+
+function escribirParcial(idioma, plano) {
+  fs.mkdirSync(PARCIAL, { recursive: true });
+  fs.writeFileSync(archivoParcial(idioma), JSON.stringify(plano, null, 2) + '\n', 'utf8');
+}
+
+function quitarParcial(idioma) {
+  const f = archivoParcial(idioma);
+  if (fs.existsSync(f)) fs.unlinkSync(f);
+}
+
+module.exports = { carpeta, idiomas, leer, escribir, llavesDeTablas, idiomasDelMaestro, maestroConNombre, leerParcial, escribirParcial, quitarParcial };

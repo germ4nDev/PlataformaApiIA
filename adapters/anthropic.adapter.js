@@ -1,9 +1,10 @@
 /*
     Author: German Valencia
-    Pattern: PORTTOS Adapter - Cerebro IA · Anthropic (Claude), puerto CerebroIA
+    Pattern: PLATAFORMA Adapter - Modelo de lenguaje · Anthropic (Claude), puerto CerebroIA (núcleo, módulo ia; CC-215)
     Description: Única puerta al SDK de Anthropic. No escribe en la base ni decide nada: envía la solicitud y
       devuelve la entrada de la herramienta forzada con el uso de tokens. Los reintentos, el presupuesto y el
-      cortacircuito son de services/ia/cerebro.service.js (por eso el SDK va con maxRetries: 0).
+      cortacircuito son de quien lo usa: el cerebro de Porttos (apps/porttos/services/ia/cerebro.service.js) y el
+      traductor de idiomas del núcleo (services/plataforma/traductor-ia.service.js); por eso el SDK va con maxRetries: 0.
       Contrato del puerto CerebroIA:
         generar({ modelo, sistema:[{texto, cache}], mensajes, herramienta, maxTokens, temperatura, timeoutMs })
           → { toolInput, toolUseId, modelo, stopReason, uso:{ entrada, salida, cacheLectura, cacheEscritura } }

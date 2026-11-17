@@ -16,6 +16,11 @@
       planDominiosDeAplicacion(cod, pedidos, filas)
                                           { insertar, activar, desactivar, conflictos }: lo pedido que falta, lo inactivo que vuelve, lo
                                           activo que ya no se pide (se inactiva, nunca se borra) y lo que es de otra aplicación o de la consola
+    Utilidades › Dominios (CC-224, usuario 2026-11-16):
+      registroDeDominio(body)             el registro limpio: dominio normalizado, tipo, app y suite (nada si es consola), rutas, marca, logo
+      revisarRegistro(r)                  [{ campo, mensaje }]: dominio válido con punto, tipo, aplicación si es de aplicación, rutas internas
+                                          (empiezan por una sola /), logo que la web puede pintar (assets/…, https://… o upload/…)
+      dominioRepetido(dominio, filas, id) la fila de otro registro con ese dominio (único en la tabla) o null
 */
 const TIPOS = new Set(['consola', 'aplicacion']);
 const HOST_VALIDO = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/;
@@ -114,7 +119,47 @@ function planDominiosDeAplicacion(codigoAplicacion, pedidos, filas) {
   return plan;
 }
 
+// ---------- Utilidades › Dominios (CC-224) ----------
+const LOGO_VALIDO = /^(assets\/[\w./-]+|https:\/\/[^\s]+|upload\/[\w-]+\/dominios\/[\w.-]+)$/i;
+const rutaInterna = (r) => r === null || (r.startsWith('/') && !r.startsWith('//') && !/\s/.test(r));
+
+function registroDeDominio(body = {}) {
+  const tipo = String(body.tipo || '').trim().toLowerCase();
+  const consola = tipo === 'consola';
+  const ruta = (v) => { const t = texto(v); return t ? t.replace(/\/+$/, '') || '/' : null; };
+  return {
+    dominio: normalizarHost(body.dominio),
+    dominioEscrito: texto(body.dominio),
+    tipo,
+    codigoAplicacion: consola ? null : texto(body.codigoAplicacion),
+    codigoSuite: consola ? null : texto(body.codigoSuite),
+    rutaPortal: ruta(body.rutaPortal),
+    rutaInicio: ruta(body.rutaInicio),
+    nombreMarca: texto(body.nombreMarca),
+    logoMarca: texto(body.logoMarca),
+    descripcion: texto(body.descripcion),
+    estado: body.estado === undefined ? true : body.estado === true || body.estado === 1 || body.estado === '1' || body.estado === 'true',
+  };
+}
+
+function revisarRegistro(r) {
+  const e = [];
+  if (!r.dominio || !r.dominio.includes('.')) e.push({ campo: 'dominio', mensaje: `Dominio no válido: ${r.dominioEscrito || '(vacío)'}. Escríbalo sin https:// ni ruta, p. ej. porttos.co.` });
+  if (!TIPOS.has(r.tipo)) e.push({ campo: 'tipo', mensaje: 'El tipo es consola o aplicación.' });
+  if (r.tipo === 'aplicacion' && !r.codigoAplicacion) e.push({ campo: 'codigoAplicacion', mensaje: 'Un dominio de aplicación necesita su aplicación.' });
+  if (!rutaInterna(r.rutaPortal)) e.push({ campo: 'rutaPortal', mensaje: 'La ruta del portal empieza por una sola / (p. ej. /websites/porttos).' });
+  if (!rutaInterna(r.rutaInicio)) e.push({ campo: 'rutaInicio', mensaje: 'La ruta de inicio empieza por una sola / (p. ej. /porttos/torre-control).' });
+  if (r.logoMarca && !LOGO_VALIDO.test(r.logoMarca)) e.push({ campo: 'logoMarca', mensaje: 'El logo es una imagen subida, un asset de la web (assets/…) o una dirección https://.' });
+  return e;
+}
+
+function dominioRepetido(dominio, filas, dominioId = null) {
+  const d = normalizarHost(dominio);
+  return (filas || []).find((f) => normalizarHost(f?.dominio) === d && Number(f?.dominioId) !== Number(dominioId)) || null;
+}
+
 module.exports = {
   normalizarHost, hostDeOrigen, indexar, contextoDe, puedeEntrar, origenesPermitidos, NEUTRO,
   listaDeDominios, dominiosDeAplicacion, planDominiosDeAplicacion,
+  registroDeDominio, revisarRegistro, dominioRepetido, LOGO_VALIDO,
 };

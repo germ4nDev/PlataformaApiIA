@@ -10,18 +10,22 @@
       dominiosDeAplicacion({ codigoAplicacion })             dominios activos de la aplicación (CC-202)
       guardarDominiosDeAplicacion({ codigoAplicacion }, body) los deja como la lista pedida: inserta, reactiva o inactiva (nunca borra);
                                         un dominio de otra aplicación o de la consola → 409; refresca la caché (CORS al instante)
+    Utilidades › Dominios (CC-224, usuario 2026-11-16): listar() · obtener({ id }) · crear(body, usuario) · modificar(id, body, usuario) ·
+      eliminar({ id }, usuario) (inactiva; nunca borra). El dominio es único; las reglas, en el núcleo (revisarRegistro). Cada cambio
+      refresca la caché (CORS y contexto al instante) y avisa por el socket dominios-actualizados.
     Cachés: dominios 5 minutos; aplicaciones de cada usuario 5 minutos. Si la base falla, se conserva la última lista buena.
 */
 const Repo = require('../../repositories/dominios/dominios.repository');
 const { validarCon, crearError } = require('../../helpers/errores.helper');
-const { ContextoQuerySchema, AplicacionParamsSchema, DominiosAplicacionSchema } = require('../../models/dominios/dominios.model');
+const { ContextoQuerySchema, AplicacionParamsSchema, DominiosAplicacionSchema, IdParamsSchema, DominioSchema } = require('../../models/dominios/dominios.model');
 const D = require('../../utils/dominios/dominios');
 
 const CACHE_MS = 5 * 60 * 1000;
 
 class DominiosService {
-  constructor({ repo = Repo, cacheMs = CACHE_MS, ahora = () => Date.now() } = {}) {
+  constructor({ repo = Repo, cacheMs = CACHE_MS, ahora = () => Date.now(), emitir = null } = {}) {
     this.repo = repo;
+    this.emitir = emitir || ((d) => { try { require('../../helpers/socket.helper').getIO().emit('dominios-actualizados', d); } catch { /* sin socket */ } });
     this.cacheMs = cacheMs;
     this.ahora = ahora;
     this.indice = new Map();
@@ -101,6 +105,54 @@ class DominiosService {
       await this.refrescar();
     }
     return D.dominiosDeAplicacion(app.codigoAplicacion, await this.repo.dominios());
+  }
+
+  // ---------- Utilidades › Dominios (CC-224) ----------
+  listar() {
+    return this.repo.listarAdmin();
+  }
+
+  async obtener(params) {
+    const { id } = validarCon(IdParamsSchema, params || {});
+    const d = await this.repo.obtener(id);
+    if (!d) throw crearError(404, 'No existe ese dominio.', 'NO_EXISTE');
+    return d;
+  }
+
+  async limpio(body, dominioId = null) {
+    const r = D.registroDeDominio(validarCon(DominioSchema, body || {}));
+    const errores = D.revisarRegistro(r);
+    if (errores.length) throw crearError(400, errores[0].mensaje, 'VALIDACION', errores);
+    if (r.codigoAplicacion && !(await this.repo.aplicacion(r.codigoAplicacion))) throw crearError(400, 'No existe esa aplicación.', 'VALIDACION', [{ campo: 'codigoAplicacion', mensaje: 'No existe esa aplicación.' }]);
+    const otro = D.dominioRepetido(r.dominio, await this.repo.dominiosConId(), dominioId);
+    if (otro) throw crearError(409, `El dominio ${r.dominio} ya está registrado${Number(otro.estado) === 0 ? ' (inactivo: actívelo en lugar de crearlo otra vez)' : ''}.`, 'DOMINIO_OCUPADO');
+    return r;
+  }
+
+  async listo(accion, id) {
+    this.cargadoEn = 0;
+    await this.refrescar();
+    this.emitir({ action: accion, id });
+    return this.repo.obtener(id);
+  }
+
+  async crear(body, usuario) {
+    const r = await this.limpio(body);
+    const id = await this.repo.crear(r, usuario);
+    return this.listo('create', id);
+  }
+
+  async modificar(id, body, usuario) {
+    const actual = await this.obtener({ id });
+    const r = await this.limpio(body, actual.dominioId);
+    await this.repo.modificar(actual.dominioId, r, usuario);
+    return this.listo('update', actual.dominioId);
+  }
+
+  async eliminar(params, usuario) {
+    const actual = await this.obtener(params);
+    await this.repo.inactivar(actual.dominioId, usuario);
+    return this.listo('delete', actual.dominioId);
   }
 
   origenPermitido(origin) {

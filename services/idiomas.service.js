@@ -7,6 +7,7 @@ const { IdiomaModel, IdiomaDTO } = require("../models/idioma");
 const { getIO } = require('../helpers/socket.helper');
 
 // CC-208 (OT-036 fase 3): crear o activar un idioma en el maestro crea su archivo de traducción; si falla, Traducciones lo ofrece.
+// CC-215: el archivo se crea con todas las llaves traducidas por la IA (en segundo plano; Traducciones y el portal muestran el avance).
 const sincronizarTraducciones = () => { try { Promise.resolve(require('./plataforma/traducciones.service').sincronizarIdiomas()).catch(() => undefined); } catch { /* sin archivos */ } };
 
 class IdiomaService {
@@ -52,7 +53,7 @@ class IdiomaService {
     return await sequelize.transaction(async (t) => {
       const idiomaDB = await this.model.create(dataDTO, { transaction: t });
 
-      sincronizarTraducciones(); // CC-208: el idioma nuevo tiene su archivo de traducción (a partir del español)
+      t.afterCommit(() => sincronizarTraducciones()); // CC-208/CC-215: el idioma nuevo tiene su archivo, traducido por la IA (después del commit: así lo ve)
       getIO().emit("idiomas-actualizados", {
         action: "create",
         msg: `Idioma creado: ${idiomaDB.nombreIdioma}`,
@@ -87,7 +88,7 @@ class IdiomaService {
         transaction: t
       });
 
-      sincronizarTraducciones(); // CC-208: un idioma que se activa tiene su archivo de traducción
+      t.afterCommit(() => sincronizarTraducciones()); // CC-208/CC-215: un idioma que se activa tiene su archivo, traducido por la IA
       getIO().emit("idiomas-actualizados", {
         action: "update",
         msg: `Idioma actualizado: ${actualizado.nombreIdioma}`,

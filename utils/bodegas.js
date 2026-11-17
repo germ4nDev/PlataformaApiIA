@@ -167,4 +167,38 @@ function movimientosConEstadia(movimientos = [], dias, ahora = new Date()) {
   };
 }
 
-module.exports = { UMBRAL_CRITICO, DIAS_FLUJO, estadia, armarBodegas, serieOcupacionBodegas, movimientosConEstadia };
+// ================================================================
+// Administración del maestro (CC-225): qué se puede cambiar de una bodega desde la pantalla.
+// ================================================================
+const esSimulada = (b) => b?.simulado === true || b?.simulado === 1;
+
+/** Una bodega del simulador la maneja el simulador: la pantalla no la edita ni la inactiva. */
+function revisarEdicion(bodega) {
+  if (esSimulada(bodega)) return { status: 422, codigo: 'BODEGA_SIMULADA', mensaje: 'La bodega es del simulador; se administra desde el simulador' };
+  return null;
+}
+
+/** Inactivar = sacarla del tablero. Con carga adentro no: primero se despacha (el inventario solo se mueve con movimientos). */
+function revisarInactivacion(bodega) {
+  const edicion = revisarEdicion(bodega);
+  if (edicion) return edicion;
+  const inventario = C.num(bodega?.inventario_actual_ton) || 0;
+  if (inventario > 0) {
+    return { status: 422, codigo: 'BODEGA_CON_INVENTARIO', mensaje: `La bodega tiene ${inventario} t; despache la carga antes de inactivarla` };
+  }
+  return null;
+}
+
+/** Fila para la tabla de administración: ocupación sin inventar (sin capacidad no hay porcentaje) y origen del dato. */
+function filaAdmin(b) {
+  const capacidad = C.num(b.capacidad_maxima_ton);
+  const inventario = C.num(b.inventario_actual_ton) || 0;
+  return {
+    ...b,
+    activo: b.activo === true || b.activo === 1,
+    simulado: esSimulada(b),
+    ocupacion_pct: capacidad > 0 ? Math.round((inventario / capacidad) * 1000) / 10 : null,
+  };
+}
+
+module.exports = { UMBRAL_CRITICO, DIAS_FLUJO, estadia, armarBodegas, serieOcupacionBodegas, movimientosConEstadia, revisarEdicion, revisarInactivacion, filaAdmin };
