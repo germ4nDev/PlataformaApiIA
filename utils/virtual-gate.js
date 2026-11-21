@@ -296,4 +296,5 @@ function armarVirtualGate({ filas = [], infoBodegas = null, puerto, fuente = 'TC
 module.exports = {
   UMBRALES_ESPERA, VENTANA, normalizarCita, enVentana, franjaHoraria, estimarDistancia,
   citasProximas12h, distribucion10Km, estadoCitas, validacion, alertas, armarVirtualGate,
+  esFinal, esRetenida, esAtendida, esCola,   // CC-289: los usa el pronóstico del gate (mismas reglas que el tablero)
 };

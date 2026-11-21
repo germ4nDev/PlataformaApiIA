@@ -2,6 +2,7 @@
     Author: German Valencia
     Monitor ETL: ejecuta un proceso de segundo plano con candado anti-solapamiento,
     timeout, bitácora en TCL_BitacoraSincronizacion y aviso por socket.
+    CC-279: guarda en memoria el último estado de cada proceso (estadoProcesos()) para el estado de servicios del mapa.
 */
 const { BitacoraSincronizacion } = require('../models');
 const { getIO } = require('../helpers/socket.helper');
@@ -9,6 +10,22 @@ const { SALA_OPERACION } = require('../helpers/salas.helper');
 
 const TIMEOUT_POR_DEFECTO_MS = 10 * 60 * 1000; // 10 minutos
 const procesosEnCurso = new Set();
+/** CC-279 · proceso → { proceso, estado, fecha, error, fallosSeguidos, ultimoExito } (en memoria; se pierde al reiniciar). */
+const ultimos = new Map();
+
+function anotar(proceso, estado, fechaISO, error) {
+  const previo = ultimos.get(proceso) || { fallosSeguidos: 0, ultimoExito: null };
+  const ok = estado === 'EXITO';
+  ultimos.set(proceso, {
+    proceso, estado, fecha: fechaISO, error: ok ? null : String(error || '').slice(0, 200),
+    fallosSeguidos: ok ? 0 : previo.fallosSeguidos + 1, ultimoExito: ok ? fechaISO : previo.ultimoExito,
+  });
+}
+
+/** CC-279 · Último estado de cada proceso que pasó por el monitor desde que arrancó el API. */
+function estadoProcesos() {
+  return [...ultimos.values()];
+}
 
 /**
  * Normaliza lo que retorna un ETL a un número de registros procesados.
@@ -78,6 +95,7 @@ async function ejecutarConMonitoreo(nombreProceso, funcionETL, opciones = {}) {
 
   const duracion = Date.now() - inicio;
   const fechaISO = new Date().toISOString();
+  anotar(nombreProceso, estado, fechaISO, mensajeError);
   if (opciones.soloFallos && estado === 'EXITO') return resultado;
 
   try {
@@ -102,3 +120,4 @@ async function ejecutarConMonitoreo(nombreProceso, funcionETL, opciones = {}) {
 }
 
 module.exports = ejecutarConMonitoreo;
+module.exports.estadoProcesos = estadoProcesos;

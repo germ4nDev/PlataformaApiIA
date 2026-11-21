@@ -4,13 +4,13 @@
     Si la petición viene de un dominio de tipo 'aplicacion' (encabezado Origin o Referer) y trae token, el suscriptor del usuario debe
     tenerle asignada esa aplicación (paquetes activos; CC-145: el acceso lo da el suscriptor, los permisos los roles); si no, 403 DOMINIO_SIN_ACCESO. Consola, dominios sin registro y peticiones sin origen
     (app móvil, servidor a servidor, herramientas) siguen igual que hoy. Sin token no decide: cada ruta aplica su validarJWT.
-    Exentas: /api/dominios (el contexto es público), /api/auth (el login devuelve el token; la web avisa y cierra si no hay
+    Exentas: /api/salud (CC-279, latido), /api/dominios (el contexto es público), /api/auth (el login devuelve el token; la web avisa y cierra si no hay
     acceso) y /api/sesiones (para poder cerrar la sesión). Si la base falla al consultar las aplicaciones → 503 (no deja pasar a ciegas).
 */
 const jwt = require('jsonwebtoken');
 const Dominios = require('../services/dominios/dominios.service');
 
-const EXENTAS = /^\/api\/(dominios|auth|sesiones)(\/|$)/i;
+const EXENTAS = /^\/api\/(dominios|auth|sesiones|salud)(\/|$)/i;   // CC-279: /api/salud, latido de la web sin consultar la base
 
 const validarDominio = async (req, res, next) => {
   try {

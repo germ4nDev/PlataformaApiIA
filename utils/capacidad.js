@@ -41,19 +41,9 @@ const textoCapacidad = (capacidad, unidad, descripcion) => {
 
 const estadoDe = (p) => (p === null ? 'SIN DATO' : p >= C.UMBRALES_SATURACION.critico ? 'CRÍTICO' : p >= C.UMBRALES_SATURACION.atencion ? 'ATENCIÓN' : 'NORMAL');
 
-function armarCapacidad({ nodos = [], bodegas = [], ocupaciones = [], puerto = null }, ahora = new Date()) {
-  const ahoraMs = ahora.getTime();
-  const ultima = new Map();
-  for (const o of ocupaciones) {
-    const previa = ultima.get(o.id_nodo);
-    if (!previa || Date.parse(o.fecha) > Date.parse(previa.fecha)) ultima.set(o.id_nodo, o);
-  }
-  const vigente = (id) => {
-    const o = ultima.get(id);
-    return o && ahoraMs - Date.parse(o.fecha) <= VIGENCIA_FOTO_MS ? o : null;
-  };
-
-  const catalogo = [
+/** CC-292 · Catálogo único de nodos: los de TCL_CapacidadNodos y las bodegas como 'BOD-<id>' (lo usa también el pronóstico de nodos). */
+function catalogoNodos(nodos = [], bodegas = []) {
+  return [
     ...nodos.filter((n) => n.activo !== false && n.activo !== 0).map((n) => ({
       id: n.id_nodo, nombre: n.nombre, categoria: n.categoria, operador: n.operador, unidad: n.unidad_capacidad,
       capacidad: C.num(n.capacidad) || 0, descripcion: n.descripcion_capacidad,
@@ -66,6 +56,21 @@ function armarCapacidad({ nodos = [], bodegas = [], ocupaciones = [], puerto = n
       ocupacionMaestro: C.pct(C.num(b.inventario_actual_ton) || 0, C.num(b.capacidad_maxima_ton) || 0),
     })),
   ];
+}
+
+function armarCapacidad({ nodos = [], bodegas = [], ocupaciones = [], puerto = null }, ahora = new Date()) {
+  const ahoraMs = ahora.getTime();
+  const ultima = new Map();
+  for (const o of ocupaciones) {
+    const previa = ultima.get(o.id_nodo);
+    if (!previa || Date.parse(o.fecha) > Date.parse(previa.fecha)) ultima.set(o.id_nodo, o);
+  }
+  const vigente = (id) => {
+    const o = ultima.get(id);
+    return o && ahoraMs - Date.parse(o.fecha) <= VIGENCIA_FOTO_MS ? o : null;
+  };
+
+  const catalogo = catalogoNodos(nodos, bodegas);
 
   const filas = catalogo.map((n) => {
     const foto = vigente(n.id);
@@ -172,4 +177,4 @@ function serieNodo({ fotos = [], horas = 24 }, ahora = new Date()) {
   };
 }
 
-module.exports = { serieNodo, CATEGORIAS, categoriaBodega, armarCapacidad };
+module.exports = { serieNodo, CATEGORIAS, categoriaBodega, armarCapacidad, catalogoNodos };

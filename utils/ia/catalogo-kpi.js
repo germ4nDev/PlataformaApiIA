@@ -13,6 +13,8 @@
         bodegas      Bodegas.obtenerDashboardBodegasPorPuerto()
         granel | suelta | capacidad   TablerosOperacion.granel() / cargaSuelta() / capacidad()
         viales       { eventos: EventosViales vigentes del puerto }
+        gnl          GnlTelemetria.serieHistorial(puerto, 24) (CC-281: volumen por hora, presión, alarmas; hoy simulado)
+      CC-281: capacidad suma la ocupación máxima, los nodos en atención y la espera máxima (de nodos[]); GNL entra a la foto.
 */
 const { UMBRALES_SATURACION } = require('../tablero-comun');
 const { UMBRALES_ESPERA } = require('../virtual-gate');
@@ -35,6 +37,16 @@ function aNumero(v) {
 const k = (fuente, ...ruta) => ruta.reduce((o, p) => (o === null || o === undefined ? undefined : o[p]), fuente);
 const kpiTablero = (codigo) => (f) => aNumero(k(f, 'kpis', codigo, 'valor'));
 const contar = (pred) => (f) => (Array.isArray(f?.eventos) ? f.eventos.filter(pred).length : null);
+
+/** CC-281 · El máximo de un campo numérico de los nodos de capacidad (null si ninguno tiene dato). */
+const maxNodos = (campo) => (f) => {
+  const v = (Array.isArray(f?.nodos) ? f.nodos : []).map((n) => aNumero(n[campo])).filter((x) => x !== null);
+  return v.length ? Math.max(...v) : null;
+};
+/** CC-281 · GNL: solo con lecturas en la ventana (filas > 0); si no, null (dato honesto, no 0). */
+const gnl = (fn) => (f) => (f && Number(f.filas) > 0 ? fn(f) : null);
+const sumaSerie = (l) => (Array.isArray(l) ? Math.round(l.reduce((a, b) => a + (Number(b) || 0), 0) * 100) / 100 : null);
+const ultimoDe = (l) => (Array.isArray(l) ? [...l].reverse().find((x) => x !== null && x !== undefined && Number.isFinite(Number(x))) ?? null : null);
 
 /** Catálogo. Agregar un KPI aquí basta para que se fotografíe, tenga señales y entre en la foto operativa. */
 const CATALOGO_KPI = Object.freeze([
@@ -72,10 +84,19 @@ const CATALOGO_KPI = Object.freeze([
   { codigo: 'suelta.vehiculos_import', modulo: 'suelta', titulo: 'Vehículos importados', unidad: 'uds', extraer: kpiTablero('PTT_SUE_KPI_VEH_IMPORT') },
   { codigo: 'suelta.vehiculos_export', modulo: 'suelta', titulo: 'Vehículos de exportación', unidad: 'uds', extraer: kpiTablero('PTT_SUE_KPI_VEH_EXPORT') },
   { codigo: 'capacidad.nodos_criticos', modulo: 'capacidad', titulo: 'Nodos de capacidad críticos', unidad: 'nodos', extraer: kpiTablero('PTT_CAP_KPI_CRITICOS') },
+  // CC-281: lo que Capacidad ya calcula por nodo (utils/capacidad.js → nodos[]); sin nodos con dato, null
+  { codigo: 'capacidad.ocupacion_max_pct', modulo: 'capacidad', titulo: 'Ocupación del nodo más lleno', unidad: '%', umbrales: SATURACION, extraer: maxNodos('ocupacionPct') },
+  { codigo: 'capacidad.nodos_atencion', modulo: 'capacidad', titulo: 'Nodos de capacidad en atención', unidad: 'nodos', extraer: (f) => (Array.isArray(f?.nodos) ? f.nodos.filter((n) => n.estado === 'ATENCIÓN').length : null) },
+  { codigo: 'capacidad.espera_max_min', modulo: 'capacidad', titulo: 'Espera máxima en nodos', unidad: 'min', extraer: maxNodos('esperaMin') },
   // ── Corredores viales ─────────────────────────────────────────────────────────────────────────────
   { codigo: 'viales.eventos_vigentes', modulo: 'viales', titulo: 'Eventos viales vigentes', unidad: 'eventos', extraer: contar(() => true) },
   { codigo: 'viales.cierres', modulo: 'viales', titulo: 'Cierres viales', unidad: 'eventos', extraer: contar((e) => String(e.tipoEvento).toUpperCase() === 'CIERRE_VIAL') },
   { codigo: 'viales.accidentes', modulo: 'viales', titulo: 'Accidentes y varados', unidad: 'eventos', extraer: contar((e) => ['ACCIDENTE', 'VEHICULO_AVERIADO'].includes(String(e.tipoEvento).toUpperCase())) },
+  // ── GNL (CC-281; serie por hora de las últimas 24 h; sin lecturas, null) ─────────────────────────────
+  { codigo: 'gnl.volumen_24h_m3', modulo: 'gnl', titulo: 'Volumen de GNL movido (24 h)', unidad: 'm³', extraer: gnl((f) => sumaSerie(f.volumenM3)) },
+  { codigo: 'gnl.volumen_hora_m3', modulo: 'gnl', titulo: 'Volumen de GNL de la última hora', unidad: 'm³', extraer: gnl((f) => ultimoDe(f.volumenM3)) },
+  { codigo: 'gnl.presion_psi', modulo: 'gnl', titulo: 'Presión promedio de la última lectura', unidad: 'psi', extraer: gnl((f) => ultimoDe(f.presionPsi)) },
+  { codigo: 'gnl.alarmas_24h', modulo: 'gnl', titulo: 'Alarmas de GNL (24 h)', unidad: 'alarmas', extraer: gnl((f) => sumaSerie(f.alarmas)) },
 ]);
 
 const POR_CODIGO = new Map(CATALOGO_KPI.map((d) => [d.codigo, d]));

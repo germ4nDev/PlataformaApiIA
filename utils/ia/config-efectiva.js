@@ -10,12 +10,16 @@
         resumen_turno    cierre de turno y resumen diario (si está apagada o sin modelo: resumen automático)
         asistente        preguntas de los usuarios (fase 5); el puerto es el de la pregunta ('*' si no trae)
         filtro           clasificador de alcance de esas preguntas (usa los topes de su propia fila)
+        prevencion       explica las acciones de prevención de muelles (CC-276), a pedido desde el panel de pronóstico
+        por_que          «¿Por qué?» de un indicador desde su tarjeta (CC-282), a pedido
 */
 const TAREAS = Object.freeze({
   analista_turno: { nombre: 'Analista de turno', descripcion: 'Alertas tempranas y tendencias cada intervalo' },
   resumen_turno: { nombre: 'Resúmenes', descripcion: 'Cierre de turno y resumen diario para el jefe de turno' },
   asistente: { nombre: 'Asistente', descripcion: 'Preguntas de los usuarios sobre la operación, con herramientas de lectura' },
   filtro: { nombre: 'Filtro de alcance', descripcion: 'Decide si una pregunta está dentro del proceso logístico portuario' },
+  prevencion: { nombre: 'Analista de prevención', descripcion: 'Explica y ordena las acciones que evitarían saturar un muelle (cifras de Porttos)' },
+  por_que: { nombre: '¿Por qué? de los indicadores', descripcion: 'Explica el valor de un indicador con las pestañas que lo mueven (a pedido, desde la tarjeta)' },
 });
 const CODIGOS_TAREA = Object.keys(TAREAS);
 

@@ -9,9 +9,11 @@ const { PROMPT_ANALISTA } = require('./analista');
 const { PROMPT_RESUMEN } = require('./resumen');
 const { PROMPT_ASISTENTE } = require('./asistente');
 const { PROMPT_FILTRO } = require('./alcance');
+const { PROMPT_PREVENCION } = require('./prevencion');
+const { PROMPT_POR_QUE } = require('./por-que');
 
 /** Prompts incorporados por tarea (versión del código). */
-const INCORPORADOS = Object.freeze({ analista_turno: PROMPT_ANALISTA, resumen_turno: PROMPT_RESUMEN, asistente: PROMPT_ASISTENTE, filtro: PROMPT_FILTRO });
+const INCORPORADOS = Object.freeze({ analista_turno: PROMPT_ANALISTA, resumen_turno: PROMPT_RESUMEN, asistente: PROMPT_ASISTENTE, filtro: PROMPT_FILTRO, prevencion: PROMPT_PREVENCION, por_que: PROMPT_POR_QUE });
 
 /** @returns {object} prompt listo para el Cerebro: { codigoTarea, version, idPrompt, origen, modelo?, temperatura, maxTokens, sistema, herramienta } */
 function desdeFila(fila, incorporado) {

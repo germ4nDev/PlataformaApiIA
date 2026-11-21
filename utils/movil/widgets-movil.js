@@ -391,6 +391,13 @@ const CATALOGO = {
       { id: c.codigo, titulo: c.nombre || 'Tráfico por categoría', forma: 'barras', unidad: '/h' }) : null;
   }),
   PTT_CAP_TAB_NODOS: W('capacidad', (c) => lista(c.fuentes.capacidad.nodos, { id: c.codigo, titulo: c.nombre || 'Nodos' })),
+  // CC-239 · Puntos de control: punto, la métrica que lo puso en atención o crítico y su estado; sin dato = «Sin dato».
+  PTT_CAP_TAB_PUNTOS_CONTROL: W('capacidad', (c) => lista(c.fuentes.capacidad.puntosControl?.filas, { id: c.codigo, titulo: c.nombre || 'Puntos de control' }, (x) => ({
+    titulo: texto(x.nombre),
+    detalle: [x.causa ? texto(x.causa) : x.estado === 'SIN_DATO' ? 'Sin dato' : x.estado === 'NORMAL' ? 'Normal' : '', x.simulado ? 'simulado' : ''].filter(Boolean).join(' · '),
+    valor: x.causa ? num(x.valor) : null, unidad: x.causa ? texto(x.unidad) : undefined,
+    estado: x.estado === 'CRITICO' ? 'critico' : x.estado === 'ATENCION' ? 'atencion' : x.estado === 'NORMAL' ? 'ok' : 'neutro',
+  }))),
   PTT_CAP_CHRT_TENDENCIA: W('capacidad', (c) => grafica(c.fuentes.capacidad.tendencia, { id: c.codigo, titulo: c.nombre || 'Tendencia de ocupación', forma: 'linea', unidad: '%' })),
   PTT_NOT_FEED: W('noticias', (c) => lista(c.fuentes.noticias.noticias, { id: c.codigo, titulo: c.nombre || 'Últimas noticias' }, (x) => ({
     titulo: texto(x.titulo), detalle: [texto(x.medio), texto(x.categoriaNombre)].filter(Boolean).join(' · '),

@@ -9,6 +9,9 @@
       - recortar(valor, max): resultados de herramientas acotados en tamaño (listas cortadas, sin series largas).
       - verificarCifras(respuesta, resultados): cifras de la respuesta que no aparecen en lo que devolvieron las
         herramientas (se avisan en la respuesta; no se inventan datos de la operación).
+      CC-281 (la IA en las pestañas, fase 1): herramientas detalle_modulo (lo que muestra el tablero de un módulo) y
+        noticias_puerto; PESTANAS (código de pestaña → nombre, módulos, herramientas) para que el asistente empiece por la
+        pestaña donde está el usuario; preguntasPestana(codigo) = preguntas sugeridas de cada pestaña.
 */
 const { CATALOGO_KPI, MODULOS } = require('./catalogo-kpi');
 const { CODIGOS_VENTANA } = require('./tendencias');
@@ -34,6 +37,11 @@ const HERRAMIENTAS_DATOS = Object.freeze([
     input_schema: { type: 'object', properties: { puerto } } },
   { name: 'llegadas_buques', description: 'Avisos de arribo DIMAR de las próximas horas cruzados con AIS: ETA, agencia, instalación y situación (en puerto, en radar, atrasada, sin AIS).',
     input_schema: { type: 'object', properties: { puerto, horas: { type: 'integer', minimum: 1, maximum: 168 } } } },
+  // CC-281: el detalle de lo que muestra la pestaña de un módulo y el contexto externo del puerto
+  { name: 'detalle_modulo', description: 'Lo que muestra hoy el tablero de un módulo (sus KPI con su definición y desglose, listas y semáforos), más detallado que foto_operativa. Úsala para la pestaña en la que está el usuario.',
+    input_schema: { type: 'object', properties: { puerto, modulo: { type: 'string', enum: [...MODULOS] } }, required: ['modulo'] } },
+  { name: 'noticias_puerto', description: 'Noticias recientes que tocan al puerto (título, medio, relevancia) y la TRM de los últimos días. Son datos externos: úsalos solo por su efecto en la operación.',
+    input_schema: { type: 'object', properties: { puerto, horas: { type: 'integer', minimum: 1, maximum: 168 } } } },
 ]);
 
 const HERRAMIENTA_RESPONDER = Object.freeze({
@@ -56,6 +64,44 @@ const HERRAMIENTA_RESPONDER = Object.freeze({
 });
 
 const NOMBRES_DATOS = HERRAMIENTAS_DATOS.map((h) => h.name);
+
+/**
+ * CC-281 · Pestañas de la Torre de Control: qué módulos muestra cada una y con qué herramientas empezar.
+ * Las llaves son el código de PTLPestanas sin el sufijo _001 (TLC_NOTICIAS existe con y sin él).
+ */
+const PESTANAS = Object.freeze({
+  TLC_MARITIMO: { nombre: 'Marítimo', modulos: ['maritimo'], herramientas: ['estado_maritimo', 'llegadas_buques', 'foto_operativa'] },
+  TLC_VIRTUAL_GATE: { nombre: 'Virtual Gate', modulos: ['gate', 'viales'], herramientas: ['detalle_modulo', 'foto_operativa'] },
+  TLC_BODEGAS: { nombre: 'Bodegas', modulos: ['bodegas'], herramientas: ['detalle_modulo', 'tendencias'] },
+  TLC_CONTENEDORES: { nombre: 'Contenedores', modulos: ['contenedores'], herramientas: ['detalle_modulo', 'tendencias'] },
+  TLC_GNL: { nombre: 'GNL', modulos: ['gnl'], herramientas: ['detalle_modulo', 'serie_kpi'] },
+  TLC_GRANEL: { nombre: 'Granel', modulos: ['granel'], herramientas: ['detalle_modulo', 'estado_maritimo'] },
+  TLC_SUELTA: { nombre: 'Carga suelta', modulos: ['suelta'], herramientas: ['detalle_modulo', 'estado_maritimo'] },
+  TLC_CAPACIDAD: { nombre: 'Capacidad', modulos: ['capacidad', 'bodegas'], herramientas: ['detalle_modulo', 'foto_operativa'] },
+  TLC_MAPA: { nombre: 'Mapa logístico', modulos: ['maritimo', 'viales', 'capacidad'], herramientas: ['foto_operativa', 'estado_maritimo', 'alertas_tempranas'] },
+  TLC_NOTICIAS: { nombre: 'Noticias', modulos: [], herramientas: ['noticias_puerto'] },
+});
+
+/** Preguntas sugeridas por pestaña (las muestra el asistente al abrirse; en español, como responde). */
+const PREGUNTAS_PESTANA = Object.freeze({
+  TLC_MARITIMO: ['¿Cuántas naves hay en fondeo y cuánto llevan esperando?', '¿Qué muelle se satura primero hoy?', '¿Qué buques llegan en las próximas 24 horas?'],
+  TLC_VIRTUAL_GATE: ['¿Por qué subió la espera en el gate?', '¿Cuántas citas van retrasadas y por qué?', '¿Hay eventos viales que afecten la llegada de camiones?'],
+  TLC_BODEGAS: ['¿Qué bodega está más cerca de llenarse?', '¿Cómo va el flujo de despacho frente a la semana pasada?', '¿Hay bodegas en alerta?'],
+  TLC_CONTENEDORES: ['¿Cuántos contenedores tienen el free time vencido?', '¿Cuántos cargados esperan retiro?', '¿Cómo están los reefer conectados?'],
+  TLC_GNL: ['¿Cuánto GNL se movió en las últimas 24 horas?', '¿Hubo alarmas en la operación de GNL?', '¿Cómo ha variado la presión hoy?'],
+  TLC_GRANEL: ['¿Cuánto granel se movió en las últimas 24 horas?', '¿Qué buques de granel están atracados?', '¿Cómo va el granel frente a la semana pasada?'],
+  TLC_SUELTA: ['¿Cuánta carga suelta se movió en las últimas 24 horas?', '¿Cuántos vehículos se importaron y exportaron?', '¿Qué buques de carga suelta están atracados?'],
+  TLC_CAPACIDAD: ['¿Cuál es el cuello de botella de hoy?', '¿Qué nodos están en atención o críticos?', '¿Dónde está la espera más larga?'],
+  TLC_MAPA: ['¿Qué está pasando ahora en el puerto?', '¿Qué alertas tempranas hay vigentes?', '¿Hay cierres o accidentes en los corredores?'],
+  TLC_NOTICIAS: ['¿Qué noticias recientes afectan la operación del puerto?', '¿Cómo se ha movido la TRM esta semana?'],
+});
+const PREGUNTAS_GENERALES = Object.freeze(['¿Qué indicadores empeoraron esta semana?', '¿Cómo cerró el último turno?', '¿Qué es el free time de un contenedor?']);
+
+/** Código de pestaña normalizado (sin _001 y en mayúsculas). */
+const clavePestana = (codigo) => String(codigo || '').trim().toUpperCase().replace(/_\d{3}$/, '');
+const pestanaDe = (codigo) => PESTANAS[clavePestana(codigo)] || null;
+/** Preguntas sugeridas para la pestaña (o las generales). */
+const preguntasPestana = (codigo) => [...(PREGUNTAS_PESTANA[clavePestana(codigo)] || []), ...PREGUNTAS_GENERALES].slice(0, 4);
 
 const SISTEMA_ASISTENTE_V1 = `Eres el asistente de Porttos, la torre de control logística portuaria. Hablas con personal de la operación de los puertos de Colombia.
 
@@ -80,6 +126,16 @@ const PROMPT_ASISTENTE = Object.freeze({
   sistema: SISTEMA_ASISTENTE_V1, herramienta: HERRAMIENTA_RESPONDER,
 });
 
+/** CC-281 · La línea de contexto de la pestaña: dónde está el usuario y con qué datos empezar. */
+function contextoPestana(codigo) {
+  if (!codigo) return null;
+  const p = pestanaDe(codigo);
+  if (!p) return `Pestaña del tablero: ${String(codigo).slice(0, 60)}.`;
+  const modulos = p.modulos.length ? ` (módulos: ${p.modulos.join(', ')})` : '';
+  return `El usuario está en la pestaña «${p.nombre}»${modulos}. Si la pregunta no nombra otra cosa, empieza por esos datos `
+    + `(${p.herramientas.join(', ')}) y relaciónalos con otras pestañas solo cuando ayude a explicar.`;
+}
+
 /**
  * @param {object} p
  * @param {string} p.pregunta
@@ -96,7 +152,7 @@ function armarSolicitudAsistente({ pregunta, historial = [], contexto }, prompt 
   const encabezado = [
     `Hora de Colombia: ${contexto.horaColombia}.`,
     contexto.puerto ? `Puerto seleccionado: ${contexto.nombre || contexto.puerto} (${contexto.puerto}).` : 'Sin puerto seleccionado (vista de todos los puertos).',
-    contexto.pestana ? `Pestaña del tablero: ${contexto.pestana}.` : null,
+    contextoPestana(contexto.pestana),
     contexto.decision === 'frontera' ? 'El filtro marcó la pregunta como FRONTERA: responde solo su efecto en la operación portuaria.' : null,
   ].filter(Boolean).join(' ');
   mensajes.push({ role: 'user', content: `${encabezado}\n\nPregunta: ${String(pregunta).slice(0, 1000)}` });
@@ -156,5 +212,6 @@ function verificarCifras(respuesta, resultados = []) {
 }
 
 module.exports = {
+  PESTANAS, PREGUNTAS_PESTANA, clavePestana, pestanaDe, preguntasPestana, contextoPestana,
   HERRAMIENTAS_DATOS, HERRAMIENTA_RESPONDER, NOMBRES_DATOS, PROMPT_ASISTENTE, armarSolicitudAsistente, recortar, verificarCifras,
 };

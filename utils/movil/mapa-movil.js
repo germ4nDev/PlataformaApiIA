@@ -134,4 +134,25 @@ function armarMapa({ puerto, cajaMaritima = null, cajaTerrestre = null, naves, f
   };
 }
 
-module.exports = { MAX_NAVES, MAX_CAMIONES, MAX_EVENTOS, coordenadaValida, estadoNave, navesMovil, camionesMovil, eventosMovil, senalMovil, armarMapa };
+// ── Puntos de control (CC-242) ──────────────────────────────────────────────
+const MAX_PUNTOS_CONTROL = 300;
+const ESTADOS_PUNTO = ['NORMAL', 'ATENCION', 'CRITICO', 'SIN_DATO'];
+
+/**
+ * Capa de puntos de control para el teléfono a partir del GeoJSON del motor (puntos-control-motor.geojsonPuerto): solo polígonos, estado
+ * válido (si no, SIN_DATO) y las métricas como texto JSON (MapLibre no guarda arreglos en las propiedades). Sin capa = colección vacía.
+ */
+function puntosControlMovil(fc) {
+  const features = (fc?.features || []).filter((f) => ['Polygon', 'MultiPolygon'].includes(f?.geometry?.type)).slice(0, MAX_PUNTOS_CONTROL).map((f) => {
+    const p = f.properties || {};
+    let metricas = typeof p.metricas === 'string' ? p.metricas : JSON.stringify(p.metricas || []);
+    try { metricas = JSON.stringify((JSON.parse(metricas) || []).slice(0, 12)); } catch { metricas = '[]'; }
+    return {
+      type: 'Feature', geometry: f.geometry,
+      properties: { id: String(p.id ?? ''), nombre: texto(p.nombre, 120) || '—', tipo: texto(p.tipo), estado: ESTADOS_PUNTO.includes(p.estado) ? p.estado : 'SIN_DATO', simulado: !!p.simulado, metricas },
+    };
+  });
+  return coleccion(features);
+}
+
+module.exports = { MAX_PUNTOS_CONTROL, puntosControlMovil, MAX_NAVES, MAX_CAMIONES, MAX_EVENTOS, coordenadaValida, estadoNave, navesMovil, camionesMovil, eventosMovil, senalMovil, armarMapa };

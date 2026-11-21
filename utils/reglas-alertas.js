@@ -2,7 +2,7 @@
     Author: German Valencia
     Pattern: PORTTOS Núcleo puro (AD-16) - Reglas de alertas del mapa
     Description: Decide QUÉ alertar a partir de datos ya leídos (flota, peajes, eventos viales, geocercas,
-      ocupación, AIS). Sin red, sin base, sin socket: el servicio alertas-mapa orquesta, guarda y emite.
+      ocupación, AIS, puntos de control). Sin red, sin base, sin socket: el servicio alertas-mapa orquesta, guarda y emite.
       Niveles (colores de toastr): info = azul (movimiento normal), warning = amarillo (atención),
       error = rojo (actuar).
       CATALOGO_REGLAS es la fuente única de las reglas, sus umbrales y sus valores por defecto; la tabla
@@ -15,10 +15,11 @@ const RADIO_TIERRA = 6371008.8;
 /**
  * Catálogo de reglas. umbrales[i] corresponde a la columna umbral_{i+1} de TCL_ConfigAlertas.
  * porPuerto: sus umbrales se pueden ajustar por puerto (las de flota se evalúan antes de saber el puerto).
+ * escala: false = solo produce alertas azules, que nunca escalan (CC-267: la pantalla no muestra el plazo de escalamiento).
  */
 const CATALOGO_REGLAS = Object.freeze({
   peaje: {
-    nombre: 'Camión pasa por un peaje', niveles: 'Azul', enfriamientoMin: 10, porPuerto: false,
+    nombre: 'Camión pasa por un peaje', niveles: 'Azul', enfriamientoMin: 10, porPuerto: false, escala: false,
     umbrales: [{ etiqueta: 'Radio del peaje (m)', defecto: 300 }, { etiqueta: 'Salto máximo entre posiciones (m)', defecto: 20000 }],
   },
   geocerca: { nombre: 'Camión entra a una geocerca', niveles: 'Azul · rojo si es zona crítica', enfriamientoMin: 15, porPuerto: false, umbrales: [] },
@@ -30,9 +31,10 @@ const CATALOGO_REGLAS = Object.freeze({
     nombre: 'Ocupación de muelles por terminal', niveles: 'Amarillo · rojo', enfriamientoMin: 30, porPuerto: true,
     umbrales: [{ etiqueta: 'Amarillo desde (%)', defecto: 80 }, { etiqueta: 'Rojo desde (%)', defecto: 95 }, { etiqueta: 'Rearme por debajo de (%)', defecto: 75 }],
   },
-  faro: { nombre: 'Nave entra a la zona de un faro', niveles: 'Azul', enfriamientoMin: 30, porPuerto: true, umbrales: [] },
-  atraque: { nombre: 'Nave atraca', niveles: 'Azul', enfriamientoMin: 60, porPuerto: true, umbrales: [] },
-  zarpe: { nombre: 'Nave desatraca', niveles: 'Azul', enfriamientoMin: 60, porPuerto: true, umbrales: [] },
+  faro: { nombre: 'Nave entra a una zona vigilada del corredor',   // CC-280: los faros son elementos del corredor
+    niveles: 'Azul', enfriamientoMin: 30, porPuerto: true, escala: false, umbrales: [] },
+  atraque: { nombre: 'Nave atraca', niveles: 'Azul', enfriamientoMin: 60, porPuerto: true, escala: false, umbrales: [] },
+  zarpe: { nombre: 'Nave desatraca', niveles: 'Azul', enfriamientoMin: 60, porPuerto: true, escala: false, umbrales: [] },
   ia_temprana: {
     nombre: 'Alerta temprana del analista IA', niveles: 'Rojo crítica · amarillo atención · azul informativa', enfriamientoMin: 30, porPuerto: true,
     umbrales: [],
@@ -44,6 +46,31 @@ const CATALOGO_REGLAS = Object.freeze({
   fondeo: {
     nombre: 'Nave fondeada mucho tiempo', niveles: 'Amarillo · rojo', enfriamientoMin: 360, porPuerto: true,
     umbrales: [{ etiqueta: 'Amarillo desde (horas)', defecto: 12 }, { etiqueta: 'Rojo desde (horas)', defecto: 24 }],
+  },
+  // CC-271 · Capa de prevención: el pronóstico de ocupación (apps/porttos/utils/pronostico-muelles) dice cuándo un terminal llegaría al
+  // umbral crítico de «ocupacion»; aquí cuánto antes se avisa en rojo y en amarillo. Azul = solo en el escenario alto (estadía p90).
+  pronostico_muelles: {
+    nombre: 'Pronóstico: muelles se saturarían', niveles: 'Rojo si falta poco · amarillo · azul si solo en el escenario alto', enfriamientoMin: 120,
+    porPuerto: true,
+    umbrales: [{ etiqueta: 'Rojo si faltan (horas) o menos', defecto: 2 }, { etiqueta: 'Amarillo si faltan (horas) o menos', defecto: 6 }],
+  },
+  // CC-290 · Prevención del gate: el pronóstico de cola (apps/porttos/utils/pronostico-gate) dice en cuántas horas la espera de un
+  // terminal llegaría a crítico (umbral de espera del tablero, 45 min); aquí cuánto antes se avisa en rojo y en amarillo.
+  pronostico_gate: {
+    nombre: 'Pronóstico: espera crítica en el gate', niveles: 'Rojo si falta poco · amarillo', enfriamientoMin: 120, porPuerto: true,
+    umbrales: [{ etiqueta: 'Rojo si faltan (horas) o menos', defecto: 1 }, { etiqueta: 'Amarillo si faltan (horas) o menos', defecto: 3 }],
+  },
+  // CC-293 · Prevención de patios y bodegas: el pronóstico de ocupación (apps/porttos/utils/pronostico-nodos) dice en cuántas horas un
+  // patio, depot o bodega llegaría a crítico (85 %); aquí cuánto antes se avisa. Azul = solo en el escenario alto.
+  pronostico_nodos: {
+    nombre: 'Pronóstico: patio o bodega se saturaría', niveles: 'Rojo si falta poco · amarillo · azul si solo en el escenario alto', enfriamientoMin: 180,
+    porPuerto: true,
+    umbrales: [{ etiqueta: 'Rojo si faltan (horas) o menos', defecto: 4 }, { etiqueta: 'Amarillo si faltan (horas) o menos', defecto: 12 }],
+  },
+  // CC-238 · Los umbrales son los de cada infraestructura (pestaña «Métricas que se miden»); aquí solo el encendido y el enfriamiento.
+  punto_control: {
+    nombre: 'Punto de control en atención o crítico', niveles: 'Amarillo atención · rojo crítico', enfriamientoMin: 30, porPuerto: true,
+    umbrales: [],
   },
 });
 
@@ -92,6 +119,7 @@ const defecto = (regla, i) => CATALOGO_REGLAS[regla].umbrales[i].defecto;
 function crearAlerta(a, ahora = new Date()) {
   const entidad = a.entidad || '';
   return {
+    ...(a.puertos ? { puertos: a.puertos } : {}),
     id: `${a.categoria}:${entidad}:${ahora.getTime()}`,
     nivel: a.nivel,
     categoria: a.categoria,
@@ -379,6 +407,40 @@ function alertasFondeo(puerto, cola, ahora = new Date(), opc = {}) {
   });
 }
 
+// ── Puntos de control (CC-238) ───────────────────────────────────────────────
+
+const GRAVEDAD_PC = { SIN_DATO: 0, NORMAL: 1, ATENCION: 2, CRITICO: 3 };
+const numeroTexto = (v) => (Number.isFinite(Number(v)) ? String(Math.round(Number(v) * 100) / 100).replace('.', ',') : '—');
+
+/**
+ * Avisa cuando una métrica con «avisar» SUBE a atención o a crítico respecto del último estado conocido (la última lectura con dato:
+ * SIN_DATO no cuenta, ni para avisar ni para rearmar). Bajar o quedarse igual no avisa; volver a normal rearma.
+ * @param {Array<{id_infraestructura, id_metrica, estado, valor, unidad, umbral_amarillo, umbral_rojo, sentido, alerta,
+ *                 nombre_infraestructura, nombre_metrica, id_puerto, coordenadas, simulado}>} lecturas
+ * @param {Map<string,string>} previos  `${id_infraestructura}|${id_metrica}` → último estado con dato
+ */
+function alertasPuntosControl(lecturas = [], previos = new Map(), ahora = new Date()) {
+  const alertas = [];
+  lecturas.forEach((l) => {
+    if (!(l.alerta === true || l.alerta === 1) || !['ATENCION', 'CRITICO'].includes(l.estado)) return;
+    const antes = previos.get(`${l.id_infraestructura}|${l.id_metrica}`) || 'NORMAL';
+    if ((GRAVEDAD_PC[l.estado] || 0) <= (GRAVEDAD_PC[antes] || 0)) return;
+    const rojo = l.estado === 'CRITICO';
+    const umbral = rojo ? l.umbral_rojo : l.umbral_amarillo;
+    const unidad = l.unidad ? ` ${l.unidad}` : '';
+    const relacion = l.sentido === 'MENOR_PEOR' ? 'hasta' : 'desde';
+    const valor = `${numeroTexto(l.valor)}${unidad}`;
+    alertas.push(crearAlerta({
+      nivel: rojo ? 'error' : 'warning', categoria: 'punto_control', entidad: `${l.id_infraestructura}|${l.id_metrica}|${l.estado}`,
+      titulo: `${rojo ? '🔴' : '🟡'} ${l.nombre_infraestructura || 'Punto de control'}: ${l.nombre_metrica || 'métrica'} ${rojo ? 'en crítico' : 'en atención'}`,
+      mensaje: umbral === null || umbral === undefined ? valor : `${valor} · ${rojo ? 'rojo' : 'amarillo'} ${relacion} ${numeroTexto(umbral)}${unidad}`,
+      coordenadas: l.coordenadas || null, simulado: !!l.simulado,
+      ...(l.id_puerto ? { puertos: [l.id_puerto] } : {}),
+    }, ahora));
+  });
+  return alertas;
+}
+
 // ── Antirruido ───────────────────────────────────────────────────────────────
 
 /** Deja pasar una alerta por (categoría, entidad) cada `tiempos[categoría]` ms. */
@@ -414,6 +476,6 @@ function peajesDesdeGeoJson(fc) {
 module.exports = {
   CATALOGO_REGLAS, resolverConfig, crearAlerta,
   alertasPeajes, alertasGeocercas, alertasProximidadEventos, alertasOcupacion,
-  alertasNavesFaros, alertasCambiosEstado, alertasFondeo, alertasEventosViales, alertasIA,
+  alertasNavesFaros, alertasCambiosEstado, alertasFondeo, alertasEventosViales, alertasIA, alertasPuntosControl,
   Enfriamiento, peajesDesdeGeoJson, distanciaATramo, metros,
 };

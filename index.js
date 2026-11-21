@@ -110,13 +110,14 @@ app.use(validarDominio);
 // === RUTAS DE LA API ===
 // ================================================
 // PLATAFORMA
+app.use('/api/salud', require('./routes/salud.routes')); // CC-279: latido de la web (sin sesión): API viva y base de datos
 app.use('/api/dashboard', require("./routes/dashboard.routes"));
 app.use("/api/actividades", require("./routes/actividades.routes"));
 app.use("/api/actividades-roles", require("./routes/actividades-roles.routes"));
 app.use("/api/tipos-actividad", require("./routes/tipos-actividad.routes"));
 app.use("/api/auth", require("./routes/auth.routes"));
 app.use("/api/upload", require("./routes/uploads.routes"));
-app.use("/api/sliders", require("./routes/sliders-inicio"));
+app.use("/api/sliders", require("./routes/sliders-inicio.routes"));
 app.use("/api/colores", require("./routes/colores-settings.routes"));
 app.use("/api/tipos-item", require("./routes/tipos-item.routes"));
 app.use("/api/items", require("./routes/items.routes"));
