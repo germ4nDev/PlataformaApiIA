@@ -49,6 +49,15 @@ function respuestaSimulada(herramienta, texto) {
   const fila = (titulo, valor, unidad) => {
     if (filas.length < 8) filas.push(`- **${String(titulo).slice(0, 80)}:** ${valor}${unidad ? ` ${unidad}` : ''}`);
   };
+  // CC-306 · 0) Lo que se viene (pronosticos_puerto): los riesgos con su nivel y en cuántas horas (cifras del resultado).
+  if (Array.isArray(datos?.riesgos)) {
+    const NIVEL = { critico: 'crítico', atencion: 'en atención', posible: 'posible', normal: 'normal' };
+    datos.riesgos.filter((r) => r && typeof r === 'object' && r.nivel !== 'normal').forEach((r) => {
+      const cuando = r.enHoras === 0 ? 'ahora' : `en ${r.enHoras} h${r.hora ? ` (hacia las ${r.hora})` : ''}`;
+      fila(`${r.frente} · ${r.nombre}`, `${NIVEL[r.nivel] || r.nivel} ${cuando}`);
+    });
+    if (!filas.length) fila('Riesgos en 24 h', 0);
+  }
   // 1) El tablero de un módulo: sus KPI del catálogo (los mismos de la foto).
   if (datos?.modulo && datos.datos && typeof datos.datos === 'object') {
     CATALOGO_KPI.filter((k) => k.modulo === datos.modulo).forEach((k) => {

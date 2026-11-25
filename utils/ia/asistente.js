@@ -42,6 +42,9 @@ const HERRAMIENTAS_DATOS = Object.freeze([
     input_schema: { type: 'object', properties: { puerto, modulo: { type: 'string', enum: [...MODULOS] } }, required: ['modulo'] } },
   { name: 'noticias_puerto', description: 'Noticias recientes que tocan al puerto (título, medio, relevancia) y la TRM de los últimos días. Son datos externos: úsalos solo por su efecto en la operación.',
     input_schema: { type: 'object', properties: { puerto, horas: { type: 'integer', minimum: 1, maximum: 168 } } } },
+  // CC-306: lo que se viene en las próximas 24 h en todas las pestañas (el cuello de botella que calcula Porttos)
+  { name: 'pronosticos_puerto', description: 'Lo que se complica en las próximas 24 h en el puerto, juntando los pronósticos de muelles, patios y bodegas, gate, granel y RoRo, y GNL: el cuello de botella, cuántos riesgos hay por nivel y la lista de riesgos (frente, nombre, nivel, en cuántas horas y a qué hora). Úsala para preguntas sobre qué viene, qué se va a complicar o dónde actuar primero.',
+    input_schema: { type: 'object', properties: { puerto } } },
 ]);
 
 const HERRAMIENTA_RESPONDER = Object.freeze({
@@ -67,7 +70,7 @@ const NOMBRES_DATOS = HERRAMIENTAS_DATOS.map((h) => h.name);
 
 /**
  * CC-281 · Pestañas de la Torre de Control: qué módulos muestra cada una y con qué herramientas empezar.
- * Las llaves son el código de PTLPestanas sin el sufijo _001 (TLC_NOTICIAS existe con y sin él).
+ * Las llaves son el código de PTL_Pestanas sin el sufijo _001 (TLC_NOTICIAS existe con y sin él).
  */
 const PESTANAS = Object.freeze({
   TLC_MARITIMO: { nombre: 'Marítimo', modulos: ['maritimo'], herramientas: ['estado_maritimo', 'llegadas_buques', 'foto_operativa'] },
@@ -80,6 +83,8 @@ const PESTANAS = Object.freeze({
   TLC_CAPACIDAD: { nombre: 'Capacidad', modulos: ['capacidad', 'bodegas'], herramientas: ['detalle_modulo', 'foto_operativa'] },
   TLC_MAPA: { nombre: 'Mapa logístico', modulos: ['maritimo', 'viales', 'capacidad'], herramientas: ['foto_operativa', 'estado_maritimo', 'alertas_tempranas'] },
   TLC_NOTICIAS: { nombre: 'Noticias', modulos: [], herramientas: ['noticias_puerto'] },
+  // CC-306: el panel Cerebro IA del encabezado (no es una pestaña de PTL_Pestanas): lo que se viene en todas
+  TLC_CEREBRO: { nombre: 'Cerebro IA', modulos: [], herramientas: ['pronosticos_puerto', 'foto_operativa'] },
 });
 
 /** Preguntas sugeridas por pestaña (las muestra el asistente al abrirse; en español, como responde). */
@@ -94,6 +99,7 @@ const PREGUNTAS_PESTANA = Object.freeze({
   TLC_CAPACIDAD: ['¿Cuál es el cuello de botella de hoy?', '¿Qué nodos están en atención o críticos?', '¿Dónde está la espera más larga?'],
   TLC_MAPA: ['¿Qué está pasando ahora en el puerto?', '¿Qué alertas tempranas hay vigentes?', '¿Hay cierres o accidentes en los corredores?'],
   TLC_NOTICIAS: ['¿Qué noticias recientes afectan la operación del puerto?', '¿Cómo se ha movido la TRM esta semana?'],
+  TLC_CEREBRO: ['¿Qué se me va a complicar hoy?', '¿Dónde actúo primero?', '¿Qué riesgos críticos vienen en las próximas horas?'],
 });
 const PREGUNTAS_GENERALES = Object.freeze(['¿Qué indicadores empeoraron esta semana?', '¿Cómo cerró el último turno?', '¿Qué es el free time de un contenedor?']);
 

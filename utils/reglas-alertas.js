@@ -67,6 +67,20 @@ const CATALOGO_REGLAS = Object.freeze({
     porPuerto: true,
     umbrales: [{ etiqueta: 'Rojo si faltan (horas) o menos', defecto: 4 }, { etiqueta: 'Amarillo si faltan (horas) o menos', defecto: 12 }],
   },
+  // CC-296 · Prevención de Granel y Carga suelta: el pronóstico de fin de las operaciones (apps/porttos/utils/pronostico-operaciones)
+  // dice cuánto se pasaría cada operación de su plan y si invadiría el siguiente atraque del muelle (rojo siempre). Azul = solo al ritmo lento.
+  pronostico_operaciones: {
+    nombre: 'Pronóstico: operación de granel o RoRo terminaría tarde', niveles: 'Rojo si choca con el siguiente atraque o se pasa mucho · amarillo · azul si solo al ritmo lento',
+    enfriamientoMin: 120, porPuerto: true,
+    umbrales: [{ etiqueta: 'Rojo si se pasa del plan (horas) o más', defecto: 4 }, { etiqueta: 'Amarillo si se pasa del plan (horas) o más', defecto: 1 }],
+  },
+  // CC-302 · Prevención de GNL: el pronóstico del inventario (apps/porttos/utils/pronostico-gnl) dice en cuántas horas bajaría del
+  // mínimo operativo (15 %) o una descarga no cabría (95 %); aquí cuánto antes se avisa. Azul = solo si el consumo sube como en sus picos.
+  pronostico_gnl: {
+    nombre: 'Pronóstico: inventario de GNL sin margen', niveles: 'Rojo si falta poco · amarillo · azul si solo con más consumo', enfriamientoMin: 240,
+    porPuerto: true,
+    umbrales: [{ etiqueta: 'Rojo si faltan (horas) o menos', defecto: 12 }, { etiqueta: 'Amarillo si faltan (horas) o menos', defecto: 36 }],
+  },
   // CC-238 · Los umbrales son los de cada infraestructura (pestaña «Métricas que se miden»); aquí solo el encendido y el enfriamiento.
   punto_control: {
     nombre: 'Punto de control en atención o crítico', niveles: 'Amarillo atención · rojo crítico', enfriamientoMin: 30, porPuerto: true,
