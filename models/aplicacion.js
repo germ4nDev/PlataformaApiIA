@@ -87,13 +87,10 @@ const AplicacionModel = (sequelize) => {
         aplicacionId: {
             type: DataTypes.INTEGER,
             autoIncrement: true,
-            // 🟢 Nota: No le pongas primaryKey: true aquí si 'codigoAplicacion' es tu verdadera PK
-            // Si la PK en SQL Server es aplicacionId, ponla aquí. 
-            // Si ambas conforman una PK compuesta o codigoAplicacion es la real, mantenlo.
             allowNull: false
         },
         codigoAplicacion: {
-            type: DataTypes.STRING(200), // 🟢 Corregido a 200 según DB
+            type: DataTypes.STRING(200),
             primaryKey: true,
             allowNull: false
         },
