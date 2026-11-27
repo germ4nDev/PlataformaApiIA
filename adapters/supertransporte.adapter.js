@@ -26,7 +26,8 @@ async function traficoPorZona(zona, limite = 4000) {
 async function traficoDesdeAnio(zona, desdeAnio, limite = 50000) {
   const { data } = await axios.get(URL, {
     headers: cabeceras(),
-    params: { zona_portuaria: limpiarZona(zona), $where: `anno_vigencia >= '${Number(desdeAnio) || 0}'`, $limit: limite },
+    // CC-311: lo más reciente primero; si se llega al tope, lo que falta es lo más viejo (el servicio avisa)
+    params: { zona_portuaria: limpiarZona(zona), $where: `anno_vigencia >= '${Number(desdeAnio) || 0}'`, $order: 'anno_vigencia DESC, mes_vigencia DESC', $limit: limite },
   });
   return data;
 }

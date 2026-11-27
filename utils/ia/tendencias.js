@@ -40,6 +40,7 @@ const COBERTURA_MINIMA = 0.3;       // fracción de tramos con dato para no deci
 const DESEABLE = Object.freeze({
   'maritimo.naves_fondeadas': 'bajo', 'maritimo.espera_fondeo_prom_min': 'bajo', 'maritimo.espera_fondeo_max_min': 'bajo',
   'maritimo.naves_criticas': 'bajo',
+  'carga.contenedores_t_dia': 'alto', 'carga.granel_t_dia': 'alto', 'carga.general_t_dia': 'alto',   // CC-314: más carga movida = mejor
   'gate.en_cola': 'bajo', 'gate.retrasadas': 'bajo', 'gate.retenidos': 'bajo', 'gate.alertas_criticas': 'bajo',
   'gate.cumplimiento_pct': 'alto', 'gate.aprobacion_pct': 'alto',
   'contenedores.cargados_pendientes': 'bajo', 'contenedores.vacios_devolver': 'bajo', 'contenedores.free_time_vencido': 'bajo',
@@ -47,6 +48,7 @@ const DESEABLE = Object.freeze({
   'granel.agricola_t': 'alto', 'granel.mineral_t': 'alto', 'granel.liquido_t': 'alto', 'suelta.breakbulk_t': 'alto',
   'capacidad.nodos_criticos': 'bajo',
   'viales.eventos_vigentes': 'bajo', 'viales.cierres': 'bajo', 'viales.accidentes': 'bajo',
+  'noticias.restricciones_viales_hoy': 'bajo', 'noticias.alertas_clima': 'bajo',   // CC-320
 });
 
 const deseableDe = (codigo) => DESEABLE[codigo] || (umbralesDe(codigo)?.sentido === 'alto' ? 'bajo' : umbralesDe(codigo)?.sentido === 'bajo' ? 'alto' : null);

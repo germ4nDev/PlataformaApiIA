@@ -17,6 +17,15 @@ const { numerosEn } = require('./prevencion');
 /** Widget de la tarjeta → KPI del catálogo (solo los que existen en la foto). */
 const WIDGET_KPI = Object.freeze({
   PTT_MAE_KPI_FONDEO: 'maritimo.naves_fondeadas', PTT_MAE_KPI_MUELLE: 'maritimo.ocupacion_muelles_pct',
+  // CC-314 (regla 30, fase 2): el resto de tarjetas de Marítimo (Saturación de bodegas es el mismo KPI de la pestaña Bodegas)
+  PTT_MAE_KPI_ESPERADOS: 'maritimo.naves_esperadas_72h', PTT_MAE_KPI_CONTENEDORES: 'carga.contenedores_t_dia',
+  PTT_MAE_KPI_GRANEL: 'carga.granel_t_dia', PTT_MAE_KPI_CARGA_SUELTA: 'carga.general_t_dia', PTT_MAE_KPI_CAMIONES: 'carga.camiones_zona_portuaria',
+  PTT_MAE_KPI_RORO: 'roro.buques_vehiculos', PTT_MAE_KPI_BODEGAS: 'bodegas.ocupacion_pct',
+  // CC-315 (regla 30, fase 3): Virtual Gate
+  PTT_GATE_KPI_OP: 'gate.camiones_activos', PTT_GATE_KPI_CONT: 'gate.citas_contenedor_48h', PTT_GATE_KPI_GRANEL: 'gate.granel_t',
+  PTT_GATE_KPI_SUELTA: 'gate.suelta_t', PTT_GATE_KPI_RORO: 'gate.citas_roro_48h', PTT_GATE_KPI_BODEGAS: 'bodegas.ocupacion_pct',   // la misma ocupación ponderada de la pestaña Bodegas
+  PTT_GATE_KPI_SUB_CONT: 'gate.camiones_contenedor_activos', PTT_GATE_KPI_SUB_GRANEL: 'gate.camiones_granel_activos',
+  PTT_GATE_KPI_SUB_SUELTA: 'gate.camiones_suelta_activos', PTT_GATE_KPI_SUB_NINERAS: 'gate.camiones_roro_activos',
   PTT_BOD_KPI_OCUPACION: 'bodegas.ocupacion_pct', PTT_BOD_KPI_INVENTARIO: 'bodegas.inventario_t', PTT_BOD_KPI_DESPACHOS: 'bodegas.flujo_24h_t',
   PTT_BOD_KPI_ALERTAS: 'bodegas.en_alerta',
   PTT_CONT_KPI_CARGADOS: 'contenedores.cargados_pendientes', PTT_CONT_KPI_VACIOS: 'contenedores.vacios_devolver',
@@ -24,7 +33,18 @@ const WIDGET_KPI = Object.freeze({
   PTT_GRA_KPI_AGRICOLA: 'granel.agricola_t', PTT_GRA_KPI_MINERAL: 'granel.mineral_t', PTT_GRA_KPI_LIQUIDO: 'granel.liquido_t',
   PTT_SUE_KPI_BREAKBULK: 'suelta.breakbulk_t', PTT_SUE_KPI_VEH_IMPORT: 'suelta.vehiculos_import', PTT_SUE_KPI_VEH_EXPORT: 'suelta.vehiculos_export',
   PTT_CAP_KPI_CRITICOS: 'capacidad.nodos_criticos',
+  // CC-319 (regla 30, fase 5)
+  PTT_CAP_KPI_NODOS: 'capacidad.nodos_monitoreados', PTT_CAP_KPI_TEU: 'capacidad.capacidad_teu', PTT_CAP_KPI_TON: 'capacidad.capacidad_t',
+  PTT_GRA_KPI_EQUIPOS: 'granel.equipos_en_uso', PTT_SUE_KPI_PROYECTO: 'suelta.project_cargo_folios',
+  // CC-320 (regla 30, fase 6)
+  PTT_NOT_KPI_TRM: 'noticias.trm_cop', PTT_NOT_KPI_NOTICIAS: 'noticias.titulares_hoy', PTT_NOT_KPI_VIAS: 'noticias.restricciones_viales_hoy',
+  PTT_NOT_KPI_CLIMA: 'noticias.alertas_clima',
   PTT_GNL_KPI_PRESION: 'gnl.presion_psi', PTT_GNL_KPI_ALERTAS: 'gnl.alarmas_24h',
+  // CC-316 (regla 30, fase 4): las tarjetas que pintan el mismo dato comparten código
+  PTT_GNL_KPI_FLUJO: 'gnl.caudal_m3h', PTT_GNL_KPI_DESCARGA: 'gnl.descarga_m3h', PTT_GNL_KPI_INYECCION: 'gnl.inyeccion_m3h',
+  PTT_GNL_KPI_BOG: 'gnl.bog_kg_h', PTT_GNL_KPI_TEMP: 'gnl.temperatura_c', PTT_GNL_KPI_ODO_MMBTU: 'gnl.energia_24h_mmbtu',
+  PTT_GNL_KPI_CALIDAD: 'gnl.poder_calorifico', PTT_GNL_KPI_CALORIFICO: 'gnl.poder_calorifico',
+  PTT_GNL_KPI_VOLUMEN: 'gnl.energia_segundo_mmbtu', PTT_GNL_KPI_TNQ_OCUP: 'gnl.tanques_ocupacion_pct',
 });
 
 /** Relaciones entre pestañas: el KPI de la izquierda lo pueden mover los de la lista (con el porqué). */
@@ -32,6 +52,23 @@ const RELACIONES = Object.freeze({
   'maritimo.naves_fondeadas': [['maritimo.ocupacion_muelles_pct', 'si los muelles están llenos, las naves esperan en fondeo'], ['maritimo.naves_atracadas', 'naves que no zarpan ocupan los muelles']],
   'maritimo.espera_fondeo_prom_min': [['maritimo.ocupacion_muelles_pct', 'sin muelle libre la espera en fondeo crece'], ['maritimo.naves_fondeadas', 'más naves en fondeo, más espera']],
   'maritimo.ocupacion_muelles_pct': [['maritimo.naves_atracadas', 'cada nave atracada ocupa un muelle'], ['maritimo.naves_fondeadas', 'la cola de fondeo presiona los muelles']],
+  // CC-314 (regla 30, fase 2)
+  'maritimo.naves_esperadas_72h': [['maritimo.ocupacion_muelles_pct', 'las llegadas presionan los muelles'], ['maritimo.naves_fondeadas', 'sin muelle libre, las que llegan esperan en fondeo']],
+  'carga.contenedores_t_dia': [['maritimo.naves_atracadas', 'más naves atracadas, más contenedores movidos'], ['contenedores.cargados_pendientes', 'la carga descargada que no se retira llena el patio']],
+  'carga.granel_t_dia': [['granel.agricola_t', 'el granel agrícola del día'], ['granel.mineral_t', 'el granel mineral del día'], ['bodegas.ocupacion_pct', 'el granel descargado entra a bodega']],
+  'carga.general_t_dia': [['suelta.breakbulk_t', 'la carga suelta del día'], ['bodegas.ocupacion_pct', 'la carga general ocupa bodega']],
+  'carga.camiones_zona_portuaria': [['gate.en_cola', 'los camiones en cola están en la zona portuaria'], ['viales.cierres', 'los cierres retienen camiones en el corredor']],
+  'roro.buques_vehiculos': [['maritimo.ocupacion_muelles_pct', 'sin muelle libre, los Ro-Ro esperan'], ['maritimo.naves_fondeadas', 'Ro-Ro que esperan en fondeo']],
+  // CC-315 (regla 30, fase 3): Virtual Gate
+  'gate.camiones_activos': [['gate.en_cola', 'los camiones en cola son parte de los activos'], ['gate.retrasadas', 'citas retrasadas que siguen abiertas'], ['viales.cierres', 'los cierres viales juntan las llegadas']],
+  'gate.citas_contenedor_48h': [['contenedores.cargados_pendientes', 'contenedores en patio que piden cita de retiro'], ['maritimo.naves_atracadas', 'el descargue de buques genera retiros']],
+  'gate.granel_t': [['granel.agricola_t', 'el granel descargado sale por el gate'], ['bodegas.flujo_24h_t', 'el despacho de bodegas sale en camión']],
+  'gate.suelta_t': [['suelta.breakbulk_t', 'la carga suelta descargada sale por el gate'], ['bodegas.flujo_24h_t', 'el despacho de bodegas sale en camión']],
+  'gate.citas_roro_48h': [['roro.buques_vehiculos', 'los buques de vehículos generan retiros con niñeras'], ['suelta.vehiculos_import', 'vehículos importados por retirar']],
+  'gate.camiones_contenedor_activos': [['gate.citas_contenedor_48h', 'citas de contenedores de la ventana'], ['gate.en_cola', 'camiones que esperan turno']],
+  'gate.camiones_granel_activos': [['gate.granel_t', 'el granel que se pesa en el gate'], ['gate.en_cola', 'camiones que esperan turno']],
+  'gate.camiones_suelta_activos': [['gate.suelta_t', 'la carga suelta que se pesa en el gate'], ['gate.en_cola', 'camiones que esperan turno']],
+  'gate.camiones_roro_activos': [['gate.citas_roro_48h', 'citas de vehículos de la ventana'], ['roro.buques_vehiculos', 'buques de vehículos en el line-up']],
   'contenedores.cargados_pendientes': [['maritimo.naves_atracadas', 'el descargue de buques llena el patio de llenos'], ['gate.retrasadas', 'citas de retiro retrasadas dejan contenedores en patio'], ['contenedores.free_time_vencido', 'contenedores que no se retiran a tiempo']],
   'contenedores.free_time_vencido': [['contenedores.cargados_pendientes', 'contenedores llenos que siguen en patio'], ['gate.retrasadas', 'retiros que no llegan a su cita']],
   'gate.en_cola': [['gate.retrasadas', 'citas retrasadas se acumulan en la cola'], ['contenedores.cargados_pendientes', 'más contenedores por retirar, más camiones'], ['viales.cierres', 'cierres en el corredor desordenan las llegadas'], ['viales.accidentes', 'accidentes retrasan los camiones']],
@@ -45,8 +82,24 @@ const RELACIONES = Object.freeze({
   'granel.agricola_t': [['maritimo.naves_atracadas', 'el granel se mueve con buques atracados']],
   'granel.mineral_t': [['maritimo.naves_atracadas', 'el granel se mueve con buques atracados']],
   'suelta.breakbulk_t': [['maritimo.naves_atracadas', 'la carga suelta se mueve con buques atracados']],
+  // CC-320 (regla 30, fase 6)
+  'noticias.restricciones_viales_hoy': [['viales.cierres', 'los cierres viales que reporta TomTom'], ['viales.accidentes', 'accidentes y vehículos varados']],
+  // CC-319 (regla 30, fase 5)
+  'granel.equipos_en_uso': [['maritimo.naves_atracadas', 'los equipos trabajan con la motonave atracada'], ['granel.agricola_t', 'el granel agrícola que se descarga'], ['granel.mineral_t', 'el granel mineral que se carga']],
+  'suelta.project_cargo_folios': [['maritimo.naves_atracadas', 'el project cargo llega con los buques'], ['viales.cierres', 'los cierres viales demoran el despacho con permiso']],
+  'capacidad.capacidad_t': [['capacidad.ocupacion_max_pct', 'la ocupación del nodo más lleno frente a esa capacidad'], ['bodegas.ocupacion_pct', 'las bodegas son parte de esa capacidad']],
+  'capacidad.capacidad_teu': [['capacidad.ocupacion_max_pct', 'la ocupación frente a esa capacidad'], ['contenedores.cargados_pendientes', 'contenedores que ocupan los patios']],
+  'capacidad.nodos_monitoreados': [['capacidad.nodos_criticos', 'de los nodos monitoreados, los críticos'], ['capacidad.nodos_atencion', 'los que están en atención']],
   'gnl.alarmas_24h': [['gnl.presion_psi', 'la presión fuera de rango dispara alarmas']],
   'gnl.presion_psi': [['gnl.volumen_hora_m3', 'el caudal de la última hora mueve la presión']],
+  // CC-316 (regla 30, fase 4)
+  'gnl.descarga_m3h': [['maritimo.naves_atracadas', 'se descarga con el metanero atracado'], ['gnl.caudal_m3h', 'el caudal de los brazos de descarga']],
+  'gnl.inyeccion_m3h': [['gnl.descarga_m3h', 'lo que se regasifica sale de lo descargado'], ['gnl.tanques_ocupacion_pct', 'con tanques bajos se inyecta menos']],
+  'gnl.bog_kg_h': [['gnl.temperatura_c', 'un ducto menos frío evapora más gas'], ['gnl.caudal_m3h', 'más caudal, más gas evaporado']],
+  'gnl.tanques_ocupacion_pct': [['gnl.descarga_m3h', 'la descarga del buque llena los tanques'], ['gnl.inyeccion_m3h', 'la inyección a red los vacía']],
+  'gnl.energia_24h_mmbtu': [['gnl.volumen_24h_m3', 'la energía sale del volumen movido'], ['gnl.poder_calorifico', 'la calidad del gas']],
+  'gnl.temperatura_c': [['gnl.presion_psi', 'presión y temperatura del ducto van juntas']],
+  'gnl.energia_segundo_mmbtu': [['gnl.caudal_m3h', 'la energía sale del caudal de los brazos'], ['gnl.poder_calorifico', 'la calidad del gas']],
 });
 
 const modulo = (codigo) => String(codigo).split('.')[0];

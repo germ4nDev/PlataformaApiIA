@@ -8,6 +8,10 @@
         (1 s por defecto); energía = volumen × 22,4 MMBTU/m³ (la misma regla del front); BOG = Σ bog (kg/h) × Δt.
       - serieHistorial(filas, horas): serie por hora para la vista ampliada (volumen, energía, presión, temperatura,
         alarmas) y el volumen por brazo.
+      - lecturaVigente(lectura, ahora): la última lectura viva si es reciente (CC-316, foto de la IA).
+      - consolidadoVivo(lecturas, ahora): «Vista General» de las tarjetas (gnl-state.service de la web): suma por brazo
+        caudal, descarga, inyección y BOG; promedia poder calorífico, llenado de tanques y temperatura; energía del
+        último segundo = caudal × 22,4 / 3600. Solo brazos con lectura reciente.
 */
 const C = require('./tablero-comun');
 
@@ -86,4 +90,26 @@ function serieHistorial(filas = [], horas = 24, ahora = new Date()) {
   };
 }
 
-module.exports = { MMBTU_POR_M3, consolidar, serieHistorial };
+/** CC-316 · La lectura viva solo vale si es de los últimos `maxSeg` segundos (sin pulso reciente, null: dato honesto). */
+function lecturaVigente(lectura, ahora = new Date(), maxSeg = 120) {
+  const t = Date.parse(lectura?.timestamp);
+  if (!Number.isFinite(t)) return null;
+  const edad = (ahora.getTime() - t) / 1000;
+  return edad >= -5 && edad <= maxSeg ? lectura : null;
+}
+
+/** CC-316 · Lo que pintan las tarjetas en «Vista General» con la última lectura de cada brazo; sin brazos recientes, null. */
+function consolidadoVivo(lecturas = [], ahora = new Date(), maxSeg = 120) {
+  const vigentes = lecturas.filter((l) => lecturaVigente(l, ahora, maxSeg));
+  if (!vigentes.length) return null;
+  const sumar = (campo) => C.redondear(vigentes.reduce((a, l) => a + num(l[campo]), 0), 2);
+  const promediar = (campo) => C.redondear(vigentes.reduce((a, l) => a + num(l[campo]), 0) / vigentes.length, 2);
+  return {
+    brazos: vigentes.length,
+    caudal_m3h: sumar('caudal_m3h'), descarga_buque: sumar('descarga_buque'), inyeccion: sumar('inyeccion'), bog: sumar('bog'),
+    poder_calorifico: promediar('poder_calorifico'), volumen_almacenado: promediar('volumen_almacenado'), temp_ducto: promediar('temp_ducto'),
+    energia_segundo_mmbtu: C.redondear((sumar('caudal_m3h') * MMBTU_POR_M3) / 3600, 4),
+  };
+}
+
+module.exports = { MMBTU_POR_M3, consolidar, serieHistorial, lecturaVigente, consolidadoVivo };

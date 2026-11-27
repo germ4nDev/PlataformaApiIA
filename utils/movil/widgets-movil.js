@@ -42,18 +42,13 @@ const resolver = (codigo) => {
   return ALIAS[c] || c;
 };
 
-/** KPI de la web → serie de 24 h del catálogo de la IA (para la gráfica del detalle). */
-const SERIE_DE = Object.freeze({
-  PTT_CONT_KPI_CARGADOS: 'contenedores.cargados_pendientes', PTT_CONT_KPI_VACIOS: 'contenedores.vacios_devolver',
-  PTT_CONT_KPI_REEFER: 'contenedores.reefer_activos', PTT_CONT_KPI_FREETIME: 'contenedores.free_time_vencido',
-  PTT_BOD_KPI_OCUPACION: 'bodegas.ocupacion_pct', PTT_BOD_KPI_INVENTARIO: 'bodegas.inventario_t',
-  PTT_BOD_KPI_DESPACHOS: 'bodegas.flujo_24h_t', PTT_BOD_KPI_ALERTAS: 'bodegas.en_alerta',
-  PTT_GRA_KPI_AGRICOLA: 'granel.agricola_t', PTT_GRA_KPI_MINERAL: 'granel.mineral_t', PTT_GRA_KPI_LIQUIDO: 'granel.liquido_t',
-  PTT_SUE_KPI_BREAKBULK: 'suelta.breakbulk_t', PTT_SUE_KPI_VEH_IMPORT: 'suelta.vehiculos_import', PTT_SUE_KPI_VEH_EXPORT: 'suelta.vehiculos_export',
-  PTT_CAP_KPI_CRITICOS: 'capacidad.nodos_criticos',
-  PTT_MAE_KPI_FONDEO: 'maritimo.naves_fondeadas', PTT_MAE_KPI_MUELLE: 'maritimo.naves_atracadas',
-  PTT_GATE_KPI_OP: 'gate.citas_total',
-});
+/**
+ * KPI de la web → serie de 24 h del catálogo de la IA (para la gráfica del detalle).
+ * CC-315 (regla 10): la misma tabla de la tarjeta web (WIDGET_KPI de utils/ia/por-que); antes era una copia y se había
+ * desalineado (Camiones en gate graficaba las citas de la ventana y Ocupación de muelles las naves atracadas).
+ */
+const { WIDGET_KPI } = require('../ia/por-que');
+const SERIE_DE = Object.freeze({ ...WIDGET_KPI });
 
 /** Foco de cada analista IA por pestaña (el mismo del widget analista-ia de la web). */
 const FOCO_ANALISTA = Object.freeze({
